@@ -94,9 +94,6 @@
   </div>
 
   <script>
-    // --- APP DATA VERSION FOR AUTO CACHE PURGING & SYNC ---
-    const CALIBGUARD_DATA_VERSION = "2026.07.20.v5";
-
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
       { 
@@ -450,19 +447,10 @@
       }
     }
 
-    // --- AUTO-PURGING SCHEMA & STORAGE MANAGER ---
+    // --- NON-DESTRUCTIVE SAFE LOCAL STORAGE ENGINE ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
-          const version = localStorage.getItem('calibguard_version');
-          if (version !== CALIBGUARD_DATA_VERSION) {
-            console.log(`Upgrading storage to version ${CALIBGUARD_DATA_VERSION}`);
-            localStorage.clear();
-            localStorage.setItem('calibguard_version', CALIBGUARD_DATA_VERSION);
-            localStorage.setItem(`calibguard_${key}`, JSON.stringify(def));
-            return def;
-          }
-
           const item = localStorage.getItem(`calibguard_${key}`); 
           if (item) {
             const parsed = JSON.parse(item);
@@ -496,7 +484,6 @@
       },
       set: (key, val) => { 
         try { 
-          localStorage.setItem('calibguard_version', CALIBGUARD_DATA_VERSION);
           localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); 
         } catch (e) { 
           console.warn(`localStorage quota error, stripping binary attachments for ${key}`);
@@ -550,7 +537,7 @@
 
       saveState(k, showToastMsg = true) {
         StorageManager.set(k, this.state[k]);
-        if (showToastMsg) showToast(`✅ Data Auto-Saved!`);
+        if (showToastMsg) showToast(`✅ Data Saved to Browser Storage!`);
       }
 
       saveAllData() {
@@ -561,20 +548,61 @@
         showToast('💾 All Master Data Successfully Saved & Persisted!');
       }
 
-      forceReloadMasterSeed() {
-        localStorage.clear();
-        localStorage.setItem('calibguard_version', CALIBGUARD_DATA_VERSION);
-        this.state.instruments = INITIAL_INSTRUMENTS;
-        this.state.agencies = INITIAL_AGENCIES;
-        this.state.users = INITIAL_USERS;
-        this.saveAllData();
-        showToast('🔄 Master Data Successfully Reset & Synced!');
-        this.renderCurrentTab();
+      exportBackupJSON() {
+        const backupData = {
+          version: "2026.07.20",
+          exportDate: new Date().toISOString(),
+          instruments: this.state.instruments,
+          agencies: this.state.agencies,
+          users: this.state.users,
+          alertThresholdDays: this.state.alertThresholdDays
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `CalibGuard_Database_Backup_${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('💾 Database Backup (.json) Exported Successfully!');
+      }
+
+      importBackupJSON(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data.instruments && Array.isArray(data.instruments)) {
+              this.state.instruments = data.instruments;
+              StorageManager.set('instruments', this.state.instruments);
+            }
+            if (data.agencies && Array.isArray(data.agencies)) {
+              this.state.agencies = data.agencies;
+              StorageManager.set('agencies', this.state.agencies);
+            }
+            if (data.users && Array.isArray(data.users)) {
+              this.state.users = data.users;
+              StorageManager.set('users', this.state.users);
+            }
+            showToast('📥 Database Backup (.json) Successfully Imported & Restored!');
+            this.renderCurrentTab();
+          } catch (err) {
+            alert('Error parsing database backup JSON file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
       }
 
       resetToDefaultSeed() {
-        if (confirm('Are you sure you want to reset & reload the master dataset?')) {
-          this.forceReloadMasterSeed();
+        if (confirm('Are you sure you want to reset to initial seed data? (Custom uploads will be overwritten)')) {
+          this.state.instruments = INITIAL_INSTRUMENTS;
+          this.state.agencies = INITIAL_AGENCIES;
+          this.state.users = INITIAL_USERS;
+          this.saveAllData();
+          showToast('🔄 Reset to Master Seed Data!');
+          this.renderCurrentTab();
         }
       }
 
@@ -842,17 +870,17 @@
               </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-              <button id="btnHeaderSyncData" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-md flex items-center space-x-1 transition-all">
-                <span>🔄 Sync Latest Data</span>
-              </button>
-
+            <div class="flex items-center space-x-2">
               <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                 <span>📊 Upload Excel Sheet</span>
               </button>
 
-              <button id="btnHeaderSaveAll" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
-                <span>💾 Save All Changes</span>
+              <button id="btnHeaderExportJSON" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
+                <span>💾 Backup (.json)</span>
+              </button>
+
+              <button id="btnHeaderImportJSON" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
+                <span>📥 Restore (.json)</span>
               </button>
 
               <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
@@ -907,8 +935,12 @@
               </div>
 
               <div class="pt-4 border-t border-slate-200 space-y-2">
-                <button id="btnSidebarSyncData" class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
-                  <span>🔄 Sync & Load Master Data</span>
+                <button id="btnSidebarExportJSON" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
+                  <span>💾 Backup Database (.json)</span>
+                </button>
+
+                <button id="btnSidebarImportJSON" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
+                  <span>📥 Restore Database (.json)</span>
                 </button>
 
                 <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
@@ -925,6 +957,7 @@
           <div id="modalContainer" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"></div>
           
           <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+          <input type="file" id="jsonFileInput" accept=".json" class="hidden">
           <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
           <input type="file" id="nablScopeFileInput" accept="application/pdf,image/*" class="hidden">
         `;
@@ -937,12 +970,23 @@
       bindEvents() {
         document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab)));
         document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
-        document.getElementById('btnHeaderSaveAll')?.addEventListener('click', () => this.saveAllData());
         document.getElementById('btnResetSeedData')?.addEventListener('click', () => this.resetToDefaultSeed());
+
+        const jsonInput = document.getElementById('jsonFileInput');
         
-        const syncFn = () => this.resetToDefaultSeed();
-        document.getElementById('btnHeaderSyncData')?.addEventListener('click', syncFn);
-        document.getElementById('btnSidebarSyncData')?.addEventListener('click', syncFn);
+        document.getElementById('btnHeaderExportJSON')?.addEventListener('click', () => this.exportBackupJSON());
+        document.getElementById('btnSidebarExportJSON')?.addEventListener('click', () => this.exportBackupJSON());
+        
+        document.getElementById('btnHeaderImportJSON')?.addEventListener('click', () => jsonInput.click());
+        document.getElementById('btnSidebarImportJSON')?.addEventListener('click', () => jsonInput.click());
+
+        jsonInput?.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            this.importBackupJSON(file);
+            e.target.value = '';
+          }
+        });
 
         const globalSearch = document.getElementById('globalSearchInput');
         globalSearch?.addEventListener('input', (e) => {
@@ -1074,14 +1118,11 @@
               </div>
 
               <div class="flex items-center space-x-2">
-                <button id="btnTableSyncData" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-md">
-                  🔄 Sync & Reload Data
-                </button>
                 <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
                   <span>📊 Upload Excel Sheet</span>
                 </button>
                 <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save Inventory Data
+                  💾 Save Data
                 </button>
                 <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
                   + Add New Instrument
@@ -1251,7 +1292,6 @@
 
         c.querySelector('#btnResetAllFilters')?.addEventListener('click', resetFn);
         c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
-        c.querySelector('#btnTableSyncData')?.addEventListener('click', () => this.resetToDefaultSeed());
 
         const excelInput = document.getElementById('excelFileInput');
         c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput.click());
