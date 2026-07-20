@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalibGuard Enterprise | Measuring Instruments Calibration System</title>
+  
+  <!-- Tailwind CSS & Lucide Icons CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- SheetJS CDN for Native Excel (.xlsx, .xls, .csv) Parsing & Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+  <style>
+    :root {
+      --bg-white: #ffffff;
+      --bg-slate: #f8fafc;
+      --border-light: #e2e8f0;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    .white-card {
+      background-color: #ffffff;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05);
+    }
+    .white-input {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+    }
+    .white-input:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+    .badge-amber {
+      background-color: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-red {
+      background-color: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .badge-green {
+      background-color: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    .nav-tab-active {
+      background-color: #e0f2fe;
+      border-left: 4px solid #0284c7;
+      color: #0369a1;
+      font-weight: 700;
+    }
+    .modal-enter {
+      animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 antialiased">
+  <div id="app"></div>
+
+  <!-- Global Toast Notification Banner -->
+  <div id="toastNotification" class="fixed top-4 right-4 z-50 hidden modal-enter flex items-center space-x-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xl border border-emerald-500">
+    <span id="toastMessage">✅ Changes Saved Successfully!</span>
+  </div>
+
+  <script>
+    // --- Data Seed ---
+    const INITIAL_AGENCIES = [
+      { 
+        id: "AGN-001", 
+        name: "Precision Metrology Services", 
+        code: "PMS-LAB", 
+        contactPerson: "Dr. Robert Vance", 
+        phone: "+1 (555) 234-8901", 
+        email: "r.vance@precisionmetrology.com", 
+        accreditation: "ISO/IEC 17025 Accredited (NABL)", 
+        nablCertNo: "NABL-CC-2894",
+        nablDueDate: "2026-07-25",
+        nablScopeName: "NABL_Scope_Precision_Metrology.pdf",
+        status: "Active" 
+      },
+      { 
+        id: "AGN-002", 
+        name: "NIST Calibration & Standards Lab", 
+        code: "NIST-CSL", 
+        contactPerson: "Sarah Jenkins", 
+        phone: "+1 (555) 876-5432", 
+        email: "s.jenkins@nist-standards.org", 
+        accreditation: "National Standards Body / NABL ISO 17025", 
+        nablCertNo: "NABL-CC-1102",
+        nablDueDate: "2026-08-15",
+        nablScopeName: "NABL_Scope_NIST_CSL.pdf",
+        status: "Active" 
+      },
+      { 
+        id: "AGN-003", 
+        name: "Apex Instruments Calibration Inc.", 
+        code: "APEX-CAL", 
+        contactPerson: "Michael Chang", 
+        phone: "+1 (555) 345-6789", 
+        email: "mchang@apexcal.com", 
+        accreditation: "ISO/IEC 17025 Accredited (NABL)", 
+        nablCertNo: "NABL-CC-4491",
+        nablDueDate: "2026-07-10",
+        nablScopeName: null,
+        status: "Active" 
+      },
+      { 
+        id: "AGN-004", 
+        name: "In-House Quality Metrology Dept", 
+        code: "INT-MET", 
+        contactPerson: "Alex Rivera", 
+        phone: "+1 (555) 440-2000", 
+        email: "metrology@internal-plant.com", 
+        accreditation: "Internal Quality Management System", 
+        nablCertNo: "INT-QMS-001",
+        nablDueDate: "2026-12-31",
+        nablScopeName: null,
+        status: "Active" 
+      }
+    ];
+
+    const INITIAL_USERS = [
+      { id: "USR-000", name: "Mukunda", username: "Mukunda", password: "Tejas", email: "mukunda@company.com", role: "Admin", department: "Quality Assurance & Metrology Head", avatar: "MK" },
+      { id: "USR-001", name: "Marcus Vance", username: "admin", password: "admin123", email: "marcus.vance@company.com", role: "Admin", department: "Quality Assurance Management", avatar: "MV" },
+      { id: "USR-002", name: "Elena Rostova", username: "elena", password: "elena123", email: "elena.rostova@company.com", role: "Technician", department: "Metrology & Quality Control", avatar: "ER" },
+      { id: "USR-003", name: "David Miller", username: "david", password: "david123", email: "d.miller@precisionmetrology.com", role: "AgencyRep", department: "External Calibration Specialist", avatar: "DM", assignedAgencyId: "AGN-001" },
+      { id: "USR-004", name: "Priya Sharma", username: "priya", password: "priya123", email: "p.sharma@company.com", role: "Auditor", department: "Compliance & Safety Audit", avatar: "PS" }
+    ];
+
+    const INITIAL_INSTRUMENTS = [
+      { 
+        id: "INS-001", 
+        tagId: "EQ-CAL-001", 
+        name: "Digital Vernier Caliper", 
+        make: "Mitutoyo", 
+        serialNo: "MT-8849201", 
+        range: "0-150 mm", 
+        leastCount: "0.01 mm", 
+        category: "Dimensional", 
+        model: "500-196-30", 
+        location: "Machining Shop - Bay 2", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-22", 
+        nextDueDate: "2026-07-22", 
+        agencyId: "AGN-001", 
+        status: "Active",
+        pdfReportName: "Calib_Report_EQ-CAL-001.pdf"
+      },
+      { 
+        id: "INS-002", 
+        tagId: "EQ-MIC-002", 
+        name: "Outside Digital Micrometer", 
+        make: "Starrett", 
+        serialNo: "ST-7739102", 
+        range: "0-25 mm", 
+        leastCount: "0.001 mm", 
+        category: "Dimensional", 
+        model: "733.1XFL-1", 
+        location: "Precision Grinding Line", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-20", 
+        nextDueDate: "2026-07-20", 
+        agencyId: "AGN-002", 
+        status: "Active",
+        pdfReportName: "Calib_Report_EQ-MIC-002.pdf"
+      },
+      { 
+        id: "INS-003", 
+        tagId: "EQ-PRS-003", 
+        name: "Digital Master Pressure Gauge", 
+        make: "Fluke Calibration", 
+        serialNo: "FK-992314", 
+        range: "0-100 PSI", 
+        leastCount: "0.01 PSI", 
+        category: "Pressure", 
+        model: "700G08", 
+        location: "Hydraulics Test Bench", 
+        frequencyMonths: 12, 
+        lastCalibratedDate: "2025-07-10", 
+        nextDueDate: "2026-07-10", 
+        agencyId: "AGN-003", 
+        status: "Out of Calibration",
+        pdfReportName: null
+      },
+      { 
+        id: "INS-004", 
+        tagId: "EQ-TRQ-004", 
+        name: "Adjustable Torque Wrench", 
+        make: "Snap-on", 
+        serialNo: "SO-441029", 
+        range: "10-100 Nm", 
+        leastCount: "0.5 Nm", 
+        category: "Torque & Force", 
+        model: "ATECH2FR100B", 
+        location: "Final Assembly Station 4", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-24", 
+        nextDueDate: "2026-07-24", 
+        agencyId: "AGN-001", 
+        status: "Active",
+        pdfReportName: "Calib_Report_EQ-TRQ-004.pdf"
+      },
+      { 
+        id: "INS-005", 
+        tagId: "EQ-TMP-005", 
+        name: "Dual Input Thermocouple Calibrator", 
+        make: "Omega Engineering", 
+        serialNo: "OE-112049", 
+        range: "-200 to 1370 °C", 
+        leastCount: "0.1 °C", 
+        category: "Thermal", 
+        model: "CL3512A", 
+        location: "Heat Treatment Dept", 
+        frequencyMonths: 12, 
+        lastCalibratedDate: "2025-08-15", 
+        nextDueDate: "2026-08-15", 
+        agencyId: "AGN-004", 
+        status: "Active",
+        pdfReportName: null
+      }
+    ];
+
+    // --- Utilities ---
+    const TODAY_DATE = new Date('2026-07-18T11:47:24');
+
+    function getDaysUntilDue(dateStr) {
+      if (!dateStr) return 0;
+      const dueDate = new Date(dateStr);
+      if (isNaN(dueDate.getTime())) return 0;
+      return Math.ceil((dueDate.getTime() - TODAY_DATE.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    function getCalibrationAlertInfo(nextDueDate, thresholdDays = 7) {
+      const days = getDaysUntilDue(nextDueDate);
+      if (days < 0) return { key: 'overdue', label: `OVERDUE (${Math.abs(days)}d ago)`, shortLabel: 'Overdue', days, badgeClass: 'badge-red' };
+      if (days <= thresholdDays) return { key: 'due-urgent', label: `DUE IN ${days} DAY${days === 1 ? '' : 'S'} (${thresholdDays}-Day Window)`, shortLabel: `Due in ${days}d`, days, badgeClass: 'badge-amber' };
+      return { key: 'valid', label: `Compliant (${days} days left)`, shortLabel: 'Compliant', days, badgeClass: 'badge-green' };
+    }
+
+    function getNABLAgencyAlertInfo(nablDueDate, thresholdDays = 7) {
+      const days = getDaysUntilDue(nablDueDate);
+      if (days < 0) return { key: 'expired', label: `NABL ACCREDITATION EXPIRED (${Math.abs(days)}d ago)`, shortLabel: 'Expired', days, badgeClass: 'badge-red' };
+      if (days <= thresholdDays) return { key: 'expiring-soon', label: `NABL SCOPE EXPIRING IN ${days} DAY${days === 1 ? '' : 'S'}`, shortLabel: `Expiring in ${days}d`, days, badgeClass: 'badge-amber' };
+      return { key: 'valid', label: `NABL Accredited (${days} days valid)`, shortLabel: 'Valid', days, badgeClass: 'badge-green' };
+    }
+
+    function calculateNextDueDate(lastDateStr, months) {
+      try {
+        if (!lastDateStr) {
+          const defaultDate = new Date(TODAY_DATE);
+          defaultDate.setMonth(defaultDate.getMonth() + parseInt(months || 6, 10));
+          return defaultDate.toISOString().split('T')[0];
+        }
+        const date = new Date(lastDateStr);
+        if (isNaN(date.getTime())) {
+          const fallbackDate = new Date(TODAY_DATE);
+          fallbackDate.setMonth(fallbackDate.getMonth() + parseInt(months || 6, 10));
+          return fallbackDate.toISOString().split('T')[0];
+        }
+        date.setMonth(date.getMonth() + parseInt(months || 6, 10));
+        return date.toISOString().split('T')[0];
+      } catch (e) {
+        return '2026-07-18';
+      }
+    }
+
+    // --- SMART DATE CONVERTER ENGINE FOR EXCEL DATES ---
+    function parseExcelDate(val) {
+      if (!val) return '2026-01-18';
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        return val.toISOString().split('T')[0];
+      }
+      if (typeof val === 'number') {
+        // Excel serial date integer (e.g. 45321)
+        const dateObj = new Date((val - (25567 + 2)) * 86400 * 1000);
+        if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+      }
+      const str = val.toString().trim();
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+
+      // Handle DD/MM/YYYY or DD-MM-YYYY format
+      const parts = str.split(/[\/\-\.]/);
+      if (parts.length === 3) {
+        if (parts[2].length === 4) {
+          // DD/MM/YYYY or MM/DD/YYYY
+          const d1 = parseInt(parts[0], 10);
+          const d2 = parseInt(parts[1], 10);
+          const y = parseInt(parts[2], 10);
+          if (d1 > 12) {
+            // Must be DD/MM/YYYY
+            const dateObj = new Date(y, d2 - 1, d1);
+            if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+          } else {
+            const dateObj = new Date(y, d1 - 1, d2);
+            if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+          }
+        }
+      }
+      return '2026-01-18';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'N/A';
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function downloadExcelTemplate() {
+      const templateData = [
+        {
+          "Tag ID": "EQ-EXP-101",
+          "Instrument Name": "Digital Height Gauge 300mm",
+          "Make": "Mitutoyo",
+          "Serial Number": "MT-992019",
+          "Range": "0-300 mm",
+          "Least Count": "0.01 mm",
+          "Category": "Dimensional",
+          "Location": "QA Inspection Shop",
+          "Calibration On Date": "2026-02-15",
+          "Frequency (Months)": 6,
+          "Agency Code": "PMS-LAB"
+        },
+        {
+          "Tag ID": "EQ-EXP-102",
+          "Instrument Name": "Digital Pressure Calibrator",
+          "Make": "Fluke",
+          "Serial Number": "FK-88201",
+          "Range": "0-500 PSI",
+          "Least Count": "0.01 PSI",
+          "Category": "Pressure",
+          "Location": "Hydraulics Test Lab",
+          "Calibration On Date": "2026-03-01",
+          "Frequency (Months)": 12,
+          "Agency Code": "APEX-CAL"
+        }
+      ];
+
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Master_Instruments");
+      XLSX.writeFile(workbook, "CalibGuard_Master_Instruments_Template.xlsx");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const text = document.getElementById('toastMessage');
+      if (toast && text) {
+        text.innerText = msg || '✅ Changes Saved Successfully!';
+        toast.classList.remove('hidden');
+        setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+      }
+    }
+
+    const StorageManager = {
+      get: (key, def) => { 
+        try { 
+          const item = localStorage.getItem(`calibguard_${key}`); 
+          if (item) {
+            const parsed = JSON.parse(item);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              if (key === 'instruments') {
+                return parsed.map(ins => ({
+                  id: ins.id || `INS-${Math.random()}`,
+                  tagId: ins.tagId || 'EQ-CAL-000',
+                  name: ins.name || 'Measuring Instrument',
+                  make: ins.make || 'Mitutoyo',
+                  serialNo: ins.serialNo || 'SN-000',
+                  range: ins.range || '0-150 mm',
+                  leastCount: ins.leastCount || '0.01 mm',
+                  category: ins.category || 'Dimensional',
+                  location: ins.location || 'Quality Inspection Shop',
+                  frequencyMonths: parseInt(ins.frequencyMonths || 6, 10),
+                  lastCalibratedDate: ins.lastCalibratedDate || '2026-01-18',
+                  nextDueDate: ins.nextDueDate || calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths),
+                  agencyId: ins.agencyId || 'AGN-001',
+                  status: ins.status || 'Active',
+                  pdfReportName: ins.pdfReportName || null
+                }));
+              }
+              return parsed;
+            }
+          }
+          return def; 
+        } catch (e) { 
+          return def; 
+        } 
+      },
+      set: (key, val) => { 
+        try { 
+          localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); 
+        } catch (e) { 
+          console.warn(`localStorage quota error, stripping binary attachments for ${key}`);
+          try {
+            const cleanVal = JSON.parse(JSON.stringify(val, (k, v) => (k === 'pdfReportData' || k === 'nablScopeData') ? null : v));
+            localStorage.setItem(`calibguard_${key}`, JSON.stringify(cleanVal));
+          } catch (err) {
+            console.error('Storage failed', err);
+          }
+        } 
+      }
+    };
+
+    // --- Main Controller ---
+    class CalibGuardApp {
+      constructor() {
+        let users = StorageManager.get('users', INITIAL_USERS);
+        if (!users.some(u => u.username === 'Mukunda')) {
+          users = INITIAL_USERS;
+          StorageManager.set('users', users);
+        }
+
+        let instruments = StorageManager.get('instruments', INITIAL_INSTRUMENTS);
+
+        this.state = {
+          instruments: instruments,
+          agencies: StorageManager.get('agencies', INITIAL_AGENCIES),
+          users: users,
+          isLoggedIn: StorageManager.get('isLoggedIn', false),
+          activeUserId: StorageManager.get('activeUserId', 'USR-000'),
+          alertThresholdDays: StorageManager.get('alertThresholdDays', 7),
+          activeTab: 'master',
+          searchQuery: '',
+          filterCategory: 'All',
+          filterStatus: 'All'
+        };
+        this.init();
+      }
+
+      init() {
+        if (!this.state.isLoggedIn) {
+          this.renderLoginScreen();
+        } else {
+          this.renderMainApp();
+        }
+      }
+
+      getActiveUser() {
+        return this.state.users.find(u => u.id === this.state.activeUserId) || this.state.users[0];
+      }
+
+      saveState(k, showToastMsg = true) {
+        StorageManager.set(k, this.state[k]);
+        if (showToastMsg) showToast(`✅ Data Auto-Saved!`);
+      }
+
+      saveAllData() {
+        StorageManager.set('instruments', this.state.instruments);
+        StorageManager.set('agencies', this.state.agencies);
+        StorageManager.set('users', this.state.users);
+        StorageManager.set('alertThresholdDays', this.state.alertThresholdDays);
+        showToast('💾 All Master Data Successfully Saved & Persisted!');
+      }
+
+      resetToDefaultSeed() {
+        if (confirm('Are you sure you want to reload default seed instruments and agencies?')) {
+          this.state.instruments = INITIAL_INSTRUMENTS;
+          this.state.agencies = INITIAL_AGENCIES;
+          this.state.users = INITIAL_USERS;
+          this.saveAllData();
+          this.renderCurrentTab();
+        }
+      }
+
+      getFilteredInstruments() {
+        const query = (this.state.searchQuery || '').toLowerCase().trim();
+        const cat = this.state.filterCategory || 'All';
+        const stat = this.state.filterStatus || 'All';
+        const threshold = this.state.alertThresholdDays;
+
+        return this.state.instruments.filter(ins => {
+          const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+          const agencyName = agency ? agency.name.toLowerCase() : '';
+          const agencyCode = agency ? agency.code.toLowerCase() : '';
+
+          const matchesQuery = !query || 
+            ins.tagId.toLowerCase().includes(query) ||
+            ins.name.toLowerCase().includes(query) ||
+            (ins.make && ins.make.toLowerCase().includes(query)) ||
+            (ins.serialNo && ins.serialNo.toLowerCase().includes(query)) ||
+            (ins.range && ins.range.toLowerCase().includes(query)) ||
+            (ins.leastCount && ins.leastCount.toLowerCase().includes(query)) ||
+            (ins.location && ins.location.toLowerCase().includes(query)) ||
+            agencyName.includes(query) ||
+            agencyCode.includes(query);
+
+          const matchesCat = (cat === 'All') || (ins.category === cat);
+
+          const alertInfo = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+          const matchesStat = (stat === 'All') || 
+            (stat === 'Overdue' && alertInfo.key === 'overdue') ||
+            (stat === 'Urgent' && alertInfo.key === 'due-urgent') ||
+            (stat === 'Compliant' && alertInfo.key === 'valid');
+
+          return matchesQuery && matchesCat && matchesStat;
+        });
+      }
+
+      // ========================================================
+      // ULTRA-SMART EXCEL & CSV UPLOADER WITH FUZZY HEADER MATCHING
+      // ========================================================
+      handleExcelUpload(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+            if (!rawRows || rawRows.length === 0) {
+              alert('Uploaded Excel sheet is empty! Please check your file.');
+              return;
+            }
+
+            // Helper to fuzzy match keys from Excel headers
+            const findValue = (row, patterns) => {
+              const keys = Object.keys(row);
+              for (let pattern of patterns) {
+                const foundKey = keys.find(k => k.toString().toLowerCase().trim().replace(/[^a-z0-9]/g, '') === pattern);
+                if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null && row[foundKey] !== '') {
+                  return row[foundKey];
+                }
+              }
+              return '';
+            };
+
+            let updatedCount = 0;
+            let addedCount = 0;
+            const importedTags = [];
+
+            rawRows.forEach((row, idx) => {
+              // Fuzzy Header Patterns
+              const tagIdVal = findValue(row, ['tagid', 'tag', 'assetid', 'asset', 'tagassetid', 'tagno', 'equipmentid', 'gaugeid', 'id', 'slno', 'srno', 'sno', 'code', 'serial']);
+              const nameVal = findValue(row, ['instrumentname', 'name', 'instrument', 'description', 'gaugename', 'equipmentname', 'title', 'particulars', 'item']);
+              
+              if (!tagIdVal && !nameVal) return; // Skip completely blank rows
+
+              const tagId = (tagIdVal || `EQ-IMP-${Date.now()}-${idx}`).toString().trim();
+              const name = (nameVal || 'Measuring Instrument').toString().trim();
+              const make = (findValue(row, ['make', 'brand', 'manufacturer', 'company', 'mfr']) || 'Mitutoyo').toString().trim();
+              const serialNo = (findValue(row, ['serialnumber', 'serialno', 'serial', 'slno', 'srno', 'sn', 'machineno']) || 'SN-000').toString().trim();
+              const range = (findValue(row, ['range', 'capacity', 'specification', 'size']) || '0-150 mm').toString().trim();
+              const leastCount = (findValue(row, ['leastcount', 'lc', 'resolution', 'accuracy']) || '0.01 mm').toString().trim();
+              const category = (findValue(row, ['category', 'type', 'discipline', 'dept']) || 'Dimensional').toString().trim();
+              const location = (findValue(row, ['location', 'shop', 'area', 'department', 'plant', 'locationdept']) || 'Quality Inspection Shop').toString().trim();
+              
+              const rawCalDate = findValue(row, ['calibrationondate', 'calibrationdate', 'lastcalibrateddate', 'caldate', 'calibratedon', 'dateofcalibration', 'caldate']);
+              const lastCal = parseExcelDate(rawCalDate);
+
+              const freqRaw = findValue(row, ['frequencymonths', 'frequency', 'freq', 'frequencyinmonths', 'periodicity', 'interval', 'months']);
+              const freq = parseInt(freqRaw || '6', 10);
+
+              const agencyCodeVal = findValue(row, ['agencycode', 'agency', 'calibrationagency', 'lab', 'calibratedby']);
+              let agency = this.state.agencies.find(a => 
+                a.code.toLowerCase() === agencyCodeVal.toString().toLowerCase() || 
+                a.name.toLowerCase() === agencyCodeVal.toString().toLowerCase()
+              );
+              if (!agency) agency = this.state.agencies[0];
+
+              const nextDue = calculateNextDueDate(lastCal, freq);
+
+              // Check if instrument already exists by Tag ID
+              const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
+
+              if (existingIdx >= 0) {
+                // Update existing record
+                this.state.instruments[existingIdx] = {
+                  ...this.state.instruments[existingIdx],
+                  tagId: tagId,
+                  name: name,
+                  make, serialNo, range, leastCount, category, location,
+                  frequencyMonths: freq,
+                  lastCalibratedDate: lastCal,
+                  nextDueDate: nextDue,
+                  agencyId: agency.id
+                };
+                updatedCount++;
+                importedTags.push(`${tagId} (${name}) - Updated`);
+              } else {
+                // Insert new record
+                this.state.instruments.unshift({
+                  id: `INS-${Date.now()}-${idx}`,
+                  tagId: tagId,
+                  name: name,
+                  make, serialNo, range, leastCount, category, location,
+                  frequencyMonths: freq,
+                  lastCalibratedDate: lastCal,
+                  nextDueDate: nextDue,
+                  agencyId: agency.id,
+                  status: 'Active',
+                  pdfReportName: null
+                });
+                addedCount++;
+                importedTags.push(`${tagId} (${name}) - Added`);
+              }
+            });
+
+            this.saveState('instruments');
+            
+            // Show Detailed Result Summary Dialog
+            this.openExcelUploadResultModal(updatedCount, addedCount, importedTags);
+            this.renderCurrentTab();
+          } catch (err) {
+            alert('Error parsing Excel sheet: ' + err.message + '\n\nPlease ensure your Excel sheet has column headers like Tag ID, Name, Make, Serial No, Range, Least Count, Calibration On Date, Frequency.');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      openExcelUploadResultModal(updated, added, tagList) {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-lg rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-lg">📊</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">Excel Import Results Summary</h3>
+                  <p class="text-xs text-slate-500">Master Instruments Inventory updated successfully!</p>
+                </div>
+              </div>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-center">
+              <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div class="text-xs text-emerald-800 uppercase font-extrabold">New Added</div>
+                <div class="text-3xl font-extrabold text-emerald-700 mt-1">${added}</div>
+              </div>
+              <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200">
+                <div class="text-xs text-sky-800 uppercase font-extrabold">Records Updated</div>
+                <div class="text-3xl font-extrabold text-sky-700 mt-1">${updated}</div>
+              </div>
+            </div>
+
+            <div class="space-y-1 text-xs">
+              <div class="font-bold text-slate-700">Imported Equipment Log (${tagList.length} items):</div>
+              <div class="max-h-40 overflow-y-auto p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] space-y-1">
+                ${tagList.map(t => `<div class="text-slate-800">• ${t}</div>`).join('')}
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-200">
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md">
+                ✅ View Master Inventory
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      renderLoginScreen() {
+        document.getElementById('app').innerHTML = `
+          <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div class="white-card modal-enter w-full max-w-md rounded-2xl p-8 border border-slate-200 shadow-xl space-y-6 bg-white">
+              <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 font-extrabold text-2xl mx-auto flex items-center justify-center border border-sky-300">
+                  CG
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">CalibGuard Enterprise</h2>
+                <p class="text-xs text-slate-500">Measuring Instruments Calibration Portal</p>
+              </div>
+
+              <form id="loginForm" class="space-y-4 text-xs">
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1">Username</label>
+                  <input type="text" id="loginUsername" value="Mukunda" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Username (Mukunda)" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1">Password</label>
+                  <input type="password" id="loginPassword" value="Tejas" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Password (Tejas)" required>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
+                  <div class="font-bold text-sky-700 flex items-center justify-between">
+                    <span>🔑 Active Login Credentials:</span>
+                    <span class="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-bold">Admin</span>
+                  </div>
+                  <div>User Name: <strong class="text-slate-900 font-mono">Mukunda</strong></div>
+                  <div>Password: <strong class="text-slate-900 font-mono">Tejas</strong></div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm transition-all shadow-md flex items-center justify-center">
+                  Sign In as Mukunda
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const userVal = document.getElementById('loginUsername').value.trim();
+          const passVal = document.getElementById('loginPassword').value.trim();
+
+          const foundUser = this.state.users.find(u => 
+            (u.username.toLowerCase() === userVal.toLowerCase() || u.email.toLowerCase() === userVal.toLowerCase()) && 
+            u.password === passVal
+          );
+
+          if (foundUser) {
+            this.state.isLoggedIn = true;
+            this.state.activeUserId = foundUser.id;
+            this.saveState('isLoggedIn', false);
+            this.saveState('activeUserId', false);
+            this.renderMainApp();
+          } else {
+            alert('Invalid credentials! Please use Username: Mukunda and Password: Tejas');
+          }
+        });
+      }
+
+      renderMainApp() {
+        const user = this.getActiveUser();
+        document.getElementById('app').innerHTML = `
+          <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center shadow-md">CG</div>
+              <div>
+                <h1 class="font-bold text-lg text-slate-900">CalibGuard Enterprise</h1>
+                <p class="text-xs text-slate-500">Measuring Instruments Calibration System</p>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-md mx-4 hidden md:block">
+              <div class="relative">
+                <input type="text" id="globalSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Quick Search Instruments (Tag ID, Name, Make, Serial, Location, Agency)..." class="white-input w-full pl-9 pr-8 py-2 rounded-xl text-xs font-semibold">
+                <span class="absolute left-3 top-2.5 text-slate-400 font-bold">🔍</span>
+                ${this.state.searchQuery ? `<button id="btnHeaderClearSearch" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-700 font-bold text-xs">✕</button>` : ''}
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
+                <span>📊 Upload Excel Sheet</span>
+              </button>
+
+              <button id="btnHeaderSaveAll" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
+                <span>💾 Save All Changes</span>
+              </button>
+
+              <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                <span class="text-xs text-slate-600">Alert Window:</span>
+                <select id="globalThresholdSelect" class="bg-transparent text-slate-800 text-xs font-bold cursor-pointer focus:outline-none">
+                  <option value="3" ${this.state.alertThresholdDays === 3 ? 'selected' : ''}>3 Days</option>
+                  <option value="7" ${this.state.alertThresholdDays === 7 ? 'selected' : ''}>7 Days (Default)</option>
+                  <option value="14" ${this.state.alertThresholdDays === 14 ? 'selected' : ''}>14 Days</option>
+                  <option value="30" ${this.state.alertThresholdDays === 30 ? 'selected' : ''}>30 Days</option>
+                </select>
+              </div>
+
+              <button id="quickAlertBtn" class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200">
+                <span class="text-xs font-semibold text-slate-800">${this.state.alertThresholdDays}-Day Alerts</span>
+                <span id="urgentAlertCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500 text-white">0</span>
+              </button>
+
+              <div class="flex items-center space-x-3 pl-3 border-l border-slate-200">
+                <div class="text-right hidden sm:block">
+                  <div class="text-xs font-bold text-slate-900">${user.name}</div>
+                  <div class="text-[10px] text-sky-700 font-semibold">${user.role} (${user.username})</div>
+                </div>
+                <button id="btnLogout" class="px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-semibold">
+                  Logout
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <div class="flex min-h-[calc(100vh-65px)] bg-slate-50">
+            <aside class="w-64 bg-white border-r border-slate-200 p-4 space-y-4 hidden lg:block shrink-0 shadow-sm">
+              <div class="space-y-1">
+                <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Navigation</div>
+                <button data-tab="master" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-sky-700 font-bold">Master Instruments List</button>
+                <button data-tab="dashboard" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Dashboard</button>
+                <button data-tab="alerts" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-amber-700">Alert Center</button>
+                <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Calibration Agencies</button>
+                <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 space-y-2.5">
+                <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
+                  <span>📊 Master Excel / CSV Import</span>
+                </div>
+                <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files to batch update inventory</p>
+                <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
+                  <span>📊 Upload Excel Sheet</span>
+                </button>
+                <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-800 hover:underline text-center block font-bold">
+                  📥 Download Excel Template (.xlsx)
+                </button>
+              </div>
+
+              <div class="pt-4 border-t border-slate-200">
+                <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
+                  🔄 Reset System Seed Data
+                </button>
+              </div>
+            </aside>
+
+            <main class="flex-1 p-6 max-w-7xl mx-auto space-y-6 overflow-y-auto bg-white">
+              <div id="tabContent"></div>
+            </main>
+          </div>
+
+          <div id="modalContainer" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"></div>
+          
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+          <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
+          <input type="file" id="nablScopeFileInput" accept="application/pdf,image/*" class="hidden">
+        `;
+
+        this.bindEvents();
+        this.updateGlobalBadges();
+        this.renderCurrentTab();
+      }
+
+      bindEvents() {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab)));
+        document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
+        document.getElementById('btnHeaderSaveAll')?.addEventListener('click', () => this.saveAllData());
+        document.getElementById('btnResetSeedData')?.addEventListener('click', () => this.resetToDefaultSeed());
+
+        const globalSearch = document.getElementById('globalSearchInput');
+        globalSearch?.addEventListener('input', (e) => {
+          this.state.searchQuery = e.target.value;
+          if (this.state.activeTab !== 'master') {
+            this.switchTab('master');
+          } else {
+            this.renderCurrentTab();
+          }
+        });
+
+        document.getElementById('btnHeaderClearSearch')?.addEventListener('click', () => {
+          this.state.searchQuery = '';
+          this.renderCurrentTab();
+        });
+
+        document.getElementById('globalThresholdSelect')?.addEventListener('change', (e) => {
+          this.state.alertThresholdDays = parseInt(e.target.value, 10);
+          this.saveState('alertThresholdDays');
+          this.updateGlobalBadges();
+          this.renderCurrentTab();
+        });
+
+        document.getElementById('btnLogout')?.addEventListener('click', () => {
+          this.state.isLoggedIn = false;
+          this.saveState('isLoggedIn', false);
+          this.renderLoginScreen();
+        });
+
+        const excelInput = document.getElementById('excelFileInput');
+        
+        document.getElementById('btnHeaderUploadExcel')?.addEventListener('click', () => excelInput.click());
+        document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => excelInput.click());
+        document.getElementById('btnDownloadTemplate')?.addEventListener('click', () => downloadExcelTemplate());
+
+        excelInput?.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            this.handleExcelUpload(file);
+            e.target.value = '';
+          }
+        });
+      }
+
+      updateGlobalBadges() {
+        const threshold = this.state.alertThresholdDays;
+        const dueUrgentCount = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; }).length;
+        const overdueCount = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0).length;
+        const nablAlertCount = this.state.agencies.filter(a => { const d = getDaysUntilDue(a.nablDueDate); return d <= threshold; }).length;
+
+        const total = dueUrgentCount + overdueCount + nablAlertCount;
+        const badge = document.getElementById('urgentAlertCountBadge');
+        if (badge) badge.innerText = total;
+      }
+
+      switchTab(tab) {
+        this.state.activeTab = tab;
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('nav-tab-active', b.dataset.tab === tab));
+        this.renderCurrentTab();
+      }
+
+      renderCurrentTab() {
+        const c = document.getElementById('tabContent');
+        c.innerHTML = '';
+        if (this.state.activeTab === 'master') this.renderMasterList(c);
+        else if (this.state.activeTab === 'alerts') this.renderAlerts(c);
+        else if (this.state.activeTab === 'agencies') this.renderAgencies(c);
+        else if (this.state.activeTab === 'users') this.renderUsers(c);
+        else this.renderDashboard(c);
+        this.updateGlobalBadges();
+      }
+
+      renderDashboard(c) {
+        const threshold = this.state.alertThresholdDays;
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+        const nablAlerts = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
+
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Welcome, ${this.getActiveUser().name}!</h2>
+                <p class="text-sm text-slate-500">Measuring Instruments & NABL Accreditation Monitoring System</p>
+              </div>
+              <div class="px-3.5 py-1.5 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold w-fit">
+                Logged in as: ${this.getActiveUser().name} (${this.getActiveUser().role})
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="white-card p-4 rounded-2xl border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-semibold">Total Master Instruments</div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-1">${this.state.instruments.length}</div>
+              </div>
+              <div class="white-card p-4 rounded-2xl border border-red-200 bg-red-50">
+                <div class="text-xs text-red-700 uppercase font-semibold">Overdue Calibrations</div>
+                <div class="text-3xl font-extrabold text-red-700 mt-1">${overdue.length}</div>
+              </div>
+              <div class="white-card p-4 rounded-2xl border border-amber-200 bg-amber-50">
+                <div class="text-xs text-amber-800 uppercase font-semibold">Due in ≤ ${threshold} Days</div>
+                <div class="text-3xl font-extrabold text-amber-800 mt-1">${urgent.length}</div>
+              </div>
+              <div class="white-card p-4 rounded-2xl border border-purple-200 bg-purple-50">
+                <div class="text-xs text-purple-800 uppercase font-semibold">NABL Scope Expiry Alerts</div>
+                <div class="text-3xl font-extrabold text-purple-800 mt-1">${nablAlerts.length}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      renderMasterList(c) {
+        const threshold = this.state.alertThresholdDays;
+        const filteredList = this.getFilteredInstruments();
+        const totalCount = this.state.instruments.length;
+
+        c.innerHTML = `
+          <div class="space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
+                  <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">
+                    Showing ${filteredList.length} of ${totalCount}
+                  </span>
+                </div>
+                <p class="text-sm text-slate-500">Live search & filter across Tag ID, Name, Make, Serial, Range, Location, & Agency</p>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                  <span>📊 Upload Excel Sheet</span>
+                </button>
+                <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                  💾 Save Inventory Data
+                </button>
+                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
+                  + Add New Instrument
+                </button>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex-1 min-w-[280px] relative">
+                <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
+                <span class="absolute left-3 top-3 text-slate-400 font-bold">🔍</span>
+                ${this.state.searchQuery ? `<button id="btnClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 font-bold text-xs">✕ Clear</button>` : ''}
+              </div>
+
+              <div class="flex items-center space-x-3 flex-wrap gap-2">
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-bold text-slate-600">Category:</span>
+                  <select id="filterCategorySelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
+                    <option value="All" ${this.state.filterCategory === 'All' ? 'selected' : ''}>All Categories</option>
+                    <option value="Dimensional" ${this.state.filterCategory === 'Dimensional' ? 'selected' : ''}>Dimensional</option>
+                    <option value="Pressure" ${this.state.filterCategory === 'Pressure' ? 'selected' : ''}>Pressure</option>
+                    <option value="Thermal" ${this.state.filterCategory === 'Thermal' ? 'selected' : ''}>Thermal</option>
+                    <option value="Torque & Force" ${this.state.filterCategory === 'Torque & Force' ? 'selected' : ''}>Torque & Force</option>
+                    <option value="Electrical" ${this.state.filterCategory === 'Electrical' ? 'selected' : ''}>Electrical</option>
+                    <option value="Mass & Weight" ${this.state.filterCategory === 'Mass & Weight' ? 'selected' : ''}>Mass & Weight</option>
+                    <option value="Other" ${this.state.filterCategory === 'Other' ? 'selected' : ''}>Other</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-bold text-slate-600">Status:</span>
+                  <select id="filterStatusSelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
+                    <option value="All" ${this.state.filterStatus === 'All' ? 'selected' : ''}>All Statuses</option>
+                    <option value="Compliant" ${this.state.filterStatus === 'Compliant' ? 'selected' : ''}>🟢 Compliant</option>
+                    <option value="Urgent" ${this.state.filterStatus === 'Urgent' ? 'selected' : ''}>🟡 Due Soon (≤ ${threshold}d)</option>
+                    <option value="Overdue" ${this.state.filterStatus === 'Overdue' ? 'selected' : ''}>🔴 Overdue</option>
+                  </select>
+                </div>
+
+                ${(this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All') ? `
+                  <button id="btnResetAllFilters" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors">
+                    ✕ Reset Filters
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="white-card rounded-2xl border border-slate-200 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase text-[10px] font-extrabold">
+                    <tr>
+                      <th class="py-3.5 px-3">Tag ID & Name</th>
+                      <th class="py-3.5 px-3">Make / Serial</th>
+                      <th class="py-3.5 px-3">Range & LC</th>
+                      <th class="py-3.5 px-3">Location</th>
+                      <th class="py-3.5 px-3">CALIBRATION ON DATE</th>
+                      <th class="py-3.5 px-3">FREQUENCY</th>
+                      <th class="py-3.5 px-3">DUE DATE</th>
+                      <th class="py-3.5 px-3">Agency</th>
+                      <th class="py-3.5 px-3">Status</th>
+                      <th class="py-3.5 px-3 text-center">PDF REPORT</th>
+                      <th class="py-3.5 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    ${filteredList.length > 0 ? filteredList.map(ins => {
+                      const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                      const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+                      const hasPdf = ins.pdfReportName || ins.pdfReportData;
+
+                      return `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                          <td class="py-3 px-3">
+                            <div class="font-bold text-slate-900">${ins.name}</div>
+                            <div class="font-mono text-sky-700 text-[10px] font-semibold">${ins.tagId}</div>
+                          </td>
+                          <td class="py-3 px-3">
+                            <div class="font-semibold text-slate-800">${ins.make || 'Mitutoyo'}</div>
+                            <div class="font-mono text-slate-500 text-[10px]">${ins.serialNo || 'SN-000'}</div>
+                          </td>
+                          <td class="py-3 px-3">
+                            <div class="text-slate-800 font-medium">${ins.range || '0-150 mm'}</div>
+                            <div class="text-sky-700 font-mono text-[10px]">LC: ${ins.leastCount || '0.01 mm'}</div>
+                          </td>
+                          <td class="py-3 px-3 text-slate-600">${ins.location}</td>
+                          <td class="py-3 px-3 font-semibold text-slate-800">${formatDate(ins.lastCalibratedDate)}</td>
+                          <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
+                          <td class="py-3 px-3 font-bold text-slate-900">${formatDate(ins.nextDueDate)}</td>
+                          <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
+                          <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
+                          
+                          <td class="py-3 px-3 text-center space-y-1">
+                            ${hasPdf ? `
+                              <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
+                                📄 View PDF Report
+                              </button>
+                            ` : `
+                              <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
+                            `}
+                            <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
+                              📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
+                            </button>
+                          </td>
+
+                          <td class="py-3 px-3 text-right space-y-1">
+                            <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
+                              ✏️ Edit & Save
+                            </button>
+                            <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
+                              🗑️ Delete
+                            </button>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('') : `
+                      <tr>
+                        <td colspan="11" class="py-8 text-center text-slate-500 space-y-2">
+                          <div class="text-2xl">🔍 No Matching Measuring Instruments Found</div>
+                          <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
+                          <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
+                            Reset Search & Filters
+                          </button>
+                        </td>
+                      </tr>
+                    `}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const searchInput = c.querySelector('#masterSearchInput');
+        searchInput?.addEventListener('input', (e) => {
+          this.state.searchQuery = e.target.value;
+          const globalInput = document.getElementById('globalSearchInput');
+          if (globalInput) globalInput.value = e.target.value;
+          this.renderCurrentTab();
+        });
+
+        c.querySelector('#btnClearSearch')?.addEventListener('click', () => {
+          this.state.searchQuery = '';
+          const globalInput = document.getElementById('globalSearchInput');
+          if (globalInput) globalInput.value = '';
+          this.renderCurrentTab();
+        });
+
+        c.querySelector('#filterCategorySelect')?.addEventListener('change', (e) => {
+          this.state.filterCategory = e.target.value;
+          this.renderCurrentTab();
+        });
+
+        c.querySelector('#filterStatusSelect')?.addEventListener('change', (e) => {
+          this.state.filterStatus = e.target.value;
+          this.renderCurrentTab();
+        });
+
+        const resetFn = () => {
+          this.state.searchQuery = '';
+          this.state.filterCategory = 'All';
+          this.state.filterStatus = 'All';
+          const globalInput = document.getElementById('globalSearchInput');
+          if (globalInput) globalInput.value = '';
+          this.renderCurrentTab();
+        };
+
+        c.querySelector('#btnResetAllFilters')?.addEventListener('click', resetFn);
+        c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
+
+        const excelInput = document.getElementById('excelFileInput');
+        c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput.click());
+
+        c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
+        c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
+
+        c.querySelectorAll('.btnEditIns').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const insId = e.currentTarget.dataset.insId;
+            this.openEditInstrumentModal(insId);
+          });
+        });
+
+        c.querySelectorAll('.btnDeleteIns').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const insId = e.currentTarget.dataset.insId;
+            if (confirm(`Are you sure you want to delete instrument ${insId}?`)) {
+              this.state.instruments = this.state.instruments.filter(i => i.id !== insId);
+              this.saveState('instruments');
+              this.renderCurrentTab();
+            }
+          });
+        });
+
+        c.querySelectorAll('.btnViewPDF').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const insId = e.currentTarget.dataset.insId;
+            this.openPDFReportViewer(insId);
+          });
+        });
+
+        const pdfInput = document.getElementById('pdfReportFileInput');
+        let currentUploadInsId = null;
+
+        c.querySelectorAll('.btnUploadPDF').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            currentUploadInsId = e.currentTarget.dataset.insId;
+            pdfInput.click();
+          });
+        });
+
+        pdfInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file || !currentUploadInsId) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const ins = this.state.instruments.find(i => i.id === currentUploadInsId);
+            if (ins) {
+              ins.pdfReportName = file.name;
+              ins.pdfReportData = evt.target.result;
+              this.saveState('instruments');
+              showToast(`📄 PDF Report "${file.name}" uploaded & saved!`);
+              this.renderCurrentTab();
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+      }
+
+      openAddInstrumentModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        const defaultTagId = `EQ-NEW-${Math.floor(100 + Math.random() * 900)}`;
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-lg rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl my-6">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
+                <p class="text-xs text-slate-500">Enter equipment details to register in Master Inventory</p>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            <form id="newInsForm" class="space-y-3.5 text-xs">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Tag / Asset ID *</label>
+                  <input type="text" id="mTagId" value="${defaultTagId}" class="white-input w-full p-2.5 rounded-xl font-mono text-sky-700 font-bold" placeholder="EQ-CAL-101" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Category *</label>
+                  <select id="mCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
+                    <option value="Dimensional">Dimensional</option>
+                    <option value="Pressure">Pressure</option>
+                    <option value="Thermal">Thermal</option>
+                    <option value="Torque & Force">Torque & Force</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Mass & Weight">Mass & Weight</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Instrument Name *</label>
+                <input type="text" id="mName" placeholder="Instrument Name (e.g. Digital Vernier Caliper)" class="white-input w-full p-2.5 rounded-xl font-semibold" required>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Make / Brand *</label>
+                  <input type="text" id="mMake" placeholder="Make (e.g. Mitutoyo)" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Serial Number *</label>
+                  <input type="text" id="mSerial" placeholder="Serial No (e.g. MT-99201)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Range *</label>
+                  <input type="text" id="mRange" placeholder="Range (e.g. 0-150 mm)" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Least Count *</label>
+                  <input type="text" id="mLeastCount" placeholder="Least Count (e.g. 0.01 mm)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Calibration On Date *</label>
+                  <input type="date" id="mLastCalib" value="2026-01-18" class="white-input w-full p-2 rounded-xl font-semibold" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Frequency (Months) *</label>
+                  <input type="number" id="mFreq" value="6" min="1" max="60" class="white-input w-full p-2 rounded-xl font-bold" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Location / Shop *</label>
+                  <input type="text" id="mLocation" placeholder="Location (e.g. Shop Bay 2)" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Assigned Agency *</label>
+                  <select id="mAgency" class="white-input w-full p-2.5 rounded-xl font-semibold">
+                    ${this.state.agencies.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200">
+                  Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                  <span>💾 Save Instrument</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('newInsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          try {
+            const tagId = document.getElementById('mTagId').value.trim();
+            const name = document.getElementById('mName').value.trim();
+            const make = document.getElementById('mMake').value.trim();
+            const serialNo = document.getElementById('mSerial').value.trim();
+            const range = document.getElementById('mRange').value.trim();
+            const leastCount = document.getElementById('mLeastCount').value.trim();
+            const category = document.getElementById('mCategory').value;
+            const location = document.getElementById('mLocation').value.trim();
+            const lastCal = document.getElementById('mLastCalib').value || '2026-01-18';
+            const freq = parseInt(document.getElementById('mFreq').value || '6', 10);
+            const agencyId = document.getElementById('mAgency').value;
+
+            const nextDue = calculateNextDueDate(lastCal, freq);
+
+            const newInstrument = {
+              id: `INS-${Date.now()}`,
+              tagId: tagId || defaultTagId,
+              name: name || 'New Instrument',
+              make: make || 'Generic',
+              serialNo: serialNo || 'SN-000',
+              range: range || '0-100',
+              leastCount: leastCount || '0.01',
+              category: category || 'Dimensional',
+              location: location || 'Quality Lab',
+              frequencyMonths: freq,
+              lastCalibratedDate: lastCal,
+              nextDueDate: nextDue,
+              agencyId: agencyId || (this.state.agencies[0] ? this.state.agencies[0].id : 'AGN-001'),
+              status: 'Active',
+              pdfReportName: null
+            };
+
+            this.state.instruments.unshift(newInstrument);
+            this.saveState('instruments');
+            showToast(`💾 Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added & Saved!`);
+            
+            m.classList.add('hidden');
+            this.renderCurrentTab();
+          } catch (err) {
+            alert('Error adding instrument: ' + err.message);
+          }
+        });
+      }
+
+      renderAgencies(c) {
+        const threshold = this.state.alertThresholdDays;
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Expiry</h2>
+                <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Due Dates & Modification Options</p>
+              </div>
+              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${this.state.agencies.map(a => {
+                const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
+                const hasNablScope = a.nablScopeName || a.nablScopeData;
+
+                return `
+                  <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
+                    <div class="space-y-2">
+                      <div class="flex justify-between items-start font-bold text-lg text-slate-900">
+                        <span>${a.name}</span>
+                        <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
+                      </div>
+
+                      <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
+                      <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
+                        <span>📞 Contact Number:</span>
+                        <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
+                      </div>
+                      <div class="text-xs text-slate-600">Email: ${a.email}</div>
+                      <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
+                      
+                      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                          <span class="font-bold text-slate-700">📜 NABL Scope Due Date:</span>
+                          <strong class="font-mono font-bold text-slate-900 text-xs">${formatDate(a.nablDueDate || '2026-08-15')}</strong>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+                          <span class="text-[11px] text-slate-500 font-semibold">Accreditation Status:</span>
+                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
+                            ${nablInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-200 space-y-2">
+                      <div class="grid grid-cols-2 gap-2">
+                        <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
+                          📜 View NABL Scope
+                        </button>
+                        <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
+                          📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
+                        </button>
+                      </div>
+
+                      <div class="flex justify-between items-center space-x-2">
+                        <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
+                          ✏️ Edit & Modify Agency
+                        </button>
+                        <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+
+        c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
+
+        c.querySelectorAll('.btnEditAgency').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const agencyId = e.currentTarget.dataset.agencyId;
+            this.openEditAgencyModal(agencyId);
+          });
+        });
+
+        c.querySelectorAll('.btnViewNABLScope').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const agencyId = e.currentTarget.dataset.agencyId;
+            this.openNABLScopeViewer(agencyId);
+          });
+        });
+
+        const nablInput = document.getElementById('nablScopeFileInput');
+        let currentAgencyId = null;
+
+        c.querySelectorAll('.btnUploadNABLScope').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            currentAgencyId = e.currentTarget.dataset.agencyId;
+            nablInput.click();
+          });
+        });
+
+        nablInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file || !currentAgencyId) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const agency = this.state.agencies.find(a => a.id === currentAgencyId);
+            if (agency) {
+              agency.nablScopeName = file.name;
+              agency.nablScopeData = evt.target.result;
+              this.saveState('agencies');
+              showToast(`📜 NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
+              this.renderCurrentTab();
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+
+        c.querySelectorAll('.btnDeleteAgency').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.agencyId;
+            if (confirm(`Delete agency?`)) {
+              this.state.agencies = this.state.agencies.filter(a => a.id !== id);
+              this.saveState('agencies');
+              this.renderCurrentTab();
+            }
+          });
+        });
+      }
+
+      openEditAgencyModal(agencyId) {
+        const agency = this.state.agencies.find(a => a.id === agencyId);
+        if (!agency) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div>
+                <h3 class="font-bold text-lg text-slate-900">Edit & Modify Agency Data</h3>
+                <p class="text-xs text-slate-500">Correct any agency details or update NABL Scope Expiry Date</p>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            <form id="editAgencyForm" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Agency Name *</label>
+                <input type="text" id="eaName" value="${agency.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Agency Code *</label>
+                  <input type="text" id="eaCode" value="${agency.code}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Contact Phone *</label>
+                  <input type="text" id="eaPhone" value="${agency.phone || ''}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Contact Person *</label>
+                  <input type="text" id="eaContact" value="${agency.contactPerson}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">NABL Cert No *</label>
+                  <input type="text" id="eaCertNo" value="${agency.nablCertNo || 'NABL-CC-2894'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Email Address *</label>
+                <input type="email" id="eaEmail" value="${agency.email}" class="white-input w-full p-2.5 rounded-xl" required>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <label class="block text-slate-700 font-bold mb-1">NABL Scope Expiry / Due Date *</label>
+                <input type="date" id="eaNablDueDate" value="${agency.nablDueDate || '2026-08-15'}" class="white-input w-full p-2 rounded-xl font-mono font-bold" required>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                  Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                  💾 Save Agency Modifications
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('editAgencyForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          agency.name = document.getElementById('eaName').value.trim();
+          agency.code = document.getElementById('eaCode').value.trim();
+          agency.phone = document.getElementById('eaPhone').value.trim();
+          agency.contactPerson = document.getElementById('eaContact').value.trim();
+          agency.nablCertNo = document.getElementById('eaCertNo').value.trim();
+          agency.email = document.getElementById('eaEmail').value.trim();
+          agency.nablDueDate = document.getElementById('eaNablDueDate').value;
+
+          this.saveState('agencies');
+          showToast(`💾 Agency "${agency.name}" modifications saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      renderAlerts(c) {
+        const threshold = this.state.alertThresholdDays;
+        
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+        const nablAlertAgencies = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
+
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div>
+              <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day System Alert Center</h2>
+              <p class="text-sm text-slate-500">Real-time alerts for Instrument Calibrations and NABL Accreditation Expiries</p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="font-bold text-base text-purple-900 flex items-center space-x-2">
+                <span>📜 NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
+              </h3>
+
+              ${nablAlertAgencies.length > 0 ? `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${nablAlertAgencies.map(a => {
+                    const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
+                    return `
+                      <div class="white-card p-5 rounded-2xl border ${nablInfo.badgeClass} space-y-3">
+                        <div class="flex justify-between font-bold text-slate-900 text-base">
+                          <span>${a.name}</span>
+                          <span class="font-mono text-xs text-sky-700">${a.code}</span>
+                        </div>
+                        <div class="text-xs text-slate-600">Contact: <strong>${a.contactPerson} (${a.phone})</strong></div>
+                        <div class="text-xs font-bold text-slate-900">NABL Scope Due Date: ${formatDate(a.nablDueDate)}</div>
+                        <div class="pt-2">
+                          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
+                            ${nablInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : `
+                <div class="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                  ✅ All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
+                </div>
+              `}
+            </div>
+
+            <div class="space-y-3 pt-4 border-t border-slate-200">
+              <h3 class="font-bold text-base text-slate-900 flex items-center space-x-2">
+                <span>⚖️ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                ${[...overdue, ...urgent].map(ins => {
+                  const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                  const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+                  return `
+                    <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
+                      <div class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</div>
+                      <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
+                      <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
+                      <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
+                      <div class="text-xs font-bold text-amber-800">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
+                      <div class="text-xs text-slate-500">Agency: ${agency ? agency.name : 'Unassigned'}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      openAddAgencyModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <h3 class="font-bold text-lg text-slate-900">Register Calibration Agency</h3>
+            <form id="newAgForm" class="space-y-3 text-xs">
+              <input type="text" id="agName" placeholder="Agency Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="agCode" placeholder="Agency Code (e.g. MCL-LAB)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                <input type="text" id="agPhone" placeholder="Contact Number (+1 555-000-0000)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="agContact" placeholder="Contact Person Name" class="white-input w-full p-2.5 rounded-xl" required>
+                <input type="text" id="agCertNo" placeholder="NABL Cert No (NABL-CC-2894)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1">NABL Scope Expiry / Due Date</label>
+                <input type="date" id="agNablDueDate" value="2026-08-15" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Agency</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.getElementById('newAgForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.state.agencies.push({
+            id: `AGN-${Date.now()}`, 
+            name: document.getElementById('agName').value,
+            code: document.getElementById('agCode').value, 
+            phone: document.getElementById('agPhone').value,
+            contactPerson: document.getElementById('agContact').value,
+            email: document.getElementById('agEmail').value, 
+            accreditation: 'ISO/IEC 17025 Accredited (NABL)', 
+            nablCertNo: document.getElementById('agCertNo').value || 'NABL-CC-2894',
+            nablDueDate: document.getElementById('agNablDueDate').value || '2026-08-15',
+            nablScopeName: null,
+            status: 'Active'
+          });
+          this.saveState('agencies');
+          showToast(`💾 Agency ${document.getElementById('agName').value} Saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      openNABLScopeViewer(agencyId) {
+        const agency = this.state.agencies.find(a => a.id === agencyId);
+        if (!agency) return;
+
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+
+        modal.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📜</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">NABL Scope of Accreditation Certificate</h3>
+                  <p class="text-xs text-slate-500">${agency.name} (${agency.code})</p>
+                </div>
+              </div>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            ${agency.nablScopeData ? `
+              <div class="w-full h-96 rounded-xl border border-slate-300 overflow-hidden">
+                <iframe src="${agency.nablScopeData}" class="w-full h-full"></iframe>
+              </div>
+            ` : `
+              <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                  <div>
+                    <h4 class="font-extrabold text-sky-800 text-base">${agency.name}</h4>
+                    <p class="text-[11px] font-semibold text-slate-700">${agency.accreditation}</p>
+                    <p class="text-[11px] text-slate-500">Contact: ${agency.contactPerson} (${agency.phone})</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] text-slate-400 font-bold block">NABL CERTIFICATE NO</span>
+                    <span class="font-mono font-extrabold text-sky-700 text-sm">${agency.nablCertNo || 'NABL-CC-2894'}</span>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="font-bold text-slate-800 uppercase text-[11px]">Accredited Calibration Disciplines & Scope:</div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">1. Dimensional Metrology</strong>
+                      <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: ±0.002mm)</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">2. Pressure & Vacuum</strong>
+                      <span class="text-slate-600 text-[11px]">Master Pressure Gauges, Transducers (0 to 700 bar)</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">3. Thermal & Temperature</strong>
+                      <span class="text-slate-600 text-[11px]">Thermocouples, RTDs, Pyrometers (-80°C to 1200°C)</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">4. Torque & Mechanical Force</strong>
+                      <span class="text-slate-600 text-[11px]">Torque Wrenches, Load Cells (1 Nm to 1000 Nm)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 flex justify-between items-center text-xs">
+                  <div>
+                    <span class="text-sky-900 font-bold block">ISO/IEC 17025:2017 NABL ACCREDITED LAB</span>
+                    <span class="text-sky-700 text-[11px]">NABL Scope Due Date: <strong>${formatDate(agency.nablDueDate || '2026-08-15')}</strong></span>
+                  </div>
+                  <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">ACTIVE</span>
+                </div>
+              </div>
+            `}
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                🖨️ Print NABL Scope
+              </button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      openPDFReportViewer(insId) {
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
+
+        const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+
+        modal.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📄</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">Calibration Certificate Report (PDF Format)</h3>
+                  <p class="text-xs text-slate-500">${ins.pdfReportName || 'Official Calibration Certificate'}</p>
+                </div>
+              </div>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            ${ins.pdfReportData ? `
+              <div class="w-full h-96 rounded-xl border border-slate-300 overflow-hidden">
+                <iframe src="${ins.pdfReportData}" class="w-full h-full"></iframe>
+              </div>
+            ` : `
+              <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                  <div>
+                    <h4 class="font-extrabold text-sky-700 text-base">${agency ? agency.name : 'Precision Metrology Services'}</h4>
+                    <p class="text-[11px] text-slate-500">${agency ? agency.accreditation : 'ISO/IEC 17025 Accredited Calibration Lab'}</p>
+                    <p class="text-[11px] text-slate-500">Contact: ${agency ? agency.phone : '+1 (555) 234-8901'}</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] text-slate-400 font-bold block">CERTIFICATE NO</span>
+                    <span class="font-mono font-extrabold text-slate-900 text-sm">CERT-2026-${ins.tagId}</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-white border border-slate-200">
+                  <div><span class="text-slate-500">Instrument Name:</span> <strong class="text-slate-900 block font-bold">${ins.name}</strong></div>
+                  <div><span class="text-slate-500">Tag / Asset ID:</span> <strong class="text-sky-700 block font-mono font-bold">${ins.tagId}</strong></div>
+                  <div><span class="text-slate-500">Make / Manufacturer:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'}</strong></div>
+                  <div><span class="text-slate-500">Serial Number:</span> <strong class="text-slate-900 block font-mono font-semibold">${ins.serialNo || 'SN-000'}</strong></div>
+                  <div><span class="text-slate-500">Range & Least Count:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
+                  <div><span class="text-slate-500">Shop Location:</span> <strong class="text-slate-900 block font-semibold">${ins.location}</strong></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200 text-center">
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Calibration On Date</span>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.lastCalibratedDate)}</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Frequency Interval</span>
+                    <strong class="text-sky-700 font-extrabold text-sm">${ins.frequencyMonths || 6} Months</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Next Due Date</span>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.nextDueDate)}</strong>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+                  <div>
+                    <span class="text-emerald-800 font-bold block text-sm">CALIBRATION RESULT: PASSED</span>
+                    <span class="text-emerald-700 text-[11px]">All measurements within allowable ISO tolerance limits.</span>
+                  </div>
+                  <div class="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 font-bold flex items-center justify-center text-xs">
+                    PASSED
+                  </div>
+                </div>
+              </div>
+            `}
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                🖨️ Print Report PDF
+              </button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      openEditInstrumentModal(insId) {
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 class="font-bold text-lg text-slate-900">Edit Instrument Specs</h3>
+              <span class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</span>
+            </div>
+
+            <form id="editInsForm" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1">Instrument Name</label>
+                <input type="text" id="eName" value="${ins.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Make</label>
+                  <input type="text" id="eMake" value="${ins.make || 'Mitutoyo'}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Serial Number</label>
+                  <input type="text" id="eSerial" value="${ins.serialNo || 'SN-000'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Range</label>
+                  <input type="text" id="eRange" value="${ins.range || '0-150 mm'}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Least Count</label>
+                  <input type="text" id="eLeastCount" value="${ins.leastCount || '0.01 mm'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
+                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
+                  <input type="number" id="eFreq" value="${ins.frequencyMonths || 6}" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Location</label>
+                  <input type="text" id="eLocation" value="${ins.location}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Assigned Agency</label>
+                  <select id="eAgency" class="white-input w-full p-2.5 rounded-xl">
+                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
+                  💾 Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('editInsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const lastCal = document.getElementById('eLastCalib').value;
+          const freq = parseInt(document.getElementById('eFreq').value, 10);
+
+          ins.name = document.getElementById('eName').value.trim();
+          ins.make = document.getElementById('eMake').value.trim();
+          ins.serialNo = document.getElementById('eSerial').value.trim();
+          ins.range = document.getElementById('eRange').value.trim();
+          ins.leastCount = document.getElementById('eLeastCount').value.trim();
+          ins.lastCalibratedDate = lastCal;
+          ins.frequencyMonths = freq;
+          ins.nextDueDate = calculateNextDueDate(lastCal, freq);
+          ins.location = document.getElementById('eLocation').value.trim();
+          ins.agencyId = document.getElementById('eAgency').value;
+
+          this.saveState('instruments');
+          showToast(`💾 Instrument ${ins.tagId} changes saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      renderUsers(c) {
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <h2 class="text-2xl font-bold text-slate-900">User Roles & Accounts</h2>
+              <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add User</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              ${this.state.users.map(u => `
+                <div class="white-card p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div class="font-bold text-sky-700 text-base">${u.name}</div>
+                  <div class="text-xs text-slate-700">Username: <code class="text-sky-800 font-mono font-bold">${u.username}</code></div>
+                  <div class="text-xs text-slate-600">Role: <strong class="text-slate-900">${u.role}</strong></div>
+                  <div class="pt-2 border-t border-slate-200 flex justify-end">
+                    <button class="btnDeleteUser px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-user-id="${u.id}">🗑️ Delete User</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        c.querySelector('#btnAddUser')?.addEventListener('click', () => this.openAddUserModal());
+        c.querySelectorAll('.btnDeleteUser').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.userId;
+            if (confirm(`Delete user?`)) {
+              this.state.users = this.state.users.filter(u => u.id !== id);
+              this.saveState('users');
+              this.renderCurrentTab();
+            }
+          });
+        });
+      }
+
+      openAddUserModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <h3 class="font-bold text-lg text-slate-900">Add System User</h3>
+            <form id="newUserForm" class="space-y-3 text-xs">
+              <input type="text" id="uName" placeholder="Full Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="uUsername" placeholder="Username" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                <input type="password" id="uPassword" placeholder="Password" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <input type="email" id="uEmail" placeholder="Email" class="white-input w-full p-2.5 rounded-xl" required>
+              <select id="uRole" class="white-input w-full p-2.5 rounded-xl">
+                <option value="Admin">Admin</option>
+                <option value="Technician">Technician</option>
+                <option value="AgencyRep">Agency Representative</option>
+                <option value="Auditor">Auditor</option>
+              </select>
+              <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.getElementById('newUserForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.state.users.push({
+            id: `USR-${Date.now()}`, name: document.getElementById('uName').value,
+            username: document.getElementById('uUsername').value, password: document.getElementById('uPassword').value,
+            email: document.getElementById('uEmail').value, role: document.getElementById('uRole').value,
+            department: 'Metrology Dept', avatar: 'MK'
+          });
+          this.saveState('users');
+          showToast(`💾 User ${document.getElementById('uUsername').value} Saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { window.app = new CalibGuardApp(); });
+  </script>
+</body>
+</html>
