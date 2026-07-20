@@ -80,13 +80,6 @@
       from { opacity: 0; transform: scale(0.95) translateY(10px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
     }
-    .toast-enter {
-      animation: toastIn 0.3s ease-out forwards;
-    }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 <body class="bg-white text-slate-900 antialiased">
@@ -100,10 +93,58 @@
   <script>
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
-      { id: "AGN-001", name: "Precision Metrology Services", code: "PMS-LAB", contactPerson: "Dr. Robert Vance", phone: "+1 (555) 234-8901", email: "r.vance@precisionmetrology.com", accreditation: "ISO/IEC 17025 Accredited", status: "Active" },
-      { id: "AGN-002", name: "NIST Calibration & Standards Lab", code: "NIST-CSL", contactPerson: "Sarah Jenkins", phone: "+1 (555) 876-5432", email: "s.jenkins@nist-standards.org", accreditation: "National Standards Body / ISO 17025", status: "Active" },
-      { id: "AGN-003", name: "Apex Instruments Calibration Inc.", code: "APEX-CAL", contactPerson: "Michael Chang", phone: "+1 (555) 345-6789", email: "mchang@apexcal.com", accreditation: "ISO/IEC 17025 Accredited", status: "Active" },
-      { id: "AGN-004", name: "In-House Quality Metrology Dept", code: "INT-MET", contactPerson: "Alex Rivera", phone: "+1 (555) 440-2000", email: "metrology@internal-plant.com", accreditation: "Internal Quality Management System", status: "Active" }
+      { 
+        id: "AGN-001", 
+        name: "Precision Metrology Services", 
+        code: "PMS-LAB", 
+        contactPerson: "Dr. Robert Vance", 
+        phone: "+1 (555) 234-8901", 
+        email: "r.vance@precisionmetrology.com", 
+        accreditation: "ISO/IEC 17025 Accredited (NABL)", 
+        nablCertNo: "NABL-CC-2894",
+        nablScopeName: "NABL_Scope_Precision_Metrology.pdf",
+        nablScopeData: null,
+        status: "Active" 
+      },
+      { 
+        id: "AGN-002", 
+        name: "NIST Calibration & Standards Lab", 
+        code: "NIST-CSL", 
+        contactPerson: "Sarah Jenkins", 
+        phone: "+1 (555) 876-5432", 
+        email: "s.jenkins@nist-standards.org", 
+        accreditation: "National Standards Body / NABL ISO 17025", 
+        nablCertNo: "NABL-CC-1102",
+        nablScopeName: "NABL_Scope_NIST_CSL.pdf",
+        nablScopeData: null,
+        status: "Active" 
+      },
+      { 
+        id: "AGN-003", 
+        name: "Apex Instruments Calibration Inc.", 
+        code: "APEX-CAL", 
+        contactPerson: "Michael Chang", 
+        phone: "+1 (555) 345-6789", 
+        email: "mchang@apexcal.com", 
+        accreditation: "ISO/IEC 17025 Accredited (NABL)", 
+        nablCertNo: "NABL-CC-4491",
+        nablScopeName: null,
+        nablScopeData: null,
+        status: "Active" 
+      },
+      { 
+        id: "AGN-004", 
+        name: "In-House Quality Metrology Dept", 
+        code: "INT-MET", 
+        contactPerson: "Alex Rivera", 
+        phone: "+1 (555) 440-2000", 
+        email: "metrology@internal-plant.com", 
+        accreditation: "Internal Quality Management System", 
+        nablCertNo: "INT-QMS-001",
+        nablScopeName: null,
+        nablScopeData: null,
+        status: "Active" 
+      }
     ];
 
     const INITIAL_USERS = [
@@ -326,12 +367,9 @@
         return this.state.users.find(u => u.id === this.state.activeUserId) || this.state.users[0];
       }
 
-      // --- AUTO-SAVE DATA INSTANTLY AND TRIGGER TOAST ---
       saveState(k, showToastMsg = true) {
         StorageManager.set(k, this.state[k]);
-        if (showToastMsg) {
-          showToast(`✅ Data Auto-Saved to Storage!`);
-        }
+        if (showToastMsg) showToast(`✅ Data Saved Successfully!`);
       }
 
       saveAllData() {
@@ -416,7 +454,6 @@
             </div>
 
             <div class="flex items-center space-x-3">
-              <!-- Explicit Save All Data Button -->
               <button id="btnHeaderSaveAll" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
                 <span>💾 Save All Changes</span>
               </button>
@@ -455,7 +492,7 @@
                 <button data-tab="dashboard" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Dashboard</button>
                 <button data-tab="master" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-sky-700">Master Instruments List</button>
                 <button data-tab="alerts" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-amber-700">Alert Center</button>
-                <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Agencies</button>
+                <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Calibration Agencies</button>
                 <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
               </div>
 
@@ -479,8 +516,11 @@
           <!-- Shared Modal -->
           <div id="modalContainer" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"></div>
           
-          <!-- Hidden PDF Upload Input -->
+          <!-- Hidden PDF Upload Input for Instruments -->
           <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
+          
+          <!-- Hidden NABL Scope Upload Input for Agencies -->
+          <input type="file" id="nablScopeFileInput" accept="application/pdf,image/*" class="hidden">
         `;
 
         this.bindEvents();
@@ -609,9 +649,6 @@
         `;
       }
 
-      // ==========================================
-      // VIEW 2: MASTER LIST WITH SAVE BUTTON & AUTO-SAVE
-      // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
         c.innerHTML = `
@@ -712,7 +749,6 @@
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
 
-        // Edit Instrument Event
         c.querySelectorAll('.btnEditIns').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const insId = e.currentTarget.dataset.insId;
@@ -720,7 +756,6 @@
           });
         });
 
-        // Delete Instrument Event
         c.querySelectorAll('.btnDeleteIns').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const insId = e.currentTarget.dataset.insId;
@@ -732,7 +767,6 @@
           });
         });
 
-        // PDF Report View Event
         c.querySelectorAll('.btnViewPDF').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const insId = e.currentTarget.dataset.insId;
@@ -740,7 +774,6 @@
           });
         });
 
-        // PDF Report Upload Event
         const pdfInput = document.getElementById('pdfReportFileInput');
         let currentUploadInsId = null;
 
@@ -762,7 +795,7 @@
               ins.pdfReportName = file.name;
               ins.pdfReportData = evt.target.result;
               this.saveState('instruments');
-              showToast(`📄 PDF Report "${file.name}" uploaded and saved!`);
+              showToast(`📄 PDF Report "${file.name}" uploaded & saved!`);
               this.renderCurrentTab();
             }
           };
@@ -770,111 +803,125 @@
         };
       }
 
-      // --- EDIT INSTRUMENT MODAL WITH SAVE BUTTON ---
-      openEditInstrumentModal(insId) {
-        const ins = this.state.instruments.find(i => i.id === insId);
-        if (!ins) return;
-
-        const m = document.getElementById('modalContainer');
-        m.classList.remove('hidden');
-        m.innerHTML = `
-          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-              <h3 class="font-bold text-lg text-slate-900">Edit Instrument Specs</h3>
-              <span class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</span>
+      // ==========================================
+      // VIEW 4: AGENCIES WITH NABL SCOPE UPLOAD & VIEW OPTIONS
+      // ==========================================
+      renderAgencies(c) {
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Reports</h2>
+                <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Certificate Upload & Viewing</p>
+              </div>
+              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
             </div>
 
-            <form id="editInsForm" class="space-y-3 text-xs">
-              <div>
-                <label class="block text-slate-600 font-semibold mb-1">Instrument Name</label>
-                <input type="text" id="eName" value="${ins.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
-              </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${this.state.agencies.map(a => {
+                const hasNablScope = a.nablScopeName || a.nablScopeData;
+                return `
+                  <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
+                    <div class="space-y-2">
+                      <div class="flex justify-between font-bold text-lg text-slate-900">
+                        <span>${a.name}</span>
+                        <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
+                      </div>
+                      <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
+                      <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
+                        <span>📞 Contact Number:</span>
+                        <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
+                      </div>
+                      <div class="text-xs text-slate-600">Email: ${a.email}</div>
+                      <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
+                      
+                      <div class="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-1">
+                        <div class="font-bold text-sky-800 flex justify-between">
+                          <span>📜 NABL Certificate No:</span>
+                          <span class="font-mono">${a.nablCertNo || 'NABL-CC-2894'}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-600">Scope Document: <strong class="text-slate-900">${a.nablScopeName || 'NABL_Scope_Certificate.pdf'}</strong></div>
+                      </div>
+                    </div>
 
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Make</label>
-                  <input type="text" id="eMake" value="${ins.make || 'Mitutoyo'}" class="white-input w-full p-2.5 rounded-xl" required>
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Serial Number</label>
-                  <input type="text" id="eSerial" value="${ins.serialNo || 'SN-000'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-                </div>
-              </div>
+                    <!-- NABL Scope Upload & View Controls -->
+                    <div class="pt-3 border-t border-slate-200 space-y-2">
+                      <div class="grid grid-cols-2 gap-2">
+                        <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
+                          📜 View NABL Scope
+                        </button>
+                        <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
+                          📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
+                        </button>
+                      </div>
 
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Range</label>
-                  <input type="text" id="eRange" value="${ins.range || '0-150 mm'}" class="white-input w-full p-2.5 rounded-xl" required>
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Least Count</label>
-                  <input type="text" id="eLeastCount" value="${ins.leastCount || '0.01 mm'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
-                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl" required>
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
-                  <input type="number" id="eFreq" value="${ins.frequencyMonths || 6}" class="white-input w-full p-2 rounded-xl" required>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Location</label>
-                  <input type="text" id="eLocation" value="${ins.location}" class="white-input w-full p-2.5 rounded-xl" required>
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Assigned Agency</label>
-                  <select id="eAgency" class="white-input w-full p-2.5 rounded-xl">
-                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
-                  </select>
-                </div>
-              </div>
-
-              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
-                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
-                  💾 Save Changes
-                </button>
-              </div>
-            </form>
+                      <div class="flex justify-end">
+                        <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">🗑️ Delete Agency</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
         `;
 
-        document.getElementById('editInsForm').addEventListener('submit', (e) => {
-          e.preventDefault();
-          const lastCal = document.getElementById('eLastCalib').value;
-          const freq = parseInt(document.getElementById('eFreq').value, 10);
+        c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
 
-          ins.name = document.getElementById('eName').value;
-          ins.make = document.getElementById('eMake').value;
-          ins.serialNo = document.getElementById('eSerial').value;
-          ins.range = document.getElementById('eRange').value;
-          ins.leastCount = document.getElementById('eLeastCount').value;
-          ins.lastCalibratedDate = lastCal;
-          ins.frequencyMonths = freq;
-          ins.nextDueDate = calculateNextDueDate(lastCal, freq);
-          ins.location = document.getElementById('eLocation').value;
-          ins.agencyId = document.getElementById('eAgency').value;
+        // View NABL Scope Event
+        c.querySelectorAll('.btnViewNABLScope').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const agencyId = e.currentTarget.dataset.agencyId;
+            this.openNABLScopeViewer(agencyId);
+          });
+        });
 
-          this.saveState('instruments');
-          showToast(`💾 Instrument ${ins.tagId} changes saved!`);
-          m.classList.add('hidden');
-          this.renderCurrentTab();
+        // Upload NABL Scope Event
+        const nablInput = document.getElementById('nablScopeFileInput');
+        let currentAgencyId = null;
+
+        c.querySelectorAll('.btnUploadNABLScope').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            currentAgencyId = e.currentTarget.dataset.agencyId;
+            nablInput.click();
+          });
+        });
+
+        nablInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file || !currentAgencyId) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const agency = this.state.agencies.find(a => a.id === currentAgencyId);
+            if (agency) {
+              agency.nablScopeName = file.name;
+              agency.nablScopeData = evt.target.result;
+              this.saveState('agencies');
+              showToast(`📜 NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
+              this.renderCurrentTab();
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+
+        c.querySelectorAll('.btnDeleteAgency').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.agencyId;
+            if (confirm(`Delete agency?`)) {
+              this.state.agencies = this.state.agencies.filter(a => a.id !== id);
+              this.saveState('agencies');
+              this.renderCurrentTab();
+            }
+          });
         });
       }
 
-      // --- PDF REPORT VIEWER MODAL ---
-      openPDFReportViewer(insId) {
-        const ins = this.state.instruments.find(i => i.id === insId);
-        if (!ins) return;
+      // --- NABL SCOPE VIEWER MODAL ---
+      openNABLScopeViewer(agencyId) {
+        const agency = this.state.agencies.find(a => a.id === agencyId);
+        if (!agency) return;
 
-        const agency = this.state.agencies.find(a => a.id === ins.agencyId);
         const modal = document.getElementById('modalContainer');
         modal.classList.remove('hidden');
 
@@ -882,74 +929,70 @@
           <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
-                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📄</span>
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📜</span>
                 <div>
-                  <h3 class="font-bold text-lg text-slate-900">Calibration Certificate Report (PDF Format)</h3>
-                  <p class="text-xs text-slate-500">${ins.pdfReportName || 'Official Calibration Certificate'}</p>
+                  <h3 class="font-bold text-lg text-slate-900">NABL Scope of Accreditation Certificate</h3>
+                  <p class="text-xs text-slate-500">${agency.name} (${agency.code})</p>
                 </div>
               </div>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
             </div>
 
-            ${ins.pdfReportData ? `
-              <!-- Embed uploaded PDF file -->
+            ${agency.nablScopeData ? `
+              <!-- Embed uploaded NABL document -->
               <div class="w-full h-96 rounded-xl border border-slate-300 overflow-hidden">
-                <iframe src="${ins.pdfReportData}" class="w-full h-full"></iframe>
+                <iframe src="${agency.nablScopeData}" class="w-full h-full"></iframe>
               </div>
             ` : `
-              <!-- Render Generated PDF Certificate Template -->
+              <!-- Render NABL Certificate Scope Template -->
               <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
                 <div class="flex justify-between items-start border-b border-slate-200 pb-3">
                   <div>
-                    <h4 class="font-extrabold text-sky-700 text-base">${agency ? agency.name : 'Precision Metrology Services'}</h4>
-                    <p class="text-[11px] text-slate-500">${agency ? agency.accreditation : 'ISO/IEC 17025 Accredited Calibration Lab'}</p>
-                    <p class="text-[11px] text-slate-500">Contact: ${agency ? agency.phone : '+1 (555) 234-8901'}</p>
+                    <h4 class="font-extrabold text-sky-800 text-base">${agency.name}</h4>
+                    <p class="text-[11px] font-semibold text-slate-700">${agency.accreditation}</p>
+                    <p class="text-[11px] text-slate-500">Contact: ${agency.contactPerson} (${agency.phone})</p>
                   </div>
                   <div class="text-right">
-                    <span class="text-[10px] text-slate-400 font-bold block">CERTIFICATE NO</span>
-                    <span class="font-mono font-extrabold text-slate-900 text-sm">CERT-2026-${ins.tagId}</span>
+                    <span class="text-[10px] text-slate-400 font-bold block">NABL CERTIFICATE NO</span>
+                    <span class="font-mono font-extrabold text-sky-700 text-sm">${agency.nablCertNo || 'NABL-CC-2894'}</span>
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-white border border-slate-200">
-                  <div><span class="text-slate-500">Instrument Name:</span> <strong class="text-slate-900 block font-bold">${ins.name}</strong></div>
-                  <div><span class="text-slate-500">Tag / Asset ID:</span> <strong class="text-sky-700 block font-mono font-bold">${ins.tagId}</strong></div>
-                  <div><span class="text-slate-500">Make / Manufacturer:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'}</strong></div>
-                  <div><span class="text-slate-500">Serial Number:</span> <strong class="text-slate-900 block font-mono font-semibold">${ins.serialNo || 'SN-000'}</strong></div>
-                  <div><span class="text-slate-500">Range & Least Count:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
-                  <div><span class="text-slate-500">Shop Location:</span> <strong class="text-slate-900 block font-semibold">${ins.location}</strong></div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200 text-center">
-                  <div>
-                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Calibration On Date</span>
-                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.lastCalibratedDate)}</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Frequency Interval</span>
-                    <strong class="text-sky-700 font-extrabold text-sm">${ins.frequencyMonths || 6} Months</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Next Due Date</span>
-                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.nextDueDate)}</strong>
+                <div class="space-y-2">
+                  <div class="font-bold text-slate-800 uppercase text-[11px]">Accredited Calibration Disciplines & Scope:</div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">1. Dimensional Metrology</strong>
+                      <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: ±0.002mm)</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">2. Pressure & Vacuum</strong>
+                      <span class="text-slate-600 text-[11px]">Master Pressure Gauges, Transducers (0 to 700 bar)</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">3. Thermal & Temperature</strong>
+                      <span class="text-slate-600 text-[11px]">Thermocouples, RTDs, Pyrometers (-80°C to 1200°C)</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <strong class="text-sky-700 block font-bold">4. Torque & Mechanical Force</strong>
+                      <span class="text-slate-600 text-[11px]">Torque Wrenches, Load Cells (1 Nm to 1000 Nm)</span>
+                    </div>
                   </div>
                 </div>
 
-                <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+                <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 flex justify-between items-center text-xs">
                   <div>
-                    <span class="text-emerald-800 font-bold block text-sm">CALIBRATION RESULT: PASSED</span>
-                    <span class="text-emerald-700 text-[11px]">All measurements within allowable ISO tolerance limits.</span>
+                    <span class="text-sky-900 font-bold block">ISO/IEC 17025:2017 NABL ACCREDITED LAB</span>
+                    <span class="text-sky-700 text-[11px]">Validity: Active & Certified till October 2028</span>
                   </div>
-                  <div class="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 font-bold flex items-center justify-center text-xs">
-                    PASSED
-                  </div>
+                  <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">ACTIVE</span>
                 </div>
               </div>
             `}
 
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
               <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
-                🖨️ Print Report PDF
+                🖨️ Print NABL Scope
               </button>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
                 Close
@@ -984,51 +1027,6 @@
             </div>
           </div>
         `;
-      }
-
-      renderAgencies(c) {
-        c.innerHTML = `
-          <div class="space-y-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies</h2>
-                <p class="text-sm text-slate-500">Calibration laboratories & external service providers with Contact Numbers</p>
-              </div>
-              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              ${this.state.agencies.map(a => `
-                <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
-                  <div class="flex justify-between font-bold text-lg text-slate-900">
-                    <span>${a.name}</span>
-                    <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
-                  </div>
-                  <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
-                  <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
-                    <span>📞 Contact Number:</span>
-                    <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
-                  </div>
-                  <div class="text-xs text-slate-600">Email: ${a.email}</div>
-                  <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
-                  <div class="pt-2 border-t border-slate-200 flex justify-end">
-                    <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">🗑️ Delete Agency</button>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-        c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
-        c.querySelectorAll('.btnDeleteAgency').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = e.currentTarget.dataset.agencyId;
-            if (confirm(`Delete agency?`)) {
-              this.state.agencies = this.state.agencies.filter(a => a.id !== id);
-              this.saveState('agencies');
-              this.renderCurrentTab();
-            }
-          });
-        });
       }
 
       renderUsers(c) {
@@ -1149,7 +1147,10 @@
                 <input type="text" id="agCode" placeholder="Agency Code (e.g. MCL-LAB)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
                 <input type="text" id="agPhone" placeholder="Contact Number (+1 555-000-0000)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
               </div>
-              <input type="text" id="agContact" placeholder="Contact Person Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="agContact" placeholder="Contact Person Name" class="white-input w-full p-2.5 rounded-xl" required>
+                <input type="text" id="agCertNo" placeholder="NABL Cert No (NABL-CC-2894)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
               <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
@@ -1167,7 +1168,10 @@
             phone: document.getElementById('agPhone').value,
             contactPerson: document.getElementById('agContact').value,
             email: document.getElementById('agEmail').value, 
-            accreditation: 'ISO/IEC 17025 Accredited', 
+            accreditation: 'ISO/IEC 17025 Accredited (NABL)', 
+            nablCertNo: document.getElementById('agCertNo').value || 'NABL-CC-2894',
+            nablScopeName: null,
+            nablScopeData: null,
             status: 'Active'
           });
           this.saveState('agencies');
