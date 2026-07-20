@@ -158,6 +158,7 @@
       { id: "USR-004", name: "Priya Sharma", username: "priya", password: "priya123", email: "p.sharma@company.com", role: "Auditor", department: "Compliance & Safety Audit", avatar: "PS" }
     ];
 
+    // --- FULL MASTER INSTRUMENTS INVENTORY SEED ---
     const INITIAL_INSTRUMENTS = [
       { 
         id: "INS-001", 
@@ -248,6 +249,74 @@
         agencyId: "AGN-004", 
         status: "Active",
         pdfReportName: null
+      },
+      {
+        id: "INS-006",
+        tagId: "EQ-CAL-101",
+        name: "Digital Vernier Caliper 150mm",
+        make: "Mitutoyo",
+        serialNo: "MT-99201",
+        range: "0-150 mm",
+        leastCount: "0.01 mm",
+        category: "Dimensional",
+        location: "Machining Shop Bay 1",
+        frequencyMonths: 6,
+        lastCalibratedDate: "2026-01-20",
+        nextDueDate: "2026-07-20",
+        agencyId: "AGN-001",
+        status: "Active",
+        pdfReportName: null
+      },
+      {
+        id: "INS-007",
+        tagId: "EQ-MIC-102",
+        name: "Outside Digital Micrometer 25mm",
+        make: "Starrett",
+        serialNo: "ST-88102",
+        range: "0-25 mm",
+        leastCount: "0.001 mm",
+        category: "Dimensional",
+        location: "Grinding Section",
+        frequencyMonths: 6,
+        lastCalibratedDate: "2026-02-15",
+        nextDueDate: "2026-08-15",
+        agencyId: "AGN-002",
+        status: "Active",
+        pdfReportName: null
+      },
+      {
+        id: "INS-008",
+        tagId: "EQ-PRS-103",
+        name: "Master Digital Pressure Gauge",
+        make: "Fluke",
+        serialNo: "FK-77301",
+        range: "0-100 PSI",
+        leastCount: "0.01 PSI",
+        category: "Pressure",
+        location: "Hydraulics Lab",
+        frequencyMonths: 12,
+        lastCalibratedDate: "2025-11-10",
+        nextDueDate: "2026-11-10",
+        agencyId: "AGN-003",
+        status: "Active",
+        pdfReportName: null
+      },
+      {
+        id: "INS-009",
+        tagId: "EQ-TMP-104",
+        name: "Dual Thermocouple Calibrator",
+        make: "Omega",
+        serialNo: "OE-44102",
+        range: "-200 to 1370 C",
+        leastCount: "0.1 C",
+        category: "Thermal",
+        location: "Heat Treatment Dept",
+        frequencyMonths: 12,
+        lastCalibratedDate: "2026-03-01",
+        nextDueDate: "2027-03-01",
+        agencyId: "AGN-004",
+        status: "Active",
+        pdfReportName: null
       }
     ];
 
@@ -295,14 +364,12 @@
       }
     }
 
-    // --- SMART DATE CONVERTER ENGINE FOR EXCEL DATES ---
     function parseExcelDate(val) {
       if (!val) return '2026-01-18';
       if (val instanceof Date && !isNaN(val.getTime())) {
         return val.toISOString().split('T')[0];
       }
       if (typeof val === 'number') {
-        // Excel serial date integer (e.g. 45321)
         const dateObj = new Date((val - (25567 + 2)) * 86400 * 1000);
         if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
       }
@@ -310,16 +377,13 @@
       const parsed = new Date(str);
       if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
 
-      // Handle DD/MM/YYYY or DD-MM-YYYY format
       const parts = str.split(/[\/\-\.]/);
       if (parts.length === 3) {
         if (parts[2].length === 4) {
-          // DD/MM/YYYY or MM/DD/YYYY
           const d1 = parseInt(parts[0], 10);
           const d2 = parseInt(parts[1], 10);
           const y = parseInt(parts[2], 10);
           if (d1 > 12) {
-            // Must be DD/MM/YYYY
             const dateObj = new Date(y, d2 - 1, d1);
             if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
           } else {
@@ -392,7 +456,15 @@
             const parsed = JSON.parse(item);
             if (Array.isArray(parsed) && parsed.length > 0) {
               if (key === 'instruments') {
-                return parsed.map(ins => ({
+                const map = new Map();
+                // Merge seed first so default updated master items exist
+                def.forEach(i => map.set(i.tagId.toLowerCase(), i));
+                // Merge stored items
+                parsed.forEach(i => {
+                  if (i.tagId) map.set(i.tagId.toLowerCase(), i);
+                });
+
+                return Array.from(map.values()).map(ins => ({
                   id: ins.id || `INS-${Math.random()}`,
                   tagId: ins.tagId || 'EQ-CAL-000',
                   name: ins.name || 'Measuring Instrument',
@@ -485,7 +557,7 @@
       }
 
       resetToDefaultSeed() {
-        if (confirm('Are you sure you want to reload default seed instruments and agencies?')) {
+        if (confirm('Are you sure you want to reload default master instruments and agencies?')) {
           this.state.instruments = INITIAL_INSTRUMENTS;
           this.state.agencies = INITIAL_AGENCIES;
           this.state.users = INITIAL_USERS;
@@ -528,9 +600,6 @@
         });
       }
 
-      // ========================================================
-      // ULTRA-SMART EXCEL & CSV UPLOADER WITH FUZZY HEADER MATCHING
-      // ========================================================
       handleExcelUpload(file) {
         if (!file) return;
 
@@ -548,7 +617,6 @@
               return;
             }
 
-            // Helper to fuzzy match keys from Excel headers
             const findValue = (row, patterns) => {
               const keys = Object.keys(row);
               for (let pattern of patterns) {
@@ -565,11 +633,10 @@
             const importedTags = [];
 
             rawRows.forEach((row, idx) => {
-              // Fuzzy Header Patterns
               const tagIdVal = findValue(row, ['tagid', 'tag', 'assetid', 'asset', 'tagassetid', 'tagno', 'equipmentid', 'gaugeid', 'id', 'slno', 'srno', 'sno', 'code', 'serial']);
               const nameVal = findValue(row, ['instrumentname', 'name', 'instrument', 'description', 'gaugename', 'equipmentname', 'title', 'particulars', 'item']);
               
-              if (!tagIdVal && !nameVal) return; // Skip completely blank rows
+              if (!tagIdVal && !nameVal) return;
 
               const tagId = (tagIdVal || `EQ-IMP-${Date.now()}-${idx}`).toString().trim();
               const name = (nameVal || 'Measuring Instrument').toString().trim();
@@ -595,11 +662,9 @@
 
               const nextDue = calculateNextDueDate(lastCal, freq);
 
-              // Check if instrument already exists by Tag ID
               const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
 
               if (existingIdx >= 0) {
-                // Update existing record
                 this.state.instruments[existingIdx] = {
                   ...this.state.instruments[existingIdx],
                   tagId: tagId,
@@ -613,7 +678,6 @@
                 updatedCount++;
                 importedTags.push(`${tagId} (${name}) - Updated`);
               } else {
-                // Insert new record
                 this.state.instruments.unshift({
                   id: `INS-${Date.now()}-${idx}`,
                   tagId: tagId,
@@ -632,12 +696,10 @@
             });
 
             this.saveState('instruments');
-            
-            // Show Detailed Result Summary Dialog
             this.openExcelUploadResultModal(updatedCount, addedCount, importedTags);
             this.renderCurrentTab();
           } catch (err) {
-            alert('Error parsing Excel sheet: ' + err.message + '\n\nPlease ensure your Excel sheet has column headers like Tag ID, Name, Make, Serial No, Range, Least Count, Calibration On Date, Frequency.');
+            alert('Error parsing Excel sheet: ' + err.message);
           }
         };
         reader.readAsArrayBuffer(file);
@@ -830,7 +892,7 @@
 
               <div class="pt-4 border-t border-slate-200">
                 <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
-                  🔄 Reset System Seed Data
+                  🔄 Reset Master Data Seed
                 </button>
               </div>
             </aside>
