@@ -104,7 +104,6 @@
         nablCertNo: "NABL-CC-2894",
         nablDueDate: "2026-07-25",
         nablScopeName: "NABL_Scope_Precision_Metrology.pdf",
-        nablScopeData: null,
         status: "Active" 
       },
       { 
@@ -118,7 +117,6 @@
         nablCertNo: "NABL-CC-1102",
         nablDueDate: "2026-08-15",
         nablScopeName: "NABL_Scope_NIST_CSL.pdf",
-        nablScopeData: null,
         status: "Active" 
       },
       { 
@@ -132,7 +130,6 @@
         nablCertNo: "NABL-CC-4491",
         nablDueDate: "2026-07-10",
         nablScopeName: null,
-        nablScopeData: null,
         status: "Active" 
       },
       { 
@@ -146,7 +143,6 @@
         nablCertNo: "INT-QMS-001",
         nablDueDate: "2026-12-31",
         nablScopeName: null,
-        nablScopeData: null,
         status: "Active" 
       }
     ];
@@ -176,8 +172,7 @@
         nextDueDate: "2026-07-22", 
         agencyId: "AGN-001", 
         status: "Active",
-        pdfReportName: "Calib_Report_EQ-CAL-001.pdf",
-        pdfReportData: null
+        pdfReportName: "Calib_Report_EQ-CAL-001.pdf"
       },
       { 
         id: "INS-002", 
@@ -195,8 +190,7 @@
         nextDueDate: "2026-07-20", 
         agencyId: "AGN-002", 
         status: "Active",
-        pdfReportName: "Calib_Report_EQ-MIC-002.pdf",
-        pdfReportData: null
+        pdfReportName: "Calib_Report_EQ-MIC-002.pdf"
       },
       { 
         id: "INS-003", 
@@ -214,8 +208,7 @@
         nextDueDate: "2026-07-10", 
         agencyId: "AGN-003", 
         status: "Out of Calibration",
-        pdfReportName: null,
-        pdfReportData: null
+        pdfReportName: null
       },
       { 
         id: "INS-004", 
@@ -233,8 +226,7 @@
         nextDueDate: "2026-07-24", 
         agencyId: "AGN-001", 
         status: "Active",
-        pdfReportName: "Calib_Report_EQ-TRQ-004.pdf",
-        pdfReportData: null
+        pdfReportName: "Calib_Report_EQ-TRQ-004.pdf"
       },
       { 
         id: "INS-005", 
@@ -252,8 +244,7 @@
         nextDueDate: "2026-08-15", 
         agencyId: "AGN-004", 
         status: "Active",
-        pdfReportName: null,
-        pdfReportData: null
+        pdfReportName: null
       }
     ];
 
@@ -318,7 +309,7 @@
         return cell.search(/("|,|\n)/g) >= 0 ? `"${cell}"` : cell;
       }).join(separator)).join('\n');
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], { type: 'type/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = filename;
@@ -357,9 +348,34 @@
       }
     }
 
+    // --- BULLETPROOF ROBUST STORAGE MANAGER WITH FALLBACK ---
     const StorageManager = {
-      get: (key, def) => { try { const item = localStorage.getItem(`calibguard_${key}`); return item ? JSON.parse(item) : def; } catch (e) { return def; } },
-      set: (key, val) => { try { localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); } catch (e) {} }
+      get: (key, def) => { 
+        try { 
+          const item = localStorage.getItem(`calibguard_${key}`); 
+          if (item) {
+            const parsed = JSON.parse(item);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+          return def; 
+        } catch (e) { 
+          return def; 
+        } 
+      },
+      set: (key, val) => { 
+        try { 
+          localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); 
+        } catch (e) { 
+          console.warn(`localStorage quota error, stripping binary attachments for ${key}`);
+          try {
+            // Strip data URLs to stay within quota
+            const cleanVal = JSON.parse(JSON.stringify(val, (k, v) => (k === 'pdfReportData' || k === 'nablScopeData') ? null : v));
+            localStorage.setItem(`calibguard_${key}`, JSON.stringify(cleanVal));
+          } catch (err) {
+            console.error('Storage failed', err);
+          }
+        } 
+      }
     };
 
     // --- Main Controller ---
@@ -370,8 +386,11 @@
           users = INITIAL_USERS;
           StorageManager.set('users', users);
         }
+
+        let instruments = StorageManager.get('instruments', INITIAL_INSTRUMENTS);
+
         this.state = {
-          instruments: StorageManager.get('instruments', INITIAL_INSTRUMENTS),
+          instruments: instruments,
           agencies: StorageManager.get('agencies', INITIAL_AGENCIES),
           users: users,
           isLoggedIn: StorageManager.get('isLoggedIn', false),
@@ -396,7 +415,7 @@
 
       saveState(k, showToastMsg = true) {
         StorageManager.set(k, this.state[k]);
-        if (showToastMsg) showToast(`✅ Data Saved Successfully!`);
+        if (showToastMsg) showToast(`✅ Data Auto-Saved!`);
       }
 
       saveAllData() {
@@ -405,6 +424,16 @@
         StorageManager.set('users', this.state.users);
         StorageManager.set('alertThresholdDays', this.state.alertThresholdDays);
         showToast('💾 All Data Successfully Saved!');
+      }
+
+      resetToDefaultSeed() {
+        if (confirm('Are you sure you want to reset all instruments and agencies to initial default data?')) {
+          this.state.instruments = INITIAL_INSTRUMENTS;
+          this.state.agencies = INITIAL_AGENCIES;
+          this.state.users = INITIAL_USERS;
+          this.saveAllData();
+          this.renderCurrentTab();
+        }
       }
 
       renderLoginScreen() {
@@ -533,6 +562,12 @@
                   Download Sample CSV Template
                 </button>
               </div>
+
+              <div class="pt-4 border-t border-slate-200">
+                <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
+                  🔄 Reset System Seed Data
+                </button>
+              </div>
             </aside>
 
             <main class="flex-1 p-6 max-w-7xl mx-auto space-y-6 overflow-y-auto bg-white">
@@ -555,6 +590,7 @@
         document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab)));
         document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
         document.getElementById('btnHeaderSaveAll')?.addEventListener('click', () => this.saveAllData());
+        document.getElementById('btnResetSeedData')?.addEventListener('click', () => this.resetToDefaultSeed());
 
         document.getElementById('globalThresholdSelect')?.addEventListener('change', (e) => {
           this.state.alertThresholdDays = parseInt(e.target.value, 10);
@@ -593,13 +629,13 @@
                     leastCount: r.LeastCount || '0.01 mm', category: r.Category || 'Dimensional',
                     location: r.Location || 'Plant Shop', frequencyMonths: freq, lastCalibratedDate: lastCal,
                     nextDueDate: calculateNextDueDate(lastCal, freq), agencyId: agency ? agency.id : 'AGN-001', status: 'Active',
-                    pdfReportName: null, pdfReportData: null
+                    pdfReportName: null
                   });
                   added++;
                 }
               });
               this.saveState('instruments');
-              showToast(`📁 ${added} Instruments imported & auto-saved!`);
+              showToast(`📁 ${added} Instruments imported & saved!`);
               this.renderCurrentTab();
             }
           };
@@ -675,14 +711,17 @@
         `;
       }
 
+      // ==========================================
+      // VIEW 2: MASTER INSTRUMENTS LIST WITH FULL PERSISTENCE
+      // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
         c.innerHTML = `
           <div class="space-y-6">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
-                <p class="text-sm text-slate-500">Auto-saves instantly after any update with explicit 💾 Save option</p>
+                <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory (${this.state.instruments.length})</h2>
+                <p class="text-sm text-slate-500">Real-time Master Specifications (Make, Serial No, Range, Least Count, Calibration Date, Due Date, Agency)</p>
               </div>
 
               <div class="flex items-center space-x-2">
@@ -784,7 +823,7 @@
         c.querySelectorAll('.btnDeleteIns').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const insId = e.currentTarget.dataset.insId;
-            if (confirm(`Delete instrument ${insId}?`)) {
+            if (confirm(`Are you sure you want to delete instrument ${insId}?`)) {
               this.state.instruments = this.state.instruments.filter(i => i.id !== insId);
               this.saveState('instruments');
               this.renderCurrentTab();
@@ -828,301 +867,7 @@
         };
       }
 
-      // ==========================================
-      // VIEW 4: AGENCIES WITH EDIT & MODIFY AGENCY OPTION
-      // ==========================================
-      renderAgencies(c) {
-        const threshold = this.state.alertThresholdDays;
-        c.innerHTML = `
-          <div class="space-y-6">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Expiry</h2>
-                <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Due Dates & Modification Options</p>
-              </div>
-              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              ${this.state.agencies.map(a => {
-                const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
-                const hasNablScope = a.nablScopeName || a.nablScopeData;
-
-                return `
-                  <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
-                    <div class="space-y-2">
-                      <div class="flex justify-between items-start font-bold text-lg text-slate-900">
-                        <span>${a.name}</span>
-                        <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
-                      </div>
-
-                      <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
-                      <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
-                        <span>📞 Contact Number:</span>
-                        <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
-                      </div>
-                      <div class="text-xs text-slate-600">Email: ${a.email}</div>
-                      <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
-                      
-                      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                        <div class="flex justify-between items-center">
-                          <span class="font-bold text-slate-700">📜 NABL Scope Due Date:</span>
-                          <strong class="font-mono font-bold text-slate-900 text-xs">${formatDate(a.nablDueDate || '2026-08-15')}</strong>
-                        </div>
-                        
-                        <div class="flex justify-between items-center pt-1 border-t border-slate-200">
-                          <span class="text-[11px] text-slate-500 font-semibold">Accreditation Status:</span>
-                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
-                            ${nablInfo.label}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- NABL Scope & Modification Controls -->
-                    <div class="pt-3 border-t border-slate-200 space-y-2">
-                      <div class="grid grid-cols-2 gap-2">
-                        <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
-                          📜 View NABL Scope
-                        </button>
-                        <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
-                          📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
-                        </button>
-                      </div>
-
-                      <div class="flex justify-between items-center space-x-2">
-                        <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
-                          ✏️ Edit & Modify Agency
-                        </button>
-                        <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
-                          🗑️ Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        `;
-
-        c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
-
-        // Edit Agency Button Event Listener
-        c.querySelectorAll('.btnEditAgency').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const agencyId = e.currentTarget.dataset.agencyId;
-            this.openEditAgencyModal(agencyId);
-          });
-        });
-
-        c.querySelectorAll('.btnViewNABLScope').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const agencyId = e.currentTarget.dataset.agencyId;
-            this.openNABLScopeViewer(agencyId);
-          });
-        });
-
-        const nablInput = document.getElementById('nablScopeFileInput');
-        let currentAgencyId = null;
-
-        c.querySelectorAll('.btnUploadNABLScope').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            currentAgencyId = e.currentTarget.dataset.agencyId;
-            nablInput.click();
-          });
-        });
-
-        nablInput.onchange = (e) => {
-          const file = e.target.files[0];
-          if (!file || !currentAgencyId) return;
-
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            const agency = this.state.agencies.find(a => a.id === currentAgencyId);
-            if (agency) {
-              agency.nablScopeName = file.name;
-              agency.nablScopeData = evt.target.result;
-              this.saveState('agencies');
-              showToast(`📜 NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
-              this.renderCurrentTab();
-            }
-          };
-          reader.readAsDataURL(file);
-        };
-
-        c.querySelectorAll('.btnDeleteAgency').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = e.currentTarget.dataset.agencyId;
-            if (confirm(`Delete agency?`)) {
-              this.state.agencies = this.state.agencies.filter(a => a.id !== id);
-              this.saveState('agencies');
-              this.renderCurrentTab();
-            }
-          });
-        });
-      }
-
-      // --- EDIT & MODIFY AGENCY MODAL ---
-      openEditAgencyModal(agencyId) {
-        const agency = this.state.agencies.find(a => a.id === agencyId);
-        if (!agency) return;
-
-        const m = document.getElementById('modalContainer');
-        m.classList.remove('hidden');
-
-        m.innerHTML = `
-          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-              <div>
-                <h3 class="font-bold text-lg text-slate-900">Edit & Modify Agency Data</h3>
-                <p class="text-xs text-slate-500">Correct any agency details or update NABL Scope Expiry Date</p>
-              </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
-            </div>
-
-            <form id="editAgencyForm" class="space-y-3 text-xs">
-              <div>
-                <label class="block text-slate-700 font-bold mb-1">Agency Name *</label>
-                <input type="text" id="eaName" value="${agency.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-700 font-bold mb-1">Agency Code *</label>
-                  <input type="text" id="eaCode" value="${agency.code}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
-                </div>
-                <div>
-                  <label class="block text-slate-700 font-bold mb-1">Contact Phone *</label>
-                  <input type="text" id="eaPhone" value="${agency.phone || ''}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-700 font-bold mb-1">Contact Person *</label>
-                  <input type="text" id="eaContact" value="${agency.contactPerson}" class="white-input w-full p-2.5 rounded-xl" required>
-                </div>
-                <div>
-                  <label class="block text-slate-700 font-bold mb-1">NABL Cert No *</label>
-                  <input type="text" id="eaCertNo" value="${agency.nablCertNo || 'NABL-CC-2894'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-slate-700 font-bold mb-1">Email Address *</label>
-                <input type="email" id="eaEmail" value="${agency.email}" class="white-input w-full p-2.5 rounded-xl" required>
-              </div>
-
-              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <label class="block text-slate-700 font-bold mb-1">NABL Scope Expiry / Due Date *</label>
-                <input type="date" id="eaNablDueDate" value="${agency.nablDueDate || '2026-08-15'}" class="white-input w-full p-2 rounded-xl font-mono font-bold" required>
-              </div>
-
-              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
-                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
-                  Cancel
-                </button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save Agency Modifications
-                </button>
-              </div>
-            </form>
-          </div>
-        `;
-
-        document.getElementById('editAgencyForm').addEventListener('submit', (e) => {
-          e.preventDefault();
-
-          agency.name = document.getElementById('eaName').value.trim();
-          agency.code = document.getElementById('eaCode').value.trim();
-          agency.phone = document.getElementById('eaPhone').value.trim();
-          agency.contactPerson = document.getElementById('eaContact').value.trim();
-          agency.nablCertNo = document.getElementById('eaCertNo').value.trim();
-          agency.email = document.getElementById('eaEmail').value.trim();
-          agency.nablDueDate = document.getElementById('eaNablDueDate').value;
-
-          this.saveState('agencies');
-          showToast(`💾 Agency "${agency.name}" modifications saved!`);
-          m.classList.add('hidden');
-          this.renderCurrentTab();
-        });
-      }
-
-      renderAlerts(c) {
-        const threshold = this.state.alertThresholdDays;
-        
-        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
-        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
-
-        const nablAlertAgencies = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
-
-        c.innerHTML = `
-          <div class="space-y-6">
-            <div>
-              <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day System Alert Center</h2>
-              <p class="text-sm text-slate-500">Real-time alerts for Instrument Calibrations and NABL Accreditation Expiries</p>
-            </div>
-
-            <div class="space-y-3">
-              <h3 class="font-bold text-base text-purple-900 flex items-center space-x-2">
-                <span>📜 NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
-              </h3>
-
-              ${nablAlertAgencies.length > 0 ? `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  ${nablAlertAgencies.map(a => {
-                    const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
-                    return `
-                      <div class="white-card p-5 rounded-2xl border ${nablInfo.badgeClass} space-y-3">
-                        <div class="flex justify-between font-bold text-slate-900 text-base">
-                          <span>${a.name}</span>
-                          <span class="font-mono text-xs text-sky-700">${a.code}</span>
-                        </div>
-                        <div class="text-xs text-slate-600">Contact: <strong>${a.contactPerson} (${a.phone})</strong></div>
-                        <div class="text-xs font-bold text-slate-900">NABL Scope Due Date: ${formatDate(a.nablDueDate)}</div>
-                        <div class="pt-2">
-                          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
-                            ${nablInfo.label}
-                          </span>
-                        </div>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              ` : `
-                <div class="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                  ✅ All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
-                </div>
-              `}
-            </div>
-
-            <div class="space-y-3 pt-4 border-t border-slate-200">
-              <h3 class="font-bold text-base text-slate-900 flex items-center space-x-2">
-                <span>⚖️ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
-              </h3>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                ${[...overdue, ...urgent].map(ins => {
-                  const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
-                  const agency = this.state.agencies.find(a => a.id === ins.agencyId);
-                  return `
-                    <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
-                      <div class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</div>
-                      <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
-                      <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
-                      <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
-                      <div class="text-xs font-bold text-amber-800">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
-                      <div class="text-xs text-slate-500">Agency: ${agency ? agency.name : 'Unassigned'}</div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          </div>
-        `;
-      }
-
+      // --- ADD INSTRUMENT MODAL ---
       openAddInstrumentModal() {
         const m = document.getElementById('modalContainer');
         m.classList.remove('hidden');
@@ -1243,7 +988,7 @@
             const newInstrument = {
               id: `INS-${Date.now()}`,
               tagId: tagId || defaultTagId,
-              name: name || 'New Measuring Instrument',
+              name: name || 'New Instrument',
               make: make || 'Generic',
               serialNo: serialNo || 'SN-000',
               range: range || '0-100',
@@ -1255,8 +1000,7 @@
               nextDueDate: nextDue,
               agencyId: agencyId || (this.state.agencies[0] ? this.state.agencies[0].id : 'AGN-001'),
               status: 'Active',
-              pdfReportName: null,
-              pdfReportData: null
+              pdfReportName: null
             };
 
             this.state.instruments.unshift(newInstrument);
@@ -1269,6 +1013,294 @@
             alert('Error adding instrument: ' + err.message);
           }
         });
+      }
+
+      renderAgencies(c) {
+        const threshold = this.state.alertThresholdDays;
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Expiry</h2>
+                <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Due Dates & Modification Options</p>
+              </div>
+              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${this.state.agencies.map(a => {
+                const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
+                const hasNablScope = a.nablScopeName || a.nablScopeData;
+
+                return `
+                  <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
+                    <div class="space-y-2">
+                      <div class="flex justify-between items-start font-bold text-lg text-slate-900">
+                        <span>${a.name}</span>
+                        <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
+                      </div>
+
+                      <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
+                      <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
+                        <span>📞 Contact Number:</span>
+                        <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
+                      </div>
+                      <div class="text-xs text-slate-600">Email: ${a.email}</div>
+                      <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
+                      
+                      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                          <span class="font-bold text-slate-700">📜 NABL Scope Due Date:</span>
+                          <strong class="font-mono font-bold text-slate-900 text-xs">${formatDate(a.nablDueDate || '2026-08-15')}</strong>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+                          <span class="text-[11px] text-slate-500 font-semibold">Accreditation Status:</span>
+                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
+                            ${nablInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-200 space-y-2">
+                      <div class="grid grid-cols-2 gap-2">
+                        <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
+                          📜 View NABL Scope
+                        </button>
+                        <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
+                          📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
+                        </button>
+                      </div>
+
+                      <div class="flex justify-between items-center space-x-2">
+                        <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
+                          ✏️ Edit & Modify Agency
+                        </button>
+                        <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+
+        c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
+
+        c.querySelectorAll('.btnEditAgency').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const agencyId = e.currentTarget.dataset.agencyId;
+            this.openEditAgencyModal(agencyId);
+          });
+        });
+
+        c.querySelectorAll('.btnViewNABLScope').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const agencyId = e.currentTarget.dataset.agencyId;
+            this.openNABLScopeViewer(agencyId);
+          });
+        });
+
+        const nablInput = document.getElementById('nablScopeFileInput');
+        let currentAgencyId = null;
+
+        c.querySelectorAll('.btnUploadNABLScope').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            currentAgencyId = e.currentTarget.dataset.agencyId;
+            nablInput.click();
+          });
+        });
+
+        nablInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file || !currentAgencyId) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const agency = this.state.agencies.find(a => a.id === currentAgencyId);
+            if (agency) {
+              agency.nablScopeName = file.name;
+              agency.nablScopeData = evt.target.result;
+              this.saveState('agencies');
+              showToast(`📜 NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
+              this.renderCurrentTab();
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+
+        c.querySelectorAll('.btnDeleteAgency').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.agencyId;
+            if (confirm(`Delete agency?`)) {
+              this.state.agencies = this.state.agencies.filter(a => a.id !== id);
+              this.saveState('agencies');
+              this.renderCurrentTab();
+            }
+          });
+        });
+      }
+
+      openEditAgencyModal(agencyId) {
+        const agency = this.state.agencies.find(a => a.id === agencyId);
+        if (!agency) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div>
+                <h3 class="font-bold text-lg text-slate-900">Edit & Modify Agency Data</h3>
+                <p class="text-xs text-slate-500">Correct any agency details or update NABL Scope Expiry Date</p>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            <form id="editAgencyForm" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Agency Name *</label>
+                <input type="text" id="eaName" value="${agency.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Agency Code *</label>
+                  <input type="text" id="eaCode" value="${agency.code}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Contact Phone *</label>
+                  <input type="text" id="eaPhone" value="${agency.phone || ''}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Contact Person *</label>
+                  <input type="text" id="eaContact" value="${agency.contactPerson}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">NABL Cert No *</label>
+                  <input type="text" id="eaCertNo" value="${agency.nablCertNo || 'NABL-CC-2894'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Email Address *</label>
+                <input type="email" id="eaEmail" value="${agency.email}" class="white-input w-full p-2.5 rounded-xl" required>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <label class="block text-slate-700 font-bold mb-1">NABL Scope Expiry / Due Date *</label>
+                <input type="date" id="eaNablDueDate" value="${agency.nablDueDate || '2026-08-15'}" class="white-input w-full p-2 rounded-xl font-mono font-bold" required>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                  Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                  💾 Save Agency Modifications
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('editAgencyForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          agency.name = document.getElementById('eaName').value.trim();
+          agency.code = document.getElementById('eaCode').value.trim();
+          agency.phone = document.getElementById('eaPhone').value.trim();
+          agency.contactPerson = document.getElementById('eaContact').value.trim();
+          agency.nablCertNo = document.getElementById('eaCertNo').value.trim();
+          agency.email = document.getElementById('eaEmail').value.trim();
+          agency.nablDueDate = document.getElementById('eaNablDueDate').value;
+
+          this.saveState('agencies');
+          showToast(`💾 Agency "${agency.name}" modifications saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      renderAlerts(c) {
+        const threshold = this.state.alertThresholdDays;
+        
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+        const nablAlertAgencies = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
+
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div>
+              <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day System Alert Center</h2>
+              <p class="text-sm text-slate-500">Real-time alerts for Instrument Calibrations and NABL Accreditation Expiries</p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="font-bold text-base text-purple-900 flex items-center space-x-2">
+                <span>📜 NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
+              </h3>
+
+              ${nablAlertAgencies.length > 0 ? `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${nablAlertAgencies.map(a => {
+                    const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
+                    return `
+                      <div class="white-card p-5 rounded-2xl border ${nablInfo.badgeClass} space-y-3">
+                        <div class="flex justify-between font-bold text-slate-900 text-base">
+                          <span>${a.name}</span>
+                          <span class="font-mono text-xs text-sky-700">${a.code}</span>
+                        </div>
+                        <div class="text-xs text-slate-600">Contact: <strong>${a.contactPerson} (${a.phone})</strong></div>
+                        <div class="text-xs font-bold text-slate-900">NABL Scope Due Date: ${formatDate(a.nablDueDate)}</div>
+                        <div class="pt-2">
+                          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
+                            ${nablInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : `
+                <div class="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                  ✅ All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
+                </div>
+              `}
+            </div>
+
+            <div class="space-y-3 pt-4 border-t border-slate-200">
+              <h3 class="font-bold text-base text-slate-900 flex items-center space-x-2">
+                <span>⚖️ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                ${[...overdue, ...urgent].map(ins => {
+                  const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                  const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+                  return `
+                    <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
+                      <div class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</div>
+                      <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
+                      <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
+                      <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
+                      <div class="text-xs font-bold text-amber-800">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
+                      <div class="text-xs text-slate-500">Agency: ${agency ? agency.name : 'Unassigned'}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
       }
 
       openAddAgencyModal() {
@@ -1312,7 +1344,6 @@
             nablCertNo: document.getElementById('agCertNo').value || 'NABL-CC-2894',
             nablDueDate: document.getElementById('agNablDueDate').value || '2026-08-15',
             nablScopeName: null,
-            nablScopeData: null,
             status: 'Active'
           });
           this.saveState('agencies');
