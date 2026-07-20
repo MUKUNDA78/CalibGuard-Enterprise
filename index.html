@@ -151,11 +151,107 @@
     ];
 
     const INITIAL_USERS = [
-      { id: "USR-000", name: "Mukunda", username: "Mukunda", password: "Tejas", email: "mukunda@company.com", role: "Admin", department: "Quality Assurance & Metrology Head", avatar: "MK" },
-      { id: "USR-001", name: "Marcus Vance", username: "admin", password: "admin123", email: "marcus.vance@company.com", role: "Admin", department: "Quality Assurance Management", avatar: "MV" },
-      { id: "USR-002", name: "Elena Rostova", username: "elena", password: "elena123", email: "elena.rostova@company.com", role: "Technician", department: "Metrology & Quality Control", avatar: "ER" },
-      { id: "USR-003", name: "David Miller", username: "david", password: "david123", email: "d.miller@precisionmetrology.com", role: "AgencyRep", department: "External Calibration Specialist", avatar: "DM", assignedAgencyId: "AGN-001" },
-      { id: "USR-004", name: "Priya Sharma", username: "priya", password: "priya123", email: "p.sharma@company.com", role: "Auditor", department: "Compliance & Safety Audit", avatar: "PS" }
+      { 
+        id: "USR-000", 
+        name: "Mukunda", 
+        username: "Mukunda", 
+        password: "Tejas", 
+        email: "mukunda@company.com", 
+        role: "Admin", 
+        department: "Quality Assurance & Metrology Head", 
+        avatar: "MK",
+        permissions: {
+          canAddInstruments: true,
+          canEditInstruments: true,
+          canDeleteInstruments: true,
+          canUploadExcel: true,
+          canUploadPDF: true,
+          canEditAgencies: true,
+          canManageUsers: true,
+          readOnlyMode: false
+        }
+      },
+      { 
+        id: "USR-001", 
+        name: "Marcus Vance", 
+        username: "admin", 
+        password: "admin123", 
+        email: "marcus.vance@company.com", 
+        role: "Admin", 
+        department: "Quality Assurance Management", 
+        avatar: "MV",
+        permissions: {
+          canAddInstruments: true,
+          canEditInstruments: true,
+          canDeleteInstruments: true,
+          canUploadExcel: true,
+          canUploadPDF: true,
+          canEditAgencies: true,
+          canManageUsers: true,
+          readOnlyMode: false
+        }
+      },
+      { 
+        id: "USR-002", 
+        name: "Elena Rostova", 
+        username: "elena", 
+        password: "elena123", 
+        email: "elena.rostova@company.com", 
+        role: "Technician", 
+        department: "Metrology & Quality Control", 
+        avatar: "ER",
+        permissions: {
+          canAddInstruments: true,
+          canEditInstruments: true,
+          canDeleteInstruments: false,
+          canUploadExcel: true,
+          canUploadPDF: true,
+          canEditAgencies: false,
+          canManageUsers: false,
+          readOnlyMode: false
+        }
+      },
+      { 
+        id: "USR-003", 
+        name: "David Miller", 
+        username: "david", 
+        password: "david123", 
+        email: "d.miller@precisionmetrology.com", 
+        role: "AgencyRep", 
+        department: "External Calibration Specialist", 
+        avatar: "DM", 
+        assignedAgencyId: "AGN-001",
+        permissions: {
+          canAddInstruments: false,
+          canEditInstruments: true,
+          canDeleteInstruments: false,
+          canUploadExcel: false,
+          canUploadPDF: true,
+          canEditAgencies: false,
+          canManageUsers: false,
+          readOnlyMode: false
+        }
+      },
+      { 
+        id: "USR-004", 
+        name: "Priya Sharma", 
+        username: "priya", 
+        password: "priya123", 
+        email: "p.sharma@company.com", 
+        role: "Auditor", 
+        department: "Compliance & Safety Audit", 
+        avatar: "PS",
+        permissions: {
+          canAddInstruments: false,
+          canEditInstruments: false,
+          canDeleteInstruments: false,
+          canUploadExcel: false,
+          canUploadPDF: false,
+          canEditAgencies: false,
+          canManageUsers: false,
+          readOnlyMode: true
+        }
+      }
     ];
 
     const INITIAL_INSTRUMENTS = [
@@ -496,7 +592,7 @@
       }
     };
 
-    // --- Main Controller with Role-Based Access Control (RBAC) ---
+    // --- Main Controller with Dynamic User Access Editor ---
     class CalibGuardApp {
       constructor() {
         let users = StorageManager.get('users', INITIAL_USERS);
@@ -537,27 +633,33 @@
       // --- PERMISSION CHECK ENGINE ---
       hasPermission(action) {
         const user = this.getActiveUser();
-        const role = user.role;
+        if (user.role === 'Admin') return true; // Admin has FULL ACCESS to everything!
 
-        if (role === 'Admin') return true;
+        const p = user.permissions || {
+          canAddInstruments: false,
+          canEditInstruments: true,
+          canDeleteInstruments: false,
+          canUploadExcel: false,
+          canUploadPDF: true,
+          canEditAgencies: false,
+          canManageUsers: false,
+          readOnlyMode: false
+        };
 
-        if (role === 'Technician') {
-          if (action === 'delete_instrument' || action === 'manage_users' || action === 'edit_agency' || action === 'reset_seed') return false;
-          return true; // Can view, add, edit instruments, and upload PDF reports
-        }
-
-        if (role === 'AgencyRep') {
-          if (action === 'delete_instrument' || action === 'manage_users' || action === 'edit_agency' || action === 'upload_excel' || action === 'add_instrument' || action === 'reset_seed') return false;
-          return true; // Can view assigned instruments & upload PDF reports
-        }
-
-        if (role === 'Auditor') {
-          // Auditor is Read-Only! Cannot add/edit/delete/upload
-          if (action === 'view_dashboard' || action === 'view_master' || action === 'view_alerts' || action === 'view_agencies' || action === 'view_pdf' || action === 'export_backup') return true;
+        if (p.readOnlyMode && action !== 'view_dashboard' && action !== 'view_master' && action !== 'view_alerts' && action !== 'view_agencies' && action !== 'view_pdf' && action !== 'export_backup') {
           return false;
         }
 
-        return false;
+        if (action === 'add_instrument') return !!p.canAddInstruments;
+        if (action === 'edit_instrument') return !!p.canEditInstruments;
+        if (action === 'delete_instrument') return !!p.canDeleteInstruments;
+        if (action === 'upload_excel') return !!p.canUploadExcel;
+        if (action === 'upload_pdf') return !!p.canUploadPDF;
+        if (action === 'edit_agency') return !!p.canEditAgencies;
+        if (action === 'manage_users') return !!p.canManageUsers;
+        if (action === 'reset_seed') return false;
+
+        return true;
       }
 
       saveState(k, showToastMsg = true) {
@@ -639,7 +741,6 @@
         const threshold = this.state.alertThresholdDays;
 
         return this.state.instruments.filter(ins => {
-          // Restricted AgencyRep scope filtering
           if (user.role === 'AgencyRep' && user.assignedAgencyId) {
             if (ins.agencyId !== user.assignedAgencyId) return false;
           }
@@ -864,7 +965,7 @@
                     <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="Mukunda" data-p="Tejas">
                       <div class="flex justify-between font-bold text-slate-900">
                         <span>1. Mukunda (Admin)</span>
-                        <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">Full Control</span>
+                        <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">Full Access</span>
                       </div>
                       <div class="text-slate-500 font-mono">User: Mukunda | Pass: Tejas</div>
                     </div>
@@ -872,7 +973,7 @@
                     <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="elena" data-p="elena123">
                       <div class="flex justify-between font-bold text-slate-900">
                         <span>2. Elena Rostova (Technician)</span>
-                        <span class="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">Edit/PDF Only</span>
+                        <span class="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">Limited Access</span>
                       </div>
                       <div class="text-slate-500 font-mono">User: elena | Pass: elena123</div>
                     </div>
@@ -880,7 +981,7 @@
                     <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="david" data-p="david123">
                       <div class="flex justify-between font-bold text-slate-900">
                         <span>3. David Miller (Agency Rep)</span>
-                        <span class="text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded text-[10px]">Assigned Agency Scope</span>
+                        <span class="text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded text-[10px]">Assigned Agency</span>
                       </div>
                       <div class="text-slate-500 font-mono">User: david | Pass: david123</div>
                     </div>
@@ -1212,7 +1313,7 @@
                   </button>
                 ` : ''}
 
-                ${user.role !== 'Auditor' ? `
+                ${user.role === 'Admin' || this.hasPermission('edit_instrument') ? `
                   <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
                     💾 Save Data
                   </button>
@@ -1320,7 +1421,7 @@
                               <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
                             `}
 
-                            ${user.role !== 'Auditor' ? `
+                            ${this.hasPermission('upload_pdf') ? `
                               <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
                                 📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
                               </button>
@@ -1328,11 +1429,11 @@
                           </td>
 
                           <td class="py-3 px-3 text-right space-y-1">
-                            ${user.role !== 'Auditor' ? `
+                            ${this.hasPermission('edit_instrument') ? `
                               <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
                                 ✏️ Edit & Save
                               </button>
-                            ` : '<span class="text-[10px] text-slate-400 italic">Read Only</span>'}
+                            ` : '<span class="text-[10px] text-slate-400 italic block text-center">View Only</span>'}
 
                             ${this.hasPermission('delete_instrument') ? `
                               <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
@@ -2227,88 +2328,297 @@
       }
 
       renderUsers(c) {
+        const currentUser = this.getActiveUser();
         c.innerHTML = `
           <div class="space-y-6">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 class="text-2xl font-bold text-slate-900">User Accounts & Role Permissions Directory</h2>
-                <p class="text-sm text-slate-500">Configure role-based access for Admins, Technicians, Agency Reps, and Auditors</p>
+                <h2 class="text-2xl font-bold text-slate-900">User Roles & Access Control Engine</h2>
+                <p class="text-sm text-slate-500">Admin has Full Access. Manage & customize limited access permissions for all users.</p>
               </div>
               ${this.hasPermission('manage_users') ? `
-                <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add User</button>
+                <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add New User Account</button>
               ` : ''}
             </div>
 
-            <!-- Role Permissions Matrix Table -->
+            <!-- Role Permissions Overview -->
             <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
-              <h3 class="font-bold text-sm text-slate-900">🛡️ Active Role-Based Access Control (RBAC) Matrix</h3>
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-900">🛡️ System Permission Rules & Role Hierarchy</h3>
+                <span class="text-xs text-sky-700 font-bold bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200">
+                  Current User: ${currentUser.name} (${currentUser.role})
+                </span>
+              </div>
+
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
                   <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px]">
                     <tr>
                       <th class="py-2.5 px-3">Role</th>
-                      <th class="py-2.5 px-3">Default Account</th>
-                      <th class="py-2.5 px-3">Password</th>
-                      <th class="py-2.5 px-3">Permissions Scope</th>
+                      <th class="py-2.5 px-3">Full Access</th>
+                      <th class="py-2.5 px-3">Limited Access Scope & Controls</th>
+                      <th class="py-2.5 px-3 text-right">Admin Controls</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200">
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Admin</td>
-                      <td class="py-2.5 px-3 font-mono font-bold">Mukunda</td>
-                      <td class="py-2.5 px-3 font-mono">Tejas</td>
-                      <td class="py-2.5 px-3 text-slate-700">Full Access (Add/Edit/Delete, Excel Upload, Agency Edit, User Admin)</td>
+                      <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Admin (Mukunda)</td>
+                      <td class="py-2.5 px-3 font-bold text-emerald-600">✅ YES (Unrestricted)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Can view, add, edit, delete, upload Excel, edit agencies, & configure user access</td>
+                      <td class="py-2.5 px-3 text-right font-semibold text-slate-400">Master Admin</td>
                     </tr>
                     <tr class="bg-slate-50">
-                      <td class="py-2.5 px-3 font-bold text-amber-700">🔧 Technician</td>
-                      <td class="py-2.5 px-3 font-mono font-bold">elena</td>
-                      <td class="py-2.5 px-3 font-mono">elena123</td>
-                      <td class="py-2.5 px-3 text-slate-700">Add/Edit Instruments, Calibration Updates, PDF Upload (No Deletions)</td>
+                      <td class="py-2.5 px-3 font-bold text-amber-700">🔧 Technician (Elena)</td>
+                      <td class="py-2.5 px-3 font-bold text-amber-600">❌ NO (Customizable)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Can add/edit instrument specs & upload PDF reports (Deletion blocked)</td>
+                      <td class="py-2.5 px-3 text-right">
+                        <span class="text-sky-700 font-bold text-[11px]">Configurable</span>
+                      </td>
                     </tr>
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-purple-700">🏢 Agency Rep</td>
-                      <td class="py-2.5 px-3 font-mono font-bold">david</td>
-                      <td class="py-2.5 px-3 font-mono">david123</td>
-                      <td class="py-2.5 px-3 text-slate-700">Assigned Agency Scope Only (Precision Metrology), Upload Reports</td>
+                      <td class="py-2.5 px-3 font-bold text-purple-700">🏢 Agency Rep (David)</td>
+                      <td class="py-2.5 px-3 font-bold text-purple-600">❌ NO (Agency Scope)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Can only view & upload PDF reports for assigned agency (Precision Metrology)</td>
+                      <td class="py-2.5 px-3 text-right">
+                        <span class="text-sky-700 font-bold text-[11px]">Configurable</span>
+                      </td>
                     </tr>
                     <tr class="bg-slate-50">
-                      <td class="py-2.5 px-3 font-bold text-sky-700">🔍 Auditor</td>
-                      <td class="py-2.5 px-3 font-mono font-bold">priya</td>
-                      <td class="py-2.5 px-3 font-mono">priya123</td>
-                      <td class="py-2.5 px-3 text-slate-700">Read-Only Compliance Access (All View/Print, No Modifications)</td>
+                      <td class="py-2.5 px-3 font-bold text-sky-700">🔍 Auditor (Priya)</td>
+                      <td class="py-2.5 px-3 font-bold text-sky-600">❌ NO (Read-Only)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Read-Only compliance audit view (All edit/upload actions hidden)</td>
+                      <td class="py-2.5 px-3 text-right">
+                        <span class="text-sky-700 font-bold text-[11px]">Configurable</span>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-              ${this.state.users.map(u => `
-                <div class="white-card p-4 rounded-2xl border border-slate-200 space-y-2">
-                  <div class="font-bold text-sky-700 text-base">${u.name}</div>
-                  <div class="text-xs text-slate-700">Username: <code class="text-sky-800 font-mono font-bold">${u.username}</code></div>
-                  <div class="text-xs text-slate-600">Role: <strong class="text-slate-900">${u.role}</strong></div>
-                  
-                  ${this.hasPermission('manage_users') ? `
-                    <div class="pt-2 border-t border-slate-200 flex justify-end">
-                      <button class="btnDeleteUser px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-user-id="${u.id}">🗑️ Delete User</button>
+            <!-- User Cards Grid with Edit Access Option -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              ${this.state.users.map(u => {
+                const isMukunda = (u.username === 'Mukunda' || u.role === 'Admin');
+                const p = u.permissions || {};
+
+                return `
+                  <div class="white-card p-4 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
+                    <div class="space-y-2">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <div class="font-bold text-slate-900 text-base">${u.name}</div>
+                          <div class="text-[11px] text-sky-700 font-semibold">${u.department || 'Metrology Dept'}</div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isMukunda ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                          ${u.role}
+                        </span>
+                      </div>
+
+                      <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1 font-mono">
+                        <div>Username: <strong class="text-slate-900">${u.username}</strong></div>
+                        <div>Password: <strong class="text-slate-900">${u.password}</strong></div>
+                        ${u.assignedAgencyId ? `<div class="text-[10px] text-purple-700 font-bold">Agency: ${u.assignedAgencyId}</div>` : ''}
+                      </div>
+
+                      <div class="text-[11px] space-y-1 pt-1">
+                        <div class="font-bold text-slate-700">Active Permissions:</div>
+                        <div class="grid grid-cols-2 gap-1 text-[10px]">
+                          <span class="${p.canAddInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canAddInstruments || isMukunda ? '✓ Add Ins' : '✕ Add Ins'}
+                          </span>
+                          <span class="${p.canEditInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canEditInstruments || isMukunda ? '✓ Edit Ins' : '✕ Edit Ins'}
+                          </span>
+                          <span class="${p.canDeleteInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canDeleteInstruments || isMukunda ? '✓ Delete Ins' : '✕ Delete Ins'}
+                          </span>
+                          <span class="${p.canUploadExcel || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canUploadExcel || isMukunda ? '✓ Excel Upload' : '✕ Excel Upload'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  ` : ''}
-                </div>
-              `).join('')}
+
+                    <div class="pt-2 border-t border-slate-200 space-y-1.5">
+                      ${currentUser.role === 'Admin' ? `
+                        <button class="btnEditUserAccess w-full py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-xs font-bold transition-all text-center block" data-user-id="${u.id}">
+                          ✏️ Edit Access & Permissions
+                        </button>
+                      ` : ''}
+
+                      ${this.hasPermission('manage_users') && !isMukunda ? `
+                        <button class="btnDeleteUser w-full py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-[11px] font-semibold hover:bg-red-100 text-center block" data-user-id="${u.id}">
+                          🗑️ Delete Account
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
+
         c.querySelector('#btnAddUser')?.addEventListener('click', () => this.openAddUserModal());
+
+        c.querySelectorAll('.btnEditUserAccess').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const userId = e.currentTarget.dataset.userId;
+            this.openEditUserAccessModal(userId);
+          });
+        });
+
         c.querySelectorAll('.btnDeleteUser').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const id = e.currentTarget.dataset.userId;
-            if (confirm(`Delete user?`)) {
+            if (confirm(`Delete user account?`)) {
               this.state.users = this.state.users.filter(u => u.id !== id);
               this.saveState('users');
               this.renderCurrentTab();
             }
           });
+        });
+      }
+
+      openEditUserAccessModal(userId) {
+        const user = this.state.users.find(u => u.id === userId);
+        if (!user) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        const p = user.permissions || {
+          canAddInstruments: false,
+          canEditInstruments: true,
+          canDeleteInstruments: false,
+          canUploadExcel: false,
+          canUploadPDF: true,
+          canEditAgencies: false,
+          canManageUsers: false,
+          readOnlyMode: false
+        };
+
+        const isMukunda = (user.username === 'Mukunda');
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 class="font-bold text-lg text-slate-900">Configure Limited Access Permissions</h3>
+                <p class="text-xs text-slate-500">Edit access levels for ${user.name} (${user.username})</p>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            <form id="editUserAccessForm" class="space-y-4 text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Full Name</label>
+                  <input type="text" id="euName" value="${user.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Role *</label>
+                  <select id="euRole" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-800">
+                    <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>👑 Admin (Full Access)</option>
+                    <option value="Technician" ${user.role === 'Technician' ? 'selected' : ''}>🔧 Technician (Limited)</option>
+                    <option value="AgencyRep" ${user.role === 'AgencyRep' ? 'selected' : ''}>🏢 Agency Rep (Assigned Scope)</option>
+                    <option value="Auditor" ${user.role === 'Auditor' ? 'selected' : ''}>🔍 Auditor (Read-Only)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Username</label>
+                  <input type="text" id="euUsername" value="${user.username}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required ${isMukunda ? 'readonly' : ''}>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">Password</label>
+                  <input type="text" id="euPassword" value="${user.password}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
+                </div>
+              </div>
+
+              <!-- Granular Checkbox Permission Controls -->
+              <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                <div class="font-bold text-slate-900 text-xs flex justify-between items-center">
+                  <span>🛠️ Granular Permission Toggles</span>
+                  <span class="text-[10px] text-sky-700 font-bold">Admin Managed</span>
+                </div>
+
+                <div class="space-y-1.5 text-slate-800 font-medium">
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkAddIns" ${p.canAddInstruments ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>➕ Allow Adding New Instruments</span>
+                  </label>
+
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkEditIns" ${p.canEditInstruments ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>✏️ Allow Editing Instruments & Calibration Specs</span>
+                  </label>
+
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkDeleteIns" ${p.canDeleteInstruments ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>🗑️ Allow Deleting Instruments</span>
+                  </label>
+
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkUploadExcel" ${p.canUploadExcel ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>📊 Allow Master Excel / CSV Upload</span>
+                  </label>
+
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkUploadPDF" ${p.canUploadPDF ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>📄 Allow Uploading PDF Reports</span>
+                  </label>
+
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkEditAgencies" ${p.canEditAgencies ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>🏢 Allow Editing Agencies & NABL Scope Dates</span>
+                  </label>
+
+                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
+                    <input type="checkbox" id="chkReadOnly" ${p.readOnlyMode ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
+                    <span>🔒 Restrict Account to Read-Only Mode</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                  Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                  💾 Save Limited Access Permissions
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('editUserAccessForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          user.name = document.getElementById('euName').value.trim();
+          user.role = document.getElementById('euRole').value;
+          user.username = document.getElementById('euUsername').value.trim();
+          user.password = document.getElementById('euPassword').value.trim();
+
+          user.permissions = {
+            canAddInstruments: document.getElementById('chkAddIns').checked,
+            canEditInstruments: document.getElementById('chkEditIns').checked,
+            canDeleteInstruments: document.getElementById('chkDeleteIns').checked,
+            canUploadExcel: document.getElementById('chkUploadExcel').checked,
+            canUploadPDF: document.getElementById('chkUploadPDF').checked,
+            canEditAgencies: document.getElementById('chkEditAgencies').checked,
+            canManageUsers: (user.role === 'Admin'),
+            readOnlyMode: document.getElementById('chkReadOnly').checked
+          };
+
+          this.saveState('users');
+          showToast(`💾 Access Permissions Updated for User "${user.name}"!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
         });
       }
 
@@ -2343,21 +2653,40 @@
 
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User Account</button>
               </div>
             </form>
           </div>
         `;
         document.getElementById('newUserForm').addEventListener('submit', (e) => {
           e.preventDefault();
+
+          const role = document.getElementById('uRole').value;
+          const isTechnician = (role === 'Technician');
+          const isAuditor = (role === 'Auditor');
+
           this.state.users.push({
-            id: `USR-${Date.now()}`, name: document.getElementById('uName').value,
-            username: document.getElementById('uUsername').value, password: document.getElementById('uPassword').value,
-            email: document.getElementById('uEmail').value, role: document.getElementById('uRole').value,
-            department: 'Metrology Dept', avatar: 'MK'
+            id: `USR-${Date.now()}`, 
+            name: document.getElementById('uName').value,
+            username: document.getElementById('uUsername').value, 
+            password: document.getElementById('uPassword').value,
+            email: document.getElementById('uEmail').value, 
+            role: role,
+            department: 'Metrology Dept', 
+            avatar: 'MK',
+            permissions: {
+              canAddInstruments: !isAuditor,
+              canEditInstruments: !isAuditor,
+              canDeleteInstruments: (role === 'Admin'),
+              canUploadExcel: (role === 'Admin' || isTechnician),
+              canUploadPDF: !isAuditor,
+              canEditAgencies: (role === 'Admin'),
+              canManageUsers: (role === 'Admin'),
+              readOnlyMode: isAuditor
+            }
           });
           this.saveState('users');
-          showToast(`💾 User ${document.getElementById('uUsername').value} Saved!`);
+          showToast(`💾 User Account ${document.getElementById('uUsername').value} Created & Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
