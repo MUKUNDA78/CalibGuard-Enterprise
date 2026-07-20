@@ -295,6 +295,42 @@
       }
     }
 
+    // --- SMART DATE CONVERTER ENGINE FOR EXCEL DATES ---
+    function parseExcelDate(val) {
+      if (!val) return '2026-01-18';
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        return val.toISOString().split('T')[0];
+      }
+      if (typeof val === 'number') {
+        // Excel serial date integer (e.g. 45321)
+        const dateObj = new Date((val - (25567 + 2)) * 86400 * 1000);
+        if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+      }
+      const str = val.toString().trim();
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+
+      // Handle DD/MM/YYYY or DD-MM-YYYY format
+      const parts = str.split(/[\/\-\.]/);
+      if (parts.length === 3) {
+        if (parts[2].length === 4) {
+          // DD/MM/YYYY or MM/DD/YYYY
+          const d1 = parseInt(parts[0], 10);
+          const d2 = parseInt(parts[1], 10);
+          const y = parseInt(parts[2], 10);
+          if (d1 > 12) {
+            // Must be DD/MM/YYYY
+            const dateObj = new Date(y, d2 - 1, d1);
+            if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+          } else {
+            const dateObj = new Date(y, d1 - 1, d2);
+            if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+          }
+        }
+      }
+      return '2026-01-18';
+    }
+
     function formatDate(dateStr) {
       if (!dateStr) return 'N/A';
       const d = new Date(dateStr);
@@ -316,6 +352,19 @@
           "Calibration On Date": "2026-02-15",
           "Frequency (Months)": 6,
           "Agency Code": "PMS-LAB"
+        },
+        {
+          "Tag ID": "EQ-EXP-102",
+          "Instrument Name": "Digital Pressure Calibrator",
+          "Make": "Fluke",
+          "Serial Number": "FK-88201",
+          "Range": "0-500 PSI",
+          "Least Count": "0.01 PSI",
+          "Category": "Pressure",
+          "Location": "Hydraulics Test Lab",
+          "Calibration On Date": "2026-03-01",
+          "Frequency (Months)": 12,
+          "Agency Code": "APEX-CAL"
         }
       ];
 
@@ -445,7 +494,6 @@
         }
       }
 
-      // --- SEARCH & FILTER CALCULATOR ENGINE ---
       getFilteredInstruments() {
         const query = (this.state.searchQuery || '').toLowerCase().trim();
         const cat = this.state.filterCategory || 'All';
@@ -480,6 +528,9 @@
         });
       }
 
+      // ========================================================
+      // ULTRA-SMART EXCEL & CSV UPLOADER WITH FUZZY HEADER MATCHING
+      // ========================================================
       handleExcelUpload(file) {
         if (!file) return;
 
@@ -493,48 +544,66 @@
             const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
             if (!rawRows || rawRows.length === 0) {
-              alert('Uploaded Excel sheet is empty!');
+              alert('Uploaded Excel sheet is empty! Please check your file.');
               return;
             }
 
+            // Helper to fuzzy match keys from Excel headers
+            const findValue = (row, patterns) => {
+              const keys = Object.keys(row);
+              for (let pattern of patterns) {
+                const foundKey = keys.find(k => k.toString().toLowerCase().trim().replace(/[^a-z0-9]/g, '') === pattern);
+                if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null && row[foundKey] !== '') {
+                  return row[foundKey];
+                }
+              }
+              return '';
+            };
+
             let updatedCount = 0;
             let addedCount = 0;
+            const importedTags = [];
 
             rawRows.forEach((row, idx) => {
-              const tagId = (row['Tag ID'] || row['TagID'] || row['Asset ID'] || row['Tag/Asset ID'] || row['tagId'] || '').toString().trim();
-              const name = (row['Instrument Name'] || row['Name'] || row['Instrument'] || row['name'] || '').toString().trim();
+              // Fuzzy Header Patterns
+              const tagIdVal = findValue(row, ['tagid', 'tag', 'assetid', 'asset', 'tagassetid', 'tagno', 'equipmentid', 'gaugeid', 'id', 'slno', 'srno', 'sno', 'code', 'serial']);
+              const nameVal = findValue(row, ['instrumentname', 'name', 'instrument', 'description', 'gaugename', 'equipmentname', 'title', 'particulars', 'item']);
               
-              if (!tagId && !name) return;
+              if (!tagIdVal && !nameVal) return; // Skip completely blank rows
 
-              const make = (row['Make'] || row['Brand'] || row['Manufacturer'] || row['make'] || 'Mitutoyo').toString().trim();
-              const serialNo = (row['Serial Number'] || row['SerialNumber'] || row['Serial No'] || row['Serial'] || row['serialNo'] || 'SN-000').toString().trim();
-              const range = (row['Range'] || row['range'] || '0-150 mm').toString().trim();
-              const leastCount = (row['Least Count'] || row['LeastCount'] || row['LC'] || row['leastCount'] || '0.01 mm').toString().trim();
-              const category = (row['Category'] || row['category'] || 'Dimensional').toString().trim();
-              const location = (row['Location'] || row['Shop'] || row['location'] || 'Plant Quality Shop').toString().trim();
+              const tagId = (tagIdVal || `EQ-IMP-${Date.now()}-${idx}`).toString().trim();
+              const name = (nameVal || 'Measuring Instrument').toString().trim();
+              const make = (findValue(row, ['make', 'brand', 'manufacturer', 'company', 'mfr']) || 'Mitutoyo').toString().trim();
+              const serialNo = (findValue(row, ['serialnumber', 'serialno', 'serial', 'slno', 'srno', 'sn', 'machineno']) || 'SN-000').toString().trim();
+              const range = (findValue(row, ['range', 'capacity', 'specification', 'size']) || '0-150 mm').toString().trim();
+              const leastCount = (findValue(row, ['leastcount', 'lc', 'resolution', 'accuracy']) || '0.01 mm').toString().trim();
+              const category = (findValue(row, ['category', 'type', 'discipline', 'dept']) || 'Dimensional').toString().trim();
+              const location = (findValue(row, ['location', 'shop', 'area', 'department', 'plant', 'locationdept']) || 'Quality Inspection Shop').toString().trim();
               
-              let lastCal = row['Calibration On Date'] || row['Calibration Date'] || row['LastCalibratedDate'] || row['lastCalibratedDate'] || '2026-01-18';
-              if (lastCal instanceof Date) {
-                lastCal = lastCal.toISOString().split('T')[0];
-              } else {
-                lastCal = lastCal.toString().trim();
-              }
+              const rawCalDate = findValue(row, ['calibrationondate', 'calibrationdate', 'lastcalibrateddate', 'caldate', 'calibratedon', 'dateofcalibration', 'caldate']);
+              const lastCal = parseExcelDate(rawCalDate);
 
-              const freq = parseInt(row['Frequency (Months)'] || row['Frequency'] || row['FrequencyMonths'] || row['frequencyMonths'] || '6', 10);
-              const agencyCode = (row['Agency Code'] || row['Agency'] || row['AgencyCode'] || row['agencyCode'] || '').toString().trim();
-              
-              let agency = this.state.agencies.find(a => a.code.toLowerCase() === agencyCode.toLowerCase() || a.name.toLowerCase() === agencyCode.toLowerCase());
+              const freqRaw = findValue(row, ['frequencymonths', 'frequency', 'freq', 'frequencyinmonths', 'periodicity', 'interval', 'months']);
+              const freq = parseInt(freqRaw || '6', 10);
+
+              const agencyCodeVal = findValue(row, ['agencycode', 'agency', 'calibrationagency', 'lab', 'calibratedby']);
+              let agency = this.state.agencies.find(a => 
+                a.code.toLowerCase() === agencyCodeVal.toString().toLowerCase() || 
+                a.name.toLowerCase() === agencyCodeVal.toString().toLowerCase()
+              );
               if (!agency) agency = this.state.agencies[0];
 
               const nextDue = calculateNextDueDate(lastCal, freq);
 
+              // Check if instrument already exists by Tag ID
               const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
 
               if (existingIdx >= 0) {
+                // Update existing record
                 this.state.instruments[existingIdx] = {
                   ...this.state.instruments[existingIdx],
-                  tagId: tagId || this.state.instruments[existingIdx].tagId,
-                  name: name || this.state.instruments[existingIdx].name,
+                  tagId: tagId,
+                  name: name,
                   make, serialNo, range, leastCount, category, location,
                   frequencyMonths: freq,
                   lastCalibratedDate: lastCal,
@@ -542,11 +611,13 @@
                   agencyId: agency.id
                 };
                 updatedCount++;
+                importedTags.push(`${tagId} (${name}) - Updated`);
               } else {
+                // Insert new record
                 this.state.instruments.unshift({
                   id: `INS-${Date.now()}-${idx}`,
-                  tagId: tagId || `EQ-IMP-${Date.now()}`,
-                  name: name || 'Uploaded Instrument',
+                  tagId: tagId,
+                  name: name,
                   make, serialNo, range, leastCount, category, location,
                   frequencyMonths: freq,
                   lastCalibratedDate: lastCal,
@@ -556,17 +627,64 @@
                   pdfReportName: null
                 });
                 addedCount++;
+                importedTags.push(`${tagId} (${name}) - Added`);
               }
             });
 
             this.saveState('instruments');
-            showToast(`📊 Excel Import Successful! ${updatedCount} Updated, ${addedCount} Added!`);
+            
+            // Show Detailed Result Summary Dialog
+            this.openExcelUploadResultModal(updatedCount, addedCount, importedTags);
             this.renderCurrentTab();
           } catch (err) {
-            alert('Error parsing Excel sheet: ' + err.message);
+            alert('Error parsing Excel sheet: ' + err.message + '\n\nPlease ensure your Excel sheet has column headers like Tag ID, Name, Make, Serial No, Range, Least Count, Calibration On Date, Frequency.');
           }
         };
         reader.readAsArrayBuffer(file);
+      }
+
+      openExcelUploadResultModal(updated, added, tagList) {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-lg rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-lg">📊</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">Excel Import Results Summary</h3>
+                  <p class="text-xs text-slate-500">Master Instruments Inventory updated successfully!</p>
+                </div>
+              </div>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-center">
+              <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div class="text-xs text-emerald-800 uppercase font-extrabold">New Added</div>
+                <div class="text-3xl font-extrabold text-emerald-700 mt-1">${added}</div>
+              </div>
+              <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200">
+                <div class="text-xs text-sky-800 uppercase font-extrabold">Records Updated</div>
+                <div class="text-3xl font-extrabold text-sky-700 mt-1">${updated}</div>
+              </div>
+            </div>
+
+            <div class="space-y-1 text-xs">
+              <div class="font-bold text-slate-700">Imported Equipment Log (${tagList.length} items):</div>
+              <div class="max-h-40 overflow-y-auto p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] space-y-1">
+                ${tagList.map(t => `<div class="text-slate-800">• ${t}</div>`).join('')}
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-200">
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md">
+                ✅ View Master Inventory
+              </button>
+            </div>
+          </div>
+        `;
       }
 
       renderLoginScreen() {
@@ -642,7 +760,6 @@
               </div>
             </div>
 
-            <!-- Global Quick Search Bar -->
             <div class="flex-1 max-w-md mx-4 hidden md:block">
               <div class="relative">
                 <input type="text" id="globalSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Quick Search Instruments (Tag ID, Name, Make, Serial, Location, Agency)..." class="white-input w-full pl-9 pr-8 py-2 rounded-xl text-xs font-semibold">
@@ -852,9 +969,6 @@
         `;
       }
 
-      // ==========================================
-      // VIEW 2: MASTER INSTRUMENTS INVENTORY WITH LIVE SEARCH & FILTERS
-      // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
         const filteredList = this.getFilteredInstruments();
@@ -886,7 +1000,6 @@
               </div>
             </div>
 
-            <!-- SEARCH BAR & FILTER CONTROL BAR -->
             <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div class="flex-1 min-w-[280px] relative">
                 <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
@@ -1013,7 +1126,6 @@
           </div>
         `;
 
-        // Search Input Listener
         const searchInput = c.querySelector('#masterSearchInput');
         searchInput?.addEventListener('input', (e) => {
           this.state.searchQuery = e.target.value;
@@ -1029,19 +1141,16 @@
           this.renderCurrentTab();
         });
 
-        // Category Filter Listener
         c.querySelector('#filterCategorySelect')?.addEventListener('change', (e) => {
           this.state.filterCategory = e.target.value;
           this.renderCurrentTab();
         });
 
-        // Status Filter Listener
         c.querySelector('#filterStatusSelect')?.addEventListener('change', (e) => {
           this.state.filterStatus = e.target.value;
           this.renderCurrentTab();
         });
 
-        // Reset Filters Button
         const resetFn = () => {
           this.state.searchQuery = '';
           this.state.filterCategory = 'All';
