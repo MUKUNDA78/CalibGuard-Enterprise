@@ -447,7 +447,6 @@
       }
     }
 
-    // --- NON-DESTRUCTIVE SAFE LOCAL STORAGE ENGINE ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
@@ -497,7 +496,7 @@
       }
     };
 
-    // --- Main Controller ---
+    // --- Main Controller with Role-Based Access Control (RBAC) ---
     class CalibGuardApp {
       constructor() {
         let users = StorageManager.get('users', INITIAL_USERS);
@@ -533,6 +532,32 @@
 
       getActiveUser() {
         return this.state.users.find(u => u.id === this.state.activeUserId) || this.state.users[0];
+      }
+
+      // --- PERMISSION CHECK ENGINE ---
+      hasPermission(action) {
+        const user = this.getActiveUser();
+        const role = user.role;
+
+        if (role === 'Admin') return true;
+
+        if (role === 'Technician') {
+          if (action === 'delete_instrument' || action === 'manage_users' || action === 'edit_agency' || action === 'reset_seed') return false;
+          return true; // Can view, add, edit instruments, and upload PDF reports
+        }
+
+        if (role === 'AgencyRep') {
+          if (action === 'delete_instrument' || action === 'manage_users' || action === 'edit_agency' || action === 'upload_excel' || action === 'add_instrument' || action === 'reset_seed') return false;
+          return true; // Can view assigned instruments & upload PDF reports
+        }
+
+        if (role === 'Auditor') {
+          // Auditor is Read-Only! Cannot add/edit/delete/upload
+          if (action === 'view_dashboard' || action === 'view_master' || action === 'view_alerts' || action === 'view_agencies' || action === 'view_pdf' || action === 'export_backup') return true;
+          return false;
+        }
+
+        return false;
       }
 
       saveState(k, showToastMsg = true) {
@@ -596,7 +621,7 @@
       }
 
       resetToDefaultSeed() {
-        if (confirm('Are you sure you want to reset to initial seed data? (Custom uploads will be overwritten)')) {
+        if (confirm('Are you sure you want to reset to initial seed data?')) {
           this.state.instruments = INITIAL_INSTRUMENTS;
           this.state.agencies = INITIAL_AGENCIES;
           this.state.users = INITIAL_USERS;
@@ -607,12 +632,18 @@
       }
 
       getFilteredInstruments() {
+        const user = this.getActiveUser();
         const query = (this.state.searchQuery || '').toLowerCase().trim();
         const cat = this.state.filterCategory || 'All';
         const stat = this.state.filterStatus || 'All';
         const threshold = this.state.alertThresholdDays;
 
         return this.state.instruments.filter(ins => {
+          // Restricted AgencyRep scope filtering
+          if (user.role === 'AgencyRep' && user.assignedAgencyId) {
+            if (ins.agencyId !== user.assignedAgencyId) return false;
+          }
+
           const agency = this.state.agencies.find(a => a.id === ins.agencyId);
           const agencyName = agency ? agency.name.toLowerCase() : '';
           const agencyCode = agency ? agency.code.toLowerCase() : '';
@@ -641,6 +672,10 @@
       }
 
       handleExcelUpload(file) {
+        if (!this.hasPermission('upload_excel')) {
+          alert('Access Denied: Your account role does not have permission to upload Excel sheets.');
+          return;
+        }
         if (!file) return;
 
         const reader = new FileReader();
@@ -792,41 +827,86 @@
       renderLoginScreen() {
         document.getElementById('app').innerHTML = `
           <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-            <div class="white-card modal-enter w-full max-w-md rounded-2xl p-8 border border-slate-200 shadow-xl space-y-6 bg-white">
+            <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-8 border border-slate-200 shadow-xl space-y-6 bg-white">
               <div class="text-center space-y-2">
                 <div class="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 font-extrabold text-2xl mx-auto flex items-center justify-center border border-sky-300">
                   CG
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">CalibGuard Enterprise</h2>
-                <p class="text-xs text-slate-500">Measuring Instruments Calibration Portal</p>
+                <p class="text-xs text-slate-500">Measuring Instruments Calibration Portal & Multi-User Access System</p>
               </div>
 
-              <form id="loginForm" class="space-y-4 text-xs">
-                <div>
-                  <label class="block text-slate-700 font-semibold mb-1">Username</label>
-                  <input type="text" id="loginUsername" value="Mukunda" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Username (Mukunda)" required>
-                </div>
-                <div>
-                  <label class="block text-slate-700 font-semibold mb-1">Password</label>
-                  <input type="password" id="loginPassword" value="Tejas" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Password (Tejas)" required>
-                </div>
-
-                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
-                  <div class="font-bold text-sky-700 flex items-center justify-between">
-                    <span>🔑 Active Login Credentials:</span>
-                    <span class="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-bold">Admin</span>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-4 text-xs">
+                  <div>
+                    <label class="block text-slate-700 font-semibold mb-1">Username</label>
+                    <input type="text" id="loginUsername" value="Mukunda" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Username (Mukunda)" required>
                   </div>
-                  <div>User Name: <strong class="text-slate-900 font-mono">Mukunda</strong></div>
-                  <div>Password: <strong class="text-slate-900 font-mono">Tejas</strong></div>
-                </div>
+                  <div>
+                    <label class="block text-slate-700 font-semibold mb-1">Password</label>
+                    <input type="password" id="loginPassword" value="Tejas" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Password (Tejas)" required>
+                  </div>
 
-                <button type="submit" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm transition-all shadow-md flex items-center justify-center">
-                  Sign In as Mukunda
-                </button>
-              </form>
+                  <button type="submit" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm transition-all shadow-md flex items-center justify-center space-x-1">
+                    <span>Sign In to System</span>
+                  </button>
+                </form>
+
+                <!-- Role-Based Credentials Directory -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
+                  <div class="font-bold text-slate-900 border-b border-slate-200 pb-2 flex justify-between items-center">
+                    <span>🔑 Role-Based Access Credentials</span>
+                    <span class="text-[10px] text-sky-700 font-mono">Select to Quick Login</span>
+                  </div>
+
+                  <div class="space-y-2 text-[11px]">
+                    <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="Mukunda" data-p="Tejas">
+                      <div class="flex justify-between font-bold text-slate-900">
+                        <span>1. Mukunda (Admin)</span>
+                        <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">Full Control</span>
+                      </div>
+                      <div class="text-slate-500 font-mono">User: Mukunda | Pass: Tejas</div>
+                    </div>
+
+                    <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="elena" data-p="elena123">
+                      <div class="flex justify-between font-bold text-slate-900">
+                        <span>2. Elena Rostova (Technician)</span>
+                        <span class="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">Edit/PDF Only</span>
+                      </div>
+                      <div class="text-slate-500 font-mono">User: elena | Pass: elena123</div>
+                    </div>
+
+                    <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="david" data-p="david123">
+                      <div class="flex justify-between font-bold text-slate-900">
+                        <span>3. David Miller (Agency Rep)</span>
+                        <span class="text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded text-[10px]">Assigned Agency Scope</span>
+                      </div>
+                      <div class="text-slate-500 font-mono">User: david | Pass: david123</div>
+                    </div>
+
+                    <div class="p-2 rounded-lg bg-white border border-slate-200 hover:border-sky-400 cursor-pointer btnQuickFill" data-u="priya" data-p="priya123">
+                      <div class="flex justify-between font-bold text-slate-900">
+                        <span>4. Priya Sharma (Auditor)</span>
+                        <span class="text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded text-[10px]">Read-Only View</span>
+                      </div>
+                      <div class="text-slate-500 font-mono">User: priya | Pass: priya123</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         `;
+
+        document.querySelectorAll('.btnQuickFill').forEach(el => {
+          el.addEventListener('click', (e) => {
+            const u = e.currentTarget.dataset.u;
+            const p = e.currentTarget.dataset.p;
+            document.getElementById('loginUsername').value = u;
+            document.getElementById('loginPassword').value = p;
+          });
+        });
 
         document.getElementById('loginForm').addEventListener('submit', (e) => {
           e.preventDefault();
@@ -845,7 +925,7 @@
             this.saveState('activeUserId', false);
             this.renderMainApp();
           } else {
-            alert('Invalid credentials! Please use Username: Mukunda and Password: Tejas');
+            alert('Invalid credentials! Check username & password.');
           }
         });
       }
@@ -871,17 +951,21 @@
             </div>
 
             <div class="flex items-center space-x-2">
-              <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
-                <span>📊 Upload Excel Sheet</span>
-              </button>
+              ${this.hasPermission('upload_excel') ? `
+                <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
+                  <span>📊 Upload Excel Sheet</span>
+                </button>
+              ` : ''}
 
               <button id="btnHeaderExportJSON" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                 <span>💾 Backup (.json)</span>
               </button>
 
-              <button id="btnHeaderImportJSON" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
-                <span>📥 Restore (.json)</span>
-              </button>
+              ${this.hasPermission('edit_agency') ? `
+                <button id="btnHeaderImportJSON" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
+                  <span>📥 Restore (.json)</span>
+                </button>
+              ` : ''}
 
               <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
                 <span class="text-xs text-slate-600">Alert Window:</span>
@@ -918,34 +1002,38 @@
                 <button data-tab="dashboard" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Dashboard</button>
                 <button data-tab="alerts" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-amber-700">Alert Center</button>
                 <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Calibration Agencies</button>
-                <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
+                <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles & Access</button>
               </div>
 
-              <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 space-y-2.5">
-                <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
-                  <span>📊 Master Excel / CSV Import</span>
+              ${this.hasPermission('upload_excel') ? `
+                <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 space-y-2.5">
+                  <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
+                    <span>📊 Master Excel / CSV Import</span>
+                  </div>
+                  <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files to batch update inventory</p>
+                  <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
+                    <span>📊 Upload Excel Sheet</span>
+                  </button>
+                  <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-800 hover:underline text-center block font-bold">
+                    📥 Download Excel Template (.xlsx)
+                  </button>
                 </div>
-                <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files to batch update inventory</p>
-                <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
-                  <span>📊 Upload Excel Sheet</span>
-                </button>
-                <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-800 hover:underline text-center block font-bold">
-                  📥 Download Excel Template (.xlsx)
-                </button>
-              </div>
+              ` : `
+                <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 font-semibold">
+                  🔒 Logged in as: <strong>${user.role}</strong> (${user.name})
+                </div>
+              `}
 
               <div class="pt-4 border-t border-slate-200 space-y-2">
                 <button id="btnSidebarExportJSON" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
                   <span>💾 Backup Database (.json)</span>
                 </button>
 
-                <button id="btnSidebarImportJSON" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
-                  <span>📥 Restore Database (.json)</span>
-                </button>
-
-                <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
-                  🔄 Reset System Seed Data
-                </button>
+                ${this.hasPermission('reset_seed') ? `
+                  <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
+                    🔄 Reset System Seed Data
+                  </button>
+                ` : ''}
               </div>
             </aside>
 
@@ -977,8 +1065,7 @@
         document.getElementById('btnHeaderExportJSON')?.addEventListener('click', () => this.exportBackupJSON());
         document.getElementById('btnSidebarExportJSON')?.addEventListener('click', () => this.exportBackupJSON());
         
-        document.getElementById('btnHeaderImportJSON')?.addEventListener('click', () => jsonInput.click());
-        document.getElementById('btnSidebarImportJSON')?.addEventListener('click', () => jsonInput.click());
+        document.getElementById('btnHeaderImportJSON')?.addEventListener('click', () => jsonInput?.click());
 
         jsonInput?.addEventListener('change', (e) => {
           const file = e.target.files[0];
@@ -1018,8 +1105,8 @@
 
         const excelInput = document.getElementById('excelFileInput');
         
-        document.getElementById('btnHeaderUploadExcel')?.addEventListener('click', () => excelInput.click());
-        document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => excelInput.click());
+        document.getElementById('btnHeaderUploadExcel')?.addEventListener('click', () => excelInput?.click());
+        document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => excelInput?.click());
         document.getElementById('btnDownloadTemplate')?.addEventListener('click', () => downloadExcelTemplate());
 
         excelInput?.addEventListener('change', (e) => {
@@ -1103,6 +1190,7 @@
         const threshold = this.state.alertThresholdDays;
         const filteredList = this.getFilteredInstruments();
         const totalCount = this.state.instruments.length;
+        const user = this.getActiveUser();
 
         c.innerHTML = `
           <div class="space-y-4">
@@ -1118,15 +1206,23 @@
               </div>
 
               <div class="flex items-center space-x-2">
-                <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
-                  <span>📊 Upload Excel Sheet</span>
-                </button>
-                <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save Data
-                </button>
-                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
-                  + Add New Instrument
-                </button>
+                ${this.hasPermission('upload_excel') ? `
+                  <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                    <span>📊 Upload Excel Sheet</span>
+                  </button>
+                ` : ''}
+
+                ${user.role !== 'Auditor' ? `
+                  <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                    💾 Save Data
+                  </button>
+                ` : ''}
+
+                ${this.hasPermission('add_instrument') ? `
+                  <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
+                    + Add New Instrument
+                  </button>
+                ` : ''}
               </div>
             </div>
 
@@ -1223,18 +1319,26 @@
                             ` : `
                               <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
                             `}
-                            <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
-                              📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
-                            </button>
+
+                            ${user.role !== 'Auditor' ? `
+                              <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
+                                📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
+                              </button>
+                            ` : ''}
                           </td>
 
                           <td class="py-3 px-3 text-right space-y-1">
-                            <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
-                              ✏️ Edit & Save
-                            </button>
-                            <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
-                              🗑️ Delete
-                            </button>
+                            ${user.role !== 'Auditor' ? `
+                              <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
+                                ✏️ Edit & Save
+                              </button>
+                            ` : '<span class="text-[10px] text-slate-400 italic">Read Only</span>'}
+
+                            ${this.hasPermission('delete_instrument') ? `
+                              <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
+                                🗑️ Delete
+                              </button>
+                            ` : ''}
                           </td>
                         </tr>
                       `;
@@ -1294,7 +1398,7 @@
         c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
 
         const excelInput = document.getElementById('excelFileInput');
-        c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput.click());
+        c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput?.click());
 
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
@@ -1354,6 +1458,11 @@
       }
 
       openAddInstrumentModal() {
+        if (!this.hasPermission('add_instrument')) {
+          alert('Access Denied: Your account role does not have permission to add instruments.');
+          return;
+        }
+
         const m = document.getElementById('modalContainer');
         m.classList.remove('hidden');
 
@@ -1509,7 +1618,9 @@
                 <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Expiry</h2>
                 <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Due Dates & Modification Options</p>
               </div>
-              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
+              ${this.hasPermission('edit_agency') ? `
+                <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
+              ` : ''}
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1553,19 +1664,24 @@
                         <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
                           📜 View NABL Scope
                         </button>
-                        <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
-                          📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
-                        </button>
+
+                        ${this.hasPermission('edit_agency') ? `
+                          <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
+                            📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
+                          </button>
+                        ` : '<span class="text-[10px] text-slate-400 italic flex items-center justify-center">View Scope Only</span>'}
                       </div>
 
-                      <div class="flex justify-between items-center space-x-2">
-                        <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
-                          ✏️ Edit & Modify Agency
-                        </button>
-                        <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
-                          🗑️ Delete
-                        </button>
-                      </div>
+                      ${this.hasPermission('edit_agency') ? `
+                        <div class="flex justify-between items-center space-x-2">
+                          <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
+                            ✏️ Edit & Modify Agency
+                          </button>
+                          <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      ` : ''}
                     </div>
                   </div>
                 `;
@@ -1631,6 +1747,11 @@
       }
 
       openEditAgencyModal(agencyId) {
+        if (!this.hasPermission('edit_agency')) {
+          alert('Access Denied: Your account role does not have permission to edit agency details.');
+          return;
+        }
+
         const agency = this.state.agencies.find(a => a.id === agencyId);
         if (!agency) return;
 
@@ -2109,18 +2230,70 @@
         c.innerHTML = `
           <div class="space-y-6">
             <div class="flex items-center justify-between">
-              <h2 class="text-2xl font-bold text-slate-900">User Roles & Accounts</h2>
-              <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add User</button>
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">User Accounts & Role Permissions Directory</h2>
+                <p class="text-sm text-slate-500">Configure role-based access for Admins, Technicians, Agency Reps, and Auditors</p>
+              </div>
+              ${this.hasPermission('manage_users') ? `
+                <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add User</button>
+              ` : ''}
             </div>
+
+            <!-- Role Permissions Matrix Table -->
+            <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
+              <h3 class="font-bold text-sm text-slate-900">🛡️ Active Role-Based Access Control (RBAC) Matrix</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+                  <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px]">
+                    <tr>
+                      <th class="py-2.5 px-3">Role</th>
+                      <th class="py-2.5 px-3">Default Account</th>
+                      <th class="py-2.5 px-3">Password</th>
+                      <th class="py-2.5 px-3">Permissions Scope</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    <tr class="bg-white">
+                      <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Admin</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">Mukunda</td>
+                      <td class="py-2.5 px-3 font-mono">Tejas</td>
+                      <td class="py-2.5 px-3 text-slate-700">Full Access (Add/Edit/Delete, Excel Upload, Agency Edit, User Admin)</td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                      <td class="py-2.5 px-3 font-bold text-amber-700">🔧 Technician</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">elena</td>
+                      <td class="py-2.5 px-3 font-mono">elena123</td>
+                      <td class="py-2.5 px-3 text-slate-700">Add/Edit Instruments, Calibration Updates, PDF Upload (No Deletions)</td>
+                    </tr>
+                    <tr class="bg-white">
+                      <td class="py-2.5 px-3 font-bold text-purple-700">🏢 Agency Rep</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">david</td>
+                      <td class="py-2.5 px-3 font-mono">david123</td>
+                      <td class="py-2.5 px-3 text-slate-700">Assigned Agency Scope Only (Precision Metrology), Upload Reports</td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                      <td class="py-2.5 px-3 font-bold text-sky-700">🔍 Auditor</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">priya</td>
+                      <td class="py-2.5 px-3 font-mono">priya123</td>
+                      <td class="py-2.5 px-3 text-slate-700">Read-Only Compliance Access (All View/Print, No Modifications)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               ${this.state.users.map(u => `
                 <div class="white-card p-4 rounded-2xl border border-slate-200 space-y-2">
                   <div class="font-bold text-sky-700 text-base">${u.name}</div>
                   <div class="text-xs text-slate-700">Username: <code class="text-sky-800 font-mono font-bold">${u.username}</code></div>
                   <div class="text-xs text-slate-600">Role: <strong class="text-slate-900">${u.role}</strong></div>
-                  <div class="pt-2 border-t border-slate-200 flex justify-end">
-                    <button class="btnDeleteUser px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-user-id="${u.id}">🗑️ Delete User</button>
-                  </div>
+                  
+                  ${this.hasPermission('manage_users') ? `
+                    <div class="pt-2 border-t border-slate-200 flex justify-end">
+                      <button class="btnDeleteUser px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-user-id="${u.id}">🗑️ Delete User</button>
+                    </div>
+                  ` : ''}
                 </div>
               `).join('')}
             </div>
@@ -2140,11 +2313,16 @@
       }
 
       openAddUserModal() {
+        if (!this.hasPermission('manage_users')) {
+          alert('Access Denied: Your account role does not have permission to manage users.');
+          return;
+        }
+
         const m = document.getElementById('modalContainer');
         m.classList.remove('hidden');
         m.innerHTML = `
           <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
-            <h3 class="font-bold text-lg text-slate-900">Add System User</h3>
+            <h3 class="font-bold text-lg text-slate-900">Add System User & Assign Role</h3>
             <form id="newUserForm" class="space-y-3 text-xs">
               <input type="text" id="uName" placeholder="Full Name" class="white-input w-full p-2.5 rounded-xl" required>
               <div class="grid grid-cols-2 gap-2">
@@ -2152,12 +2330,17 @@
                 <input type="password" id="uPassword" placeholder="Password" class="white-input w-full p-2.5 rounded-xl font-mono" required>
               </div>
               <input type="email" id="uEmail" placeholder="Email" class="white-input w-full p-2.5 rounded-xl" required>
-              <select id="uRole" class="white-input w-full p-2.5 rounded-xl">
-                <option value="Admin">Admin</option>
-                <option value="Technician">Technician</option>
-                <option value="AgencyRep">Agency Representative</option>
-                <option value="Auditor">Auditor</option>
-              </select>
+              
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Assign User Role *</label>
+                <select id="uRole" class="white-input w-full p-2.5 rounded-xl font-semibold">
+                  <option value="Admin">Admin (Full System Control)</option>
+                  <option value="Technician">Technician (Add/Edit Instruments, No Delete)</option>
+                  <option value="AgencyRep">Agency Representative (Assigned Scope Only)</option>
+                  <option value="Auditor">Auditor (Read-Only Compliance View)</option>
+                </select>
+              </div>
+
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
                 <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User</button>
