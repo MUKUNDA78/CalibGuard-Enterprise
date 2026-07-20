@@ -302,7 +302,6 @@
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    // --- NATIVE EXCEL (.XLSX) GENERATION & TEMPLATE EXPORT ---
     function downloadExcelTemplate() {
       const templateData = [
         {
@@ -317,19 +316,6 @@
           "Calibration On Date": "2026-02-15",
           "Frequency (Months)": 6,
           "Agency Code": "PMS-LAB"
-        },
-        {
-          "Tag ID": "EQ-EXP-102",
-          "Instrument Name": "Digital Pressure Calibrator",
-          "Make": "Fluke",
-          "Serial Number": "FK-88201",
-          "Range": "0-500 PSI",
-          "Least Count": "0.01 PSI",
-          "Category": "Pressure",
-          "Location": "Hydraulics Test Lab",
-          "Calibration On Date": "2026-03-01",
-          "Frequency (Months)": 12,
-          "Agency Code": "APEX-CAL"
         }
       ];
 
@@ -416,7 +402,10 @@
           isLoggedIn: StorageManager.get('isLoggedIn', false),
           activeUserId: StorageManager.get('activeUserId', 'USR-000'),
           alertThresholdDays: StorageManager.get('alertThresholdDays', 7),
-          activeTab: 'master'
+          activeTab: 'master',
+          searchQuery: '',
+          filterCategory: 'All',
+          filterStatus: 'All'
         };
         this.init();
       }
@@ -456,7 +445,41 @@
         }
       }
 
-      // --- EXCEL & CSV UPLOAD & UPSERT ENGINE ---
+      // --- SEARCH & FILTER CALCULATOR ENGINE ---
+      getFilteredInstruments() {
+        const query = (this.state.searchQuery || '').toLowerCase().trim();
+        const cat = this.state.filterCategory || 'All';
+        const stat = this.state.filterStatus || 'All';
+        const threshold = this.state.alertThresholdDays;
+
+        return this.state.instruments.filter(ins => {
+          const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+          const agencyName = agency ? agency.name.toLowerCase() : '';
+          const agencyCode = agency ? agency.code.toLowerCase() : '';
+
+          const matchesQuery = !query || 
+            ins.tagId.toLowerCase().includes(query) ||
+            ins.name.toLowerCase().includes(query) ||
+            (ins.make && ins.make.toLowerCase().includes(query)) ||
+            (ins.serialNo && ins.serialNo.toLowerCase().includes(query)) ||
+            (ins.range && ins.range.toLowerCase().includes(query)) ||
+            (ins.leastCount && ins.leastCount.toLowerCase().includes(query)) ||
+            (ins.location && ins.location.toLowerCase().includes(query)) ||
+            agencyName.includes(query) ||
+            agencyCode.includes(query);
+
+          const matchesCat = (cat === 'All') || (ins.category === cat);
+
+          const alertInfo = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+          const matchesStat = (stat === 'All') || 
+            (stat === 'Overdue' && alertInfo.key === 'overdue') ||
+            (stat === 'Urgent' && alertInfo.key === 'due-urgent') ||
+            (stat === 'Compliant' && alertInfo.key === 'valid');
+
+          return matchesQuery && matchesCat && matchesStat;
+        });
+      }
+
       handleExcelUpload(file) {
         if (!file) return;
 
@@ -478,7 +501,6 @@
             let addedCount = 0;
 
             rawRows.forEach((row, idx) => {
-              // Flexible column header mapping
               const tagId = (row['Tag ID'] || row['TagID'] || row['Asset ID'] || row['Tag/Asset ID'] || row['tagId'] || '').toString().trim();
               const name = (row['Instrument Name'] || row['Name'] || row['Instrument'] || row['name'] || '').toString().trim();
               
@@ -491,7 +513,6 @@
               const category = (row['Category'] || row['category'] || 'Dimensional').toString().trim();
               const location = (row['Location'] || row['Shop'] || row['location'] || 'Plant Quality Shop').toString().trim();
               
-              // Date handling
               let lastCal = row['Calibration On Date'] || row['Calibration Date'] || row['LastCalibratedDate'] || row['lastCalibratedDate'] || '2026-01-18';
               if (lastCal instanceof Date) {
                 lastCal = lastCal.toISOString().split('T')[0];
@@ -507,11 +528,9 @@
 
               const nextDue = calculateNextDueDate(lastCal, freq);
 
-              // Check if instrument already exists by Tag ID
               const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
 
               if (existingIdx >= 0) {
-                // Update existing record
                 this.state.instruments[existingIdx] = {
                   ...this.state.instruments[existingIdx],
                   tagId: tagId || this.state.instruments[existingIdx].tagId,
@@ -524,7 +543,6 @@
                 };
                 updatedCount++;
               } else {
-                // Insert new record
                 this.state.instruments.unshift({
                   id: `INS-${Date.now()}-${idx}`,
                   tagId: tagId || `EQ-IMP-${Date.now()}`,
@@ -624,8 +642,16 @@
               </div>
             </div>
 
+            <!-- Global Quick Search Bar -->
+            <div class="flex-1 max-w-md mx-4 hidden md:block">
+              <div class="relative">
+                <input type="text" id="globalSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Quick Search Instruments (Tag ID, Name, Make, Serial, Location, Agency)..." class="white-input w-full pl-9 pr-8 py-2 rounded-xl text-xs font-semibold">
+                <span class="absolute left-3 top-2.5 text-slate-400 font-bold">🔍</span>
+                ${this.state.searchQuery ? `<button id="btnHeaderClearSearch" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-700 font-bold text-xs">✕</button>` : ''}
+              </div>
+            </div>
+
             <div class="flex items-center space-x-3">
-              <!-- Header Excel Upload Button -->
               <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                 <span>📊 Upload Excel Sheet</span>
               </button>
@@ -672,7 +698,6 @@
                 <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
               </div>
 
-              <!-- Dedicated Native Excel Import Section -->
               <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 space-y-2.5">
                 <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
                   <span>📊 Master Excel / CSV Import</span>
@@ -700,7 +725,6 @@
 
           <div id="modalContainer" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"></div>
           
-          <!-- Unified Excel & CSV Input -->
           <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
           <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
           <input type="file" id="nablScopeFileInput" accept="application/pdf,image/*" class="hidden">
@@ -717,6 +741,21 @@
         document.getElementById('btnHeaderSaveAll')?.addEventListener('click', () => this.saveAllData());
         document.getElementById('btnResetSeedData')?.addEventListener('click', () => this.resetToDefaultSeed());
 
+        const globalSearch = document.getElementById('globalSearchInput');
+        globalSearch?.addEventListener('input', (e) => {
+          this.state.searchQuery = e.target.value;
+          if (this.state.activeTab !== 'master') {
+            this.switchTab('master');
+          } else {
+            this.renderCurrentTab();
+          }
+        });
+
+        document.getElementById('btnHeaderClearSearch')?.addEventListener('click', () => {
+          this.state.searchQuery = '';
+          this.renderCurrentTab();
+        });
+
         document.getElementById('globalThresholdSelect')?.addEventListener('change', (e) => {
           this.state.alertThresholdDays = parseInt(e.target.value, 10);
           this.saveState('alertThresholdDays');
@@ -730,7 +769,6 @@
           this.renderLoginScreen();
         });
 
-        // Excel upload handlers
         const excelInput = document.getElementById('excelFileInput');
         
         document.getElementById('btnHeaderUploadExcel')?.addEventListener('click', () => excelInput.click());
@@ -741,7 +779,7 @@
           const file = e.target.files[0];
           if (file) {
             this.handleExcelUpload(file);
-            e.target.value = ''; // Reset input
+            e.target.value = '';
           }
         });
       }
@@ -815,24 +853,29 @@
       }
 
       // ==========================================
-      // VIEW 2: MASTER INSTRUMENTS INVENTORY (WITH EXCEL UPLOAD)
+      // VIEW 2: MASTER INSTRUMENTS INVENTORY WITH LIVE SEARCH & FILTERS
       // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
+        const filteredList = this.getFilteredInstruments();
+        const totalCount = this.state.instruments.length;
+
         c.innerHTML = `
-          <div class="space-y-6">
+          <div class="space-y-4">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <div class="flex items-center space-x-2">
                   <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
-                  <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">${this.state.instruments.length} Registered</span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">
+                    Showing ${filteredList.length} of ${totalCount}
+                  </span>
                 </div>
-                <p class="text-sm text-slate-500">Make, Serial No, Range, LC, Calibration On Date, Frequency, Due Date, Agency</p>
+                <p class="text-sm text-slate-500">Live search & filter across Tag ID, Name, Make, Serial, Range, Location, & Agency</p>
               </div>
 
               <div class="flex items-center space-x-2">
                 <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
-                  <span>📊 Upload Excel Sheet (.xlsx / .csv)</span>
+                  <span>📊 Upload Excel Sheet</span>
                 </button>
                 <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
                   💾 Save Inventory Data
@@ -840,6 +883,47 @@
                 <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
                   + Add New Instrument
                 </button>
+              </div>
+            </div>
+
+            <!-- SEARCH BAR & FILTER CONTROL BAR -->
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex-1 min-w-[280px] relative">
+                <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
+                <span class="absolute left-3 top-3 text-slate-400 font-bold">🔍</span>
+                ${this.state.searchQuery ? `<button id="btnClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 font-bold text-xs">✕ Clear</button>` : ''}
+              </div>
+
+              <div class="flex items-center space-x-3 flex-wrap gap-2">
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-bold text-slate-600">Category:</span>
+                  <select id="filterCategorySelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
+                    <option value="All" ${this.state.filterCategory === 'All' ? 'selected' : ''}>All Categories</option>
+                    <option value="Dimensional" ${this.state.filterCategory === 'Dimensional' ? 'selected' : ''}>Dimensional</option>
+                    <option value="Pressure" ${this.state.filterCategory === 'Pressure' ? 'selected' : ''}>Pressure</option>
+                    <option value="Thermal" ${this.state.filterCategory === 'Thermal' ? 'selected' : ''}>Thermal</option>
+                    <option value="Torque & Force" ${this.state.filterCategory === 'Torque & Force' ? 'selected' : ''}>Torque & Force</option>
+                    <option value="Electrical" ${this.state.filterCategory === 'Electrical' ? 'selected' : ''}>Electrical</option>
+                    <option value="Mass & Weight" ${this.state.filterCategory === 'Mass & Weight' ? 'selected' : ''}>Mass & Weight</option>
+                    <option value="Other" ${this.state.filterCategory === 'Other' ? 'selected' : ''}>Other</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-bold text-slate-600">Status:</span>
+                  <select id="filterStatusSelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
+                    <option value="All" ${this.state.filterStatus === 'All' ? 'selected' : ''}>All Statuses</option>
+                    <option value="Compliant" ${this.state.filterStatus === 'Compliant' ? 'selected' : ''}>🟢 Compliant</option>
+                    <option value="Urgent" ${this.state.filterStatus === 'Urgent' ? 'selected' : ''}>🟡 Due Soon (≤ ${threshold}d)</option>
+                    <option value="Overdue" ${this.state.filterStatus === 'Overdue' ? 'selected' : ''}>🔴 Overdue</option>
+                  </select>
+                </div>
+
+                ${(this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All') ? `
+                  <button id="btnResetAllFilters" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors">
+                    ✕ Reset Filters
+                  </button>
+                ` : ''}
               </div>
             </div>
 
@@ -862,7 +946,7 @@
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200">
-                    ${this.state.instruments.map(ins => {
+                    ${filteredList.length > 0 ? filteredList.map(ins => {
                       const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
                       const agency = this.state.agencies.find(a => a.id === ins.agencyId);
                       const hasPdf = ins.pdfReportName || ins.pdfReportData;
@@ -911,13 +995,64 @@
                           </td>
                         </tr>
                       `;
-                    }).join('')}
+                    }).join('') : `
+                      <tr>
+                        <td colspan="11" class="py-8 text-center text-slate-500 space-y-2">
+                          <div class="text-2xl">🔍 No Matching Measuring Instruments Found</div>
+                          <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
+                          <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
+                            Reset Search & Filters
+                          </button>
+                        </td>
+                      </tr>
+                    `}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
         `;
+
+        // Search Input Listener
+        const searchInput = c.querySelector('#masterSearchInput');
+        searchInput?.addEventListener('input', (e) => {
+          this.state.searchQuery = e.target.value;
+          const globalInput = document.getElementById('globalSearchInput');
+          if (globalInput) globalInput.value = e.target.value;
+          this.renderCurrentTab();
+        });
+
+        c.querySelector('#btnClearSearch')?.addEventListener('click', () => {
+          this.state.searchQuery = '';
+          const globalInput = document.getElementById('globalSearchInput');
+          if (globalInput) globalInput.value = '';
+          this.renderCurrentTab();
+        });
+
+        // Category Filter Listener
+        c.querySelector('#filterCategorySelect')?.addEventListener('change', (e) => {
+          this.state.filterCategory = e.target.value;
+          this.renderCurrentTab();
+        });
+
+        // Status Filter Listener
+        c.querySelector('#filterStatusSelect')?.addEventListener('change', (e) => {
+          this.state.filterStatus = e.target.value;
+          this.renderCurrentTab();
+        });
+
+        // Reset Filters Button
+        const resetFn = () => {
+          this.state.searchQuery = '';
+          this.state.filterCategory = 'All';
+          this.state.filterStatus = 'All';
+          const globalInput = document.getElementById('globalSearchInput');
+          if (globalInput) globalInput.value = '';
+          this.renderCurrentTab();
+        };
+
+        c.querySelector('#btnResetAllFilters')?.addEventListener('click', resetFn);
+        c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
 
         const excelInput = document.getElementById('excelFileInput');
         c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput.click());
