@@ -94,6 +94,9 @@
   </div>
 
   <script>
+    // --- APP DATA VERSION FOR AUTO CACHE PURGING & SYNC ---
+    const CALIBGUARD_DATA_VERSION = "2026.07.20.v5";
+
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
       { 
@@ -158,7 +161,6 @@
       { id: "USR-004", name: "Priya Sharma", username: "priya", password: "priya123", email: "p.sharma@company.com", role: "Auditor", department: "Compliance & Safety Audit", avatar: "PS" }
     ];
 
-    // --- FULL MASTER INSTRUMENTS INVENTORY SEED ---
     const INITIAL_INSTRUMENTS = [
       { 
         id: "INS-001", 
@@ -448,23 +450,25 @@
       }
     }
 
+    // --- AUTO-PURGING SCHEMA & STORAGE MANAGER ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
+          const version = localStorage.getItem('calibguard_version');
+          if (version !== CALIBGUARD_DATA_VERSION) {
+            console.log(`Upgrading storage to version ${CALIBGUARD_DATA_VERSION}`);
+            localStorage.clear();
+            localStorage.setItem('calibguard_version', CALIBGUARD_DATA_VERSION);
+            localStorage.setItem(`calibguard_${key}`, JSON.stringify(def));
+            return def;
+          }
+
           const item = localStorage.getItem(`calibguard_${key}`); 
           if (item) {
             const parsed = JSON.parse(item);
             if (Array.isArray(parsed) && parsed.length > 0) {
               if (key === 'instruments') {
-                const map = new Map();
-                // Merge seed first so default updated master items exist
-                def.forEach(i => map.set(i.tagId.toLowerCase(), i));
-                // Merge stored items
-                parsed.forEach(i => {
-                  if (i.tagId) map.set(i.tagId.toLowerCase(), i);
-                });
-
-                return Array.from(map.values()).map(ins => ({
+                return parsed.map(ins => ({
                   id: ins.id || `INS-${Math.random()}`,
                   tagId: ins.tagId || 'EQ-CAL-000',
                   name: ins.name || 'Measuring Instrument',
@@ -492,6 +496,7 @@
       },
       set: (key, val) => { 
         try { 
+          localStorage.setItem('calibguard_version', CALIBGUARD_DATA_VERSION);
           localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); 
         } catch (e) { 
           console.warn(`localStorage quota error, stripping binary attachments for ${key}`);
@@ -556,13 +561,20 @@
         showToast('💾 All Master Data Successfully Saved & Persisted!');
       }
 
+      forceReloadMasterSeed() {
+        localStorage.clear();
+        localStorage.setItem('calibguard_version', CALIBGUARD_DATA_VERSION);
+        this.state.instruments = INITIAL_INSTRUMENTS;
+        this.state.agencies = INITIAL_AGENCIES;
+        this.state.users = INITIAL_USERS;
+        this.saveAllData();
+        showToast('🔄 Master Data Successfully Reset & Synced!');
+        this.renderCurrentTab();
+      }
+
       resetToDefaultSeed() {
-        if (confirm('Are you sure you want to reload default master instruments and agencies?')) {
-          this.state.instruments = INITIAL_INSTRUMENTS;
-          this.state.agencies = INITIAL_AGENCIES;
-          this.state.users = INITIAL_USERS;
-          this.saveAllData();
-          this.renderCurrentTab();
+        if (confirm('Are you sure you want to reset & reload the master dataset?')) {
+          this.forceReloadMasterSeed();
         }
       }
 
@@ -831,6 +843,10 @@
             </div>
 
             <div class="flex items-center space-x-3">
+              <button id="btnHeaderSyncData" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-md flex items-center space-x-1 transition-all">
+                <span>🔄 Sync Latest Data</span>
+              </button>
+
               <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                 <span>📊 Upload Excel Sheet</span>
               </button>
@@ -890,9 +906,13 @@
                 </button>
               </div>
 
-              <div class="pt-4 border-t border-slate-200">
+              <div class="pt-4 border-t border-slate-200 space-y-2">
+                <button id="btnSidebarSyncData" class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
+                  <span>🔄 Sync & Load Master Data</span>
+                </button>
+
                 <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
-                  🔄 Reset Master Data Seed
+                  🔄 Reset System Seed Data
                 </button>
               </div>
             </aside>
@@ -919,6 +939,10 @@
         document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
         document.getElementById('btnHeaderSaveAll')?.addEventListener('click', () => this.saveAllData());
         document.getElementById('btnResetSeedData')?.addEventListener('click', () => this.resetToDefaultSeed());
+        
+        const syncFn = () => this.resetToDefaultSeed();
+        document.getElementById('btnHeaderSyncData')?.addEventListener('click', syncFn);
+        document.getElementById('btnSidebarSyncData')?.addEventListener('click', syncFn);
 
         const globalSearch = document.getElementById('globalSearchInput');
         globalSearch?.addEventListener('input', (e) => {
@@ -1043,13 +1067,16 @@
                 <div class="flex items-center space-x-2">
                   <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
                   <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">
-                    Showing ${filteredList.length} of ${totalCount}
+                    Showing ${filteredList.length} of ${totalCount} Registered Instruments
                   </span>
                 </div>
                 <p class="text-sm text-slate-500">Live search & filter across Tag ID, Name, Make, Serial, Range, Location, & Agency</p>
               </div>
 
               <div class="flex items-center space-x-2">
+                <button id="btnTableSyncData" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-md">
+                  🔄 Sync & Reload Data
+                </button>
                 <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
                   <span>📊 Upload Excel Sheet</span>
                 </button>
@@ -1224,6 +1251,7 @@
 
         c.querySelector('#btnResetAllFilters')?.addEventListener('click', resetFn);
         c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
+        c.querySelector('#btnTableSyncData')?.addEventListener('click', () => this.resetToDefaultSeed());
 
         const excelInput = document.getElementById('excelFileInput');
         c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput.click());
