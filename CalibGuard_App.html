@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalibGuard Enterprise | Measuring Instruments Calibration System</title>
+  
+  <!-- Tailwind CSS & Lucide Icons CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+  <style>
+    :root {
+      --bg-white: #ffffff;
+      --bg-slate: #f8fafc;
+      --border-light: #e2e8f0;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    .white-card {
+      background-color: #ffffff;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05);
+    }
+    .white-input {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+    }
+    .white-input:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+    .badge-amber {
+      background-color: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-red {
+      background-color: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .badge-green {
+      background-color: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    .nav-tab-active {
+      background-color: #e0f2fe;
+      border-left: 4px solid #0284c7;
+      color: #0369a1;
+      font-weight: 700;
+    }
+    .modal-enter {
+      animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 antialiased">
+  <div id="app"></div>
+
+  <script>
+    // --- Data Seed ---
+    const INITIAL_AGENCIES = [
+      { id: "AGN-001", name: "Precision Metrology Services", code: "PMS-LAB", contactPerson: "Dr. Robert Vance", phone: "+1 (555) 234-8901", email: "r.vance@precisionmetrology.com", accreditation: "ISO/IEC 17025 Accredited", status: "Active" },
+      { id: "AGN-002", name: "NIST Calibration & Standards Lab", code: "NIST-CSL", contactPerson: "Sarah Jenkins", phone: "+1 (555) 876-5432", email: "s.jenkins@nist-standards.org", accreditation: "National Standards Body / ISO 17025", status: "Active" },
+      { id: "AGN-003", name: "Apex Instruments Calibration Inc.", code: "APEX-CAL", contactPerson: "Michael Chang", phone: "+1 (555) 345-6789", email: "mchang@apexcal.com", accreditation: "ISO/IEC 17025 Accredited", status: "Active" },
+      { id: "AGN-004", name: "In-House Quality Metrology Dept", code: "INT-MET", contactPerson: "Alex Rivera", phone: "+1 (555) 440-2000", email: "metrology@internal-plant.com", accreditation: "Internal Quality Management System", status: "Active" }
+    ];
+
+    const INITIAL_USERS = [
+      { id: "USR-000", name: "Mukunda", username: "Mukunda", password: "Tejas", email: "mukunda@company.com", role: "Admin", department: "Quality Assurance & Metrology Head", avatar: "MK" },
+      { id: "USR-001", name: "Marcus Vance", username: "admin", password: "admin123", email: "marcus.vance@company.com", role: "Admin", department: "Quality Assurance Management", avatar: "MV" },
+      { id: "USR-002", name: "Elena Rostova", username: "elena", password: "elena123", email: "elena.rostova@company.com", role: "Technician", department: "Metrology & Quality Control", avatar: "ER" },
+      { id: "USR-003", name: "David Miller", username: "david", password: "david123", email: "d.miller@precisionmetrology.com", role: "AgencyRep", department: "External Calibration Specialist", avatar: "DM", assignedAgencyId: "AGN-001" },
+      { id: "USR-004", name: "Priya Sharma", username: "priya", password: "priya123", email: "p.sharma@company.com", role: "Auditor", department: "Compliance & Safety Audit", avatar: "PS" }
+    ];
+
+    const INITIAL_INSTRUMENTS = [
+      { 
+        id: "INS-001", 
+        tagId: "EQ-CAL-001", 
+        name: "Digital Vernier Caliper", 
+        make: "Mitutoyo", 
+        serialNo: "MT-8849201", 
+        range: "0-150 mm", 
+        leastCount: "0.01 mm", 
+        category: "Dimensional", 
+        model: "500-196-30", 
+        location: "Machining Shop - Bay 2", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-22", 
+        nextDueDate: "2026-07-22", 
+        agencyId: "AGN-001", 
+        status: "Active",
+        pdfReportName: "Calib_Report_EQ-CAL-001.pdf",
+        pdfReportData: null
+      },
+      { 
+        id: "INS-002", 
+        tagId: "EQ-MIC-002", 
+        name: "Outside Digital Micrometer", 
+        make: "Starrett", 
+        serialNo: "ST-7739102", 
+        range: "0-25 mm", 
+        leastCount: "0.001 mm", 
+        category: "Dimensional", 
+        model: "733.1XFL-1", 
+        location: "Precision Grinding Line", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-20", 
+        nextDueDate: "2026-07-20", 
+        agencyId: "AGN-002", 
+        status: "Active",
+        pdfReportName: "Calib_Report_EQ-MIC-002.pdf",
+        pdfReportData: null
+      },
+      { 
+        id: "INS-003", 
+        tagId: "EQ-PRS-003", 
+        name: "Digital Master Pressure Gauge", 
+        make: "Fluke Calibration", 
+        serialNo: "FK-992314", 
+        range: "0-100 PSI", 
+        leastCount: "0.01 PSI", 
+        category: "Pressure", 
+        model: "700G08", 
+        location: "Hydraulics Test Bench", 
+        frequencyMonths: 12, 
+        lastCalibratedDate: "2025-07-10", 
+        nextDueDate: "2026-07-10", 
+        agencyId: "AGN-003", 
+        status: "Out of Calibration",
+        pdfReportName: null,
+        pdfReportData: null
+      },
+      { 
+        id: "INS-004", 
+        tagId: "EQ-TRQ-004", 
+        name: "Adjustable Torque Wrench", 
+        make: "Snap-on", 
+        serialNo: "SO-441029", 
+        range: "10-100 Nm", 
+        leastCount: "0.5 Nm", 
+        category: "Torque & Force", 
+        model: "ATECH2FR100B", 
+        location: "Final Assembly Station 4", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-24", 
+        nextDueDate: "2026-07-24", 
+        agencyId: "AGN-001", 
+        status: "Active",
+        pdfReportName: "Calib_Report_EQ-TRQ-004.pdf",
+        pdfReportData: null
+      },
+      { 
+        id: "INS-005", 
+        tagId: "EQ-TMP-005", 
+        name: "Dual Input Thermocouple Calibrator", 
+        make: "Omega Engineering", 
+        serialNo: "OE-112049", 
+        range: "-200 to 1370 °C", 
+        leastCount: "0.1 °C", 
+        category: "Thermal", 
+        model: "CL3512A", 
+        location: "Heat Treatment Dept", 
+        frequencyMonths: 12, 
+        lastCalibratedDate: "2025-08-15", 
+        nextDueDate: "2026-08-15", 
+        agencyId: "AGN-004", 
+        status: "Active",
+        pdfReportName: null,
+        pdfReportData: null
+      }
+    ];
+
+    // --- Utilities ---
+    const TODAY_DATE = new Date('2026-07-18T11:47:24');
+
+    function getDaysUntilDue(dateStr) {
+      if (!dateStr) return 0;
+      const dueDate = new Date(dateStr);
+      return Math.ceil((dueDate.getTime() - TODAY_DATE.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    function getCalibrationAlertInfo(nextDueDate, thresholdDays = 7) {
+      const days = getDaysUntilDue(nextDueDate);
+      if (days < 0) return { key: 'overdue', label: `OVERDUE (${Math.abs(days)}d ago)`, shortLabel: 'Overdue', days, badgeClass: 'badge-red' };
+      if (days <= thresholdDays) return { key: 'due-urgent', label: `DUE IN ${days} DAY${days === 1 ? '' : 'S'} (${thresholdDays}-Day Window)`, shortLabel: `Due in ${days}d`, days, badgeClass: 'badge-amber' };
+      return { key: 'valid', label: `Compliant (${days} days left)`, shortLabel: 'Compliant', days, badgeClass: 'badge-green' };
+    }
+
+    function calculateNextDueDate(lastDateStr, months) {
+      if (!lastDateStr) return '';
+      const date = new Date(lastDateStr);
+      date.setMonth(date.getMonth() + parseInt(months, 10));
+      return date.toISOString().split('T')[0];
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function exportToCSV(filename, rows) {
+      if (!rows || !rows.length) return;
+      const separator = ',';
+      const keys = Object.keys(rows[0]);
+      const csvContent = keys.join(separator) + '\n' + rows.map(row => keys.map(k => {
+        let cell = row[k] === null || row[k] === undefined ? '' : row[k];
+        cell = cell.toString().replace(/"/g, '""');
+        return cell.search(/("|,|\n)/g) >= 0 ? `"${cell}"` : cell;
+      }).join(separator)).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+
+    function parseCSV(text) {
+      const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+      if (lines.length < 2) return [];
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"(.*)"$/, '$1'));
+      const results = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+        if (row.length === headers.length) {
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = row[idx]);
+          results.push(obj);
+        }
+      }
+      return results;
+    }
+
+    function downloadCSVTemplate() {
+      exportToCSV('CalibGuard_Instrument_Import_Template.csv', [
+        { TagID: "EQ-IMP-101", Name: "Digital Height Gauge", Make: "Mitutoyo", SerialNumber: "MT-992019", Range: "0-300 mm", LeastCount: "0.01 mm", Category: "Dimensional", Location: "QA Inspection Room", FrequencyMonths: "6", LastCalibratedDate: "2026-02-15", AgencyCode: "PMS-LAB" }
+      ]);
+    }
+
+    const StorageManager = {
+      get: (key, def) => { try { const item = localStorage.getItem(`calibguard_${key}`); return item ? JSON.parse(item) : def; } catch (e) { return def; } },
+      set: (key, val) => { try { localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); } catch (e) {} }
+    };
+
+    // --- Main Controller ---
+    class CalibGuardApp {
+      constructor() {
+        let users = StorageManager.get('users', INITIAL_USERS);
+        if (!users.some(u => u.username === 'Mukunda')) {
+          users = INITIAL_USERS;
+          StorageManager.set('users', users);
+        }
+        this.state = {
+          instruments: StorageManager.get('instruments', INITIAL_INSTRUMENTS),
+          agencies: StorageManager.get('agencies', INITIAL_AGENCIES),
+          users: users,
+          isLoggedIn: StorageManager.get('isLoggedIn', false),
+          activeUserId: StorageManager.get('activeUserId', 'USR-000'),
+          alertThresholdDays: StorageManager.get('alertThresholdDays', 7),
+          activeTab: 'dashboard'
+        };
+        this.init();
+      }
+
+      init() {
+        if (!this.state.isLoggedIn) {
+          this.renderLoginScreen();
+        } else {
+          this.renderMainApp();
+        }
+      }
+
+      getActiveUser() {
+        return this.state.users.find(u => u.id === this.state.activeUserId) || this.state.users[0];
+      }
+
+      saveState(k) { StorageManager.set(k, this.state[k]); }
+
+      renderLoginScreen() {
+        document.getElementById('app').innerHTML = `
+          <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div class="white-card modal-enter w-full max-w-md rounded-2xl p-8 border border-slate-200 shadow-xl space-y-6 bg-white">
+              <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 font-extrabold text-2xl mx-auto flex items-center justify-center border border-sky-300">
+                  CG
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">CalibGuard Enterprise</h2>
+                <p class="text-xs text-slate-500">Measuring Instruments Calibration Portal</p>
+              </div>
+
+              <form id="loginForm" class="space-y-4 text-xs">
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1">Username</label>
+                  <input type="text" id="loginUsername" value="Mukunda" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Username (Mukunda)" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1">Password</label>
+                  <input type="password" id="loginPassword" value="Tejas" class="white-input w-full p-3 rounded-xl font-mono text-sky-800 font-bold" placeholder="Password (Tejas)" required>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
+                  <div class="font-bold text-sky-700 flex items-center justify-between">
+                    <span>🔑 Active Login Credentials:</span>
+                    <span class="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-bold">Admin</span>
+                  </div>
+                  <div>User Name: <strong class="text-slate-900 font-mono">Mukunda</strong></div>
+                  <div>Password: <strong class="text-slate-900 font-mono">Tejas</strong></div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm transition-all shadow-md flex items-center justify-center">
+                  Sign In as Mukunda
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const userVal = document.getElementById('loginUsername').value.trim();
+          const passVal = document.getElementById('loginPassword').value.trim();
+
+          const foundUser = this.state.users.find(u => 
+            (u.username.toLowerCase() === userVal.toLowerCase() || u.email.toLowerCase() === userVal.toLowerCase()) && 
+            u.password === passVal
+          );
+
+          if (foundUser) {
+            this.state.isLoggedIn = true;
+            this.state.activeUserId = foundUser.id;
+            this.saveState('isLoggedIn');
+            this.saveState('activeUserId');
+            this.renderMainApp();
+          } else {
+            alert('Invalid credentials! Please use Username: Mukunda and Password: Tejas');
+          }
+        });
+      }
+
+      renderMainApp() {
+        const user = this.getActiveUser();
+        document.getElementById('app').innerHTML = `
+          <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center shadow-md">CG</div>
+              <div>
+                <h1 class="font-bold text-lg text-slate-900">CalibGuard Enterprise</h1>
+                <p class="text-xs text-slate-500">Measuring Instruments Calibration System</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                <span class="text-xs text-slate-600">Alert Window:</span>
+                <select id="globalThresholdSelect" class="bg-transparent text-slate-800 text-xs font-bold cursor-pointer focus:outline-none">
+                  <option value="3" ${this.state.alertThresholdDays === 3 ? 'selected' : ''}>3 Days</option>
+                  <option value="7" ${this.state.alertThresholdDays === 7 ? 'selected' : ''}>7 Days (Default)</option>
+                  <option value="14" ${this.state.alertThresholdDays === 14 ? 'selected' : ''}>14 Days</option>
+                  <option value="30" ${this.state.alertThresholdDays === 30 ? 'selected' : ''}>30 Days</option>
+                </select>
+              </div>
+
+              <button id="quickAlertBtn" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200">
+                <span class="text-xs font-semibold text-slate-800">${this.state.alertThresholdDays}-Day Alerts</span>
+                <span id="urgentAlertCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500 text-white">0</span>
+              </button>
+
+              <div class="flex items-center space-x-3 pl-3 border-l border-slate-200">
+                <div class="text-right hidden sm:block">
+                  <div class="text-xs font-bold text-slate-900">${user.name}</div>
+                  <div class="text-[10px] text-sky-700 font-semibold">${user.role} (${user.username})</div>
+                </div>
+                <button id="btnLogout" class="px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-semibold">
+                  Logout
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <div class="flex min-h-[calc(100vh-65px)] bg-slate-50">
+            <aside class="w-64 bg-white border-r border-slate-200 p-4 space-y-4 hidden lg:block shrink-0 shadow-sm">
+              <div class="space-y-1">
+                <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Navigation</div>
+                <button data-tab="dashboard" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Dashboard</button>
+                <button data-tab="master" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-sky-700">Master Instruments List</button>
+                <button data-tab="alerts" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-amber-700">Alert Center</button>
+                <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Agencies</button>
+                <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                <div class="text-xs font-semibold text-slate-800">Bulk Excel / CSV Upload</div>
+                <input type="file" id="excelFileInput" accept=".csv" class="hidden">
+                <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-sm">
+                  📁 Import Instruments CSV
+                </button>
+                <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-700 hover:underline text-center block font-medium">
+                  Download Sample CSV Template
+                </button>
+              </div>
+            </aside>
+
+            <main class="flex-1 p-6 max-w-7xl mx-auto space-y-6 overflow-y-auto bg-white">
+              <div id="tabContent"></div>
+            </main>
+          </div>
+
+          <!-- Shared Modal -->
+          <div id="modalContainer" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"></div>
+          
+          <!-- Hidden PDF Upload Input -->
+          <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
+        `;
+
+        this.bindEvents();
+        this.updateGlobalBadges();
+        this.renderCurrentTab();
+      }
+
+      bindEvents() {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab)));
+        document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
+        document.getElementById('globalThresholdSelect')?.addEventListener('change', (e) => {
+          this.state.alertThresholdDays = parseInt(e.target.value, 10);
+          this.saveState('alertThresholdDays');
+          this.updateGlobalBadges();
+          this.renderCurrentTab();
+        });
+        document.getElementById('btnLogout')?.addEventListener('click', () => {
+          this.state.isLoggedIn = false;
+          this.saveState('isLoggedIn');
+          this.renderLoginScreen();
+        });
+
+        const fileInput = document.getElementById('excelFileInput');
+        document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => fileInput.click());
+        document.getElementById('btnDownloadTemplate')?.addEventListener('click', () => downloadCSVTemplate());
+
+        fileInput?.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const rows = parseCSV(evt.target.result);
+            if (rows.length > 0) {
+              let added = 0;
+              rows.forEach(r => {
+                if (r.TagID && r.Name) {
+                  const freq = parseInt(r.FrequencyMonths || '6', 10);
+                  const lastCal = r.LastCalibratedDate || '2026-01-01';
+                  let agency = this.state.agencies.find(a => a.code === r.AgencyCode) || this.state.agencies[0];
+                  this.state.instruments.unshift({
+                    id: `INS-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+                    tagId: r.TagID, name: r.Name, make: r.Make || 'Mitutoyo',
+                    serialNo: r.SerialNumber || 'SN-000', range: r.Range || '0-150 mm',
+                    leastCount: r.LeastCount || '0.01 mm', category: r.Category || 'Dimensional',
+                    location: r.Location || 'Plant Shop', frequencyMonths: freq, lastCalibratedDate: lastCal,
+                    nextDueDate: calculateNextDueDate(lastCal, freq), agencyId: agency.id, status: 'Active',
+                    pdfReportName: null, pdfReportData: null
+                  });
+                  added++;
+                }
+              });
+              this.saveState('instruments');
+              alert(`Imported ${added} instruments from CSV!`);
+              this.renderCurrentTab();
+            }
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      updateGlobalBadges() {
+        const threshold = this.state.alertThresholdDays;
+        const dueUrgentCount = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; }).length;
+        const overdueCount = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0).length;
+        const total = dueUrgentCount + overdueCount;
+        const badge = document.getElementById('urgentAlertCountBadge');
+        if (badge) badge.innerText = total;
+      }
+
+      switchTab(tab) {
+        this.state.activeTab = tab;
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('nav-tab-active', b.dataset.tab === tab));
+        this.renderCurrentTab();
+      }
+
+      renderCurrentTab() {
+        const c = document.getElementById('tabContent');
+        c.innerHTML = '';
+        if (this.state.activeTab === 'master') this.renderMasterList(c);
+        else if (this.state.activeTab === 'alerts') this.renderAlerts(c);
+        else if (this.state.activeTab === 'agencies') this.renderAgencies(c);
+        else if (this.state.activeTab === 'users') this.renderUsers(c);
+        else this.renderDashboard(c);
+        this.updateGlobalBadges();
+      }
+
+      renderDashboard(c) {
+        const threshold = this.state.alertThresholdDays;
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Welcome, ${this.getActiveUser().name}!</h2>
+                <p class="text-sm text-slate-500">Measuring Instruments Calibration System Dashboard</p>
+              </div>
+              <div class="px-3.5 py-1.5 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold w-fit">
+                Logged in as: ${this.getActiveUser().name} (${this.getActiveUser().role})
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="white-card p-4 rounded-2xl border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-semibold">Total Master Instruments</div>
+                <div class="text-3xl font-extrabold text-slate-900 mt-1">${this.state.instruments.length}</div>
+              </div>
+              <div class="white-card p-4 rounded-2xl border border-red-200 bg-red-50">
+                <div class="text-xs text-red-700 uppercase font-semibold">Overdue Calibrations</div>
+                <div class="text-3xl font-extrabold text-red-700 mt-1">${overdue.length}</div>
+              </div>
+              <div class="white-card p-4 rounded-2xl border border-amber-200 bg-amber-50">
+                <div class="text-xs text-amber-800 uppercase font-semibold">Due in ≤ ${threshold} Days</div>
+                <div class="text-3xl font-extrabold text-amber-800 mt-1">${urgent.length}</div>
+              </div>
+              <div class="white-card p-4 rounded-2xl border border-emerald-200 bg-emerald-50">
+                <div class="text-xs text-emerald-800 uppercase font-semibold">Registered Agencies</div>
+                <div class="text-3xl font-extrabold text-emerald-800 mt-1">${this.state.agencies.length}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // ==========================================
+      // VIEW 2: MASTER LIST WITH DATES, FREQ & PDF REPORT UPLOAD/VIEW
+      // ==========================================
+      renderMasterList(c) {
+        const threshold = this.state.alertThresholdDays;
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
+                <p class="text-sm text-slate-500">Master List with Calibration On Date, Frequency, Due Date & PDF Reports</p>
+              </div>
+              <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                + Add New Instrument
+              </button>
+            </div>
+
+            <div class="white-card rounded-2xl border border-slate-200 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase text-[10px] font-extrabold">
+                    <tr>
+                      <th class="py-3.5 px-3">Tag ID & Name</th>
+                      <th class="py-3.5 px-3">Make / Serial</th>
+                      <th class="py-3.5 px-3">Range & LC</th>
+                      <th class="py-3.5 px-3">Location</th>
+                      <th class="py-3.5 px-3">CALIBRATION ON DATE</th>
+                      <th class="py-3.5 px-3">FREQUENCY</th>
+                      <th class="py-3.5 px-3">DUE DATE</th>
+                      <th class="py-3.5 px-3">Agency</th>
+                      <th class="py-3.5 px-3">Status</th>
+                      <th class="py-3.5 px-3 text-center">PDF REPORT</th>
+                      <th class="py-3.5 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    ${this.state.instruments.map(ins => {
+                      const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                      const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+                      const hasPdf = ins.pdfReportName || ins.pdfReportData;
+
+                      return `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                          <td class="py-3 px-3">
+                            <div class="font-bold text-slate-900">${ins.name}</div>
+                            <div class="font-mono text-sky-700 text-[10px] font-semibold">${ins.tagId}</div>
+                          </td>
+                          <td class="py-3 px-3">
+                            <div class="font-semibold text-slate-800">${ins.make || 'Mitutoyo'}</div>
+                            <div class="font-mono text-slate-500 text-[10px]">${ins.serialNo || 'SN-000'}</div>
+                          </td>
+                          <td class="py-3 px-3">
+                            <div class="text-slate-800 font-medium">${ins.range || '0-150 mm'}</div>
+                            <div class="text-sky-700 font-mono text-[10px]">LC: ${ins.leastCount || '0.01 mm'}</div>
+                          </td>
+                          <td class="py-3 px-3 text-slate-600">${ins.location}</td>
+                          <td class="py-3 px-3 font-semibold text-slate-800">${formatDate(ins.lastCalibratedDate)}</td>
+                          <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
+                          <td class="py-3 px-3 font-bold text-slate-900">${formatDate(ins.nextDueDate)}</td>
+                          <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
+                          <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
+                          
+                          <!-- PDF Report Upload & View Options -->
+                          <td class="py-3 px-3 text-center space-y-1">
+                            ${hasPdf ? `
+                              <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
+                                📄 View PDF Report
+                              </button>
+                            ` : `
+                              <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
+                            `}
+                            <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
+                              📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
+                            </button>
+                          </td>
+
+                          <td class="py-3 px-3 text-right">
+                            <button class="btnDeleteIns px-2 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-ins-id="${ins.id}">🗑️ Delete</button>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
+
+        // Delete Instrument Event
+        c.querySelectorAll('.btnDeleteIns').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const insId = e.currentTarget.dataset.insId;
+            if (confirm(`Delete instrument ${insId}?`)) {
+              this.state.instruments = this.state.instruments.filter(i => i.id !== insId);
+              this.saveState('instruments');
+              this.renderCurrentTab();
+            }
+          });
+        });
+
+        // PDF Report View Event
+        c.querySelectorAll('.btnViewPDF').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const insId = e.currentTarget.dataset.insId;
+            this.openPDFReportViewer(insId);
+          });
+        });
+
+        // PDF Report Upload Event
+        const pdfInput = document.getElementById('pdfReportFileInput');
+        let currentUploadInsId = null;
+
+        c.querySelectorAll('.btnUploadPDF').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            currentUploadInsId = e.currentTarget.dataset.insId;
+            pdfInput.click();
+          });
+        });
+
+        pdfInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file || !currentUploadInsId) return;
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const ins = this.state.instruments.find(i => i.id === currentUploadInsId);
+            if (ins) {
+              ins.pdfReportName = file.name;
+              ins.pdfReportData = evt.target.result; // Data URL for PDF preview
+              this.saveState('instruments');
+              alert(`Successfully uploaded Calibration PDF Report "${file.name}" for ${ins.tagId}!`);
+              this.renderCurrentTab();
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+      }
+
+      // --- PDF REPORT VIEWER MODAL ---
+      openPDFReportViewer(insId) {
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
+
+        const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+
+        modal.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📄</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">Calibration Certificate Report (PDF Format)</h3>
+                  <p class="text-xs text-slate-500">${ins.pdfReportName || 'Official Calibration Certificate'}</p>
+                </div>
+              </div>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            ${ins.pdfReportData ? `
+              <!-- Embed uploaded PDF file -->
+              <div class="w-full h-96 rounded-xl border border-slate-300 overflow-hidden">
+                <iframe src="${ins.pdfReportData}" class="w-full h-full"></iframe>
+              </div>
+            ` : `
+              <!-- Render Generated PDF Certificate Template -->
+              <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                  <div>
+                    <h4 class="font-extrabold text-sky-700 text-base">${agency ? agency.name : 'Precision Metrology Services'}</h4>
+                    <p class="text-[11px] text-slate-500">${agency ? agency.accreditation : 'ISO/IEC 17025 Accredited Calibration Lab'}</p>
+                    <p class="text-[11px] text-slate-500">Contact: ${agency ? agency.phone : '+1 (555) 234-8901'}</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] text-slate-400 font-bold block">CERTIFICATE NO</span>
+                    <span class="font-mono font-extrabold text-slate-900 text-sm">CERT-2026-${ins.tagId}</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-white border border-slate-200">
+                  <div><span class="text-slate-500">Instrument Name:</span> <strong class="text-slate-900 block font-bold">${ins.name}</strong></div>
+                  <div><span class="text-slate-500">Tag / Asset ID:</span> <strong class="text-sky-700 block font-mono font-bold">${ins.tagId}</strong></div>
+                  <div><span class="text-slate-500">Make / Manufacturer:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'}</strong></div>
+                  <div><span class="text-slate-500">Serial Number:</span> <strong class="text-slate-900 block font-mono font-semibold">${ins.serialNo || 'SN-000'}</strong></div>
+                  <div><span class="text-slate-500">Range & Least Count:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
+                  <div><span class="text-slate-500">Shop Location:</span> <strong class="text-slate-900 block font-semibold">${ins.location}</strong></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200 text-center">
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Calibration On Date</span>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.lastCalibratedDate)}</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Frequency Interval</span>
+                    <strong class="text-sky-700 font-extrabold text-sm">${ins.frequencyMonths || 6} Months</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Next Due Date</span>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.nextDueDate)}</strong>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+                  <div>
+                    <span class="text-emerald-800 font-bold block text-sm">CALIBRATION RESULT: PASSED</span>
+                    <span class="text-emerald-700 text-[11px]">All measurements within allowable ISO tolerance limits.</span>
+                  </div>
+                  <div class="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 font-bold flex items-center justify-center text-xs">
+                    PASSED
+                  </div>
+                </div>
+              </div>
+            `}
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                🖨️ Print Report PDF
+              </button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      renderAlerts(c) {
+        const threshold = this.state.alertThresholdDays;
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+
+        c.innerHTML = `
+          <div class="space-y-6">
+            <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day Alert Engine Center</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              ${[...overdue, ...urgent].map(ins => {
+                const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+                return `
+                  <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
+                    <div class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</div>
+                    <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
+                    <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
+                    <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
+                    <div class="text-xs text-amber-800 font-bold">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      renderAgencies(c) {
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies</h2>
+                <p class="text-sm text-slate-500">Calibration laboratories & external service providers with Contact Numbers</p>
+              </div>
+              <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${this.state.agencies.map(a => `
+                <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
+                  <div class="flex justify-between font-bold text-lg text-slate-900">
+                    <span>${a.name}</span>
+                    <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
+                  </div>
+                  <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
+                  <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
+                    <span>📞 Contact Number:</span>
+                    <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
+                  </div>
+                  <div class="text-xs text-slate-600">Email: ${a.email}</div>
+                  <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
+                  <div class="pt-2 border-t border-slate-200 flex justify-end">
+                    <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">🗑️ Delete Agency</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
+        c.querySelectorAll('.btnDeleteAgency').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.agencyId;
+            if (confirm(`Delete agency?`)) {
+              this.state.agencies = this.state.agencies.filter(a => a.id !== id);
+              this.saveState('agencies');
+              this.renderCurrentTab();
+            }
+          });
+        });
+      }
+
+      renderUsers(c) {
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <h2 class="text-2xl font-bold text-slate-900">User Roles & Accounts</h2>
+              <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add User</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              ${this.state.users.map(u => `
+                <div class="white-card p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div class="font-bold text-sky-700 text-base">${u.name}</div>
+                  <div class="text-xs text-slate-700">Username: <code class="text-sky-800 font-mono font-bold">${u.username}</code></div>
+                  <div class="text-xs text-slate-600">Role: <strong class="text-slate-900">${u.role}</strong></div>
+                  <div class="pt-2 border-t border-slate-200 flex justify-end">
+                    <button class="btnDeleteUser px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-user-id="${u.id}">🗑️ Delete User</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        c.querySelector('#btnAddUser')?.addEventListener('click', () => this.openAddUserModal());
+        c.querySelectorAll('.btnDeleteUser').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.userId;
+            if (confirm(`Delete user?`)) {
+              this.state.users = this.state.users.filter(u => u.id !== id);
+              this.saveState('users');
+              this.renderCurrentTab();
+            }
+          });
+        });
+      }
+
+      openAddInstrumentModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
+            <form id="newInsForm" class="space-y-3 text-xs">
+              <input type="text" id="mTagId" value="EQ-NEW-${Math.floor(100+Math.random()*900)}" class="white-input w-full p-2.5 rounded-xl font-mono text-sky-700 font-bold" placeholder="Tag ID" required>
+              <input type="text" id="mName" placeholder="Instrument Name (e.g. Vernier Caliper)" class="white-input w-full p-2.5 rounded-xl" required>
+              
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="mMake" placeholder="Make (e.g. Mitutoyo)" class="white-input w-full p-2.5 rounded-xl" required>
+                <input type="text" id="mSerial" placeholder="Serial Number" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="mRange" placeholder="Range (e.g. 0-150 mm)" class="white-input w-full p-2.5 rounded-xl" required>
+                <input type="text" id="mLeastCount" placeholder="Least Count (e.g. 0.01 mm)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
+                  <input type="date" id="mLastCalib" value="2026-01-18" class="white-input w-full p-2 rounded-xl">
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
+                  <input type="number" id="mFreq" value="6" placeholder="Months" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="mLocation" placeholder="Location (e.g. Bay 2)" class="white-input w-full p-2.5 rounded-xl" required>
+                <select id="mAgency" class="white-input w-full p-2.5 rounded-xl">${this.state.agencies.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold">Save Master Instrument</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.getElementById('newInsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const lastCal = document.getElementById('mLastCalib').value || '2026-01-18';
+          const freq = parseInt(document.getElementById('mFreq').value, 10);
+          this.state.instruments.unshift({
+            id: `INS-${Date.now()}`, 
+            tagId: document.getElementById('mTagId').value,
+            name: document.getElementById('mName').value, 
+            make: document.getElementById('mMake').value,
+            serialNo: document.getElementById('mSerial').value,
+            range: document.getElementById('mRange').value,
+            leastCount: document.getElementById('mLeastCount').value,
+            category: 'Dimensional',
+            location: document.getElementById('mLocation').value,
+            frequencyMonths: freq, 
+            lastCalibratedDate: lastCal, 
+            nextDueDate: calculateNextDueDate(lastCal, freq),
+            agencyId: document.getElementById('mAgency').value, 
+            status: 'Active',
+            pdfReportName: null,
+            pdfReportData: null
+          });
+          this.saveState('instruments');
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      openAddAgencyModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <h3 class="font-bold text-lg text-slate-900">Register Calibration Agency</h3>
+            <form id="newAgForm" class="space-y-3 text-xs">
+              <input type="text" id="agName" placeholder="Agency Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="agCode" placeholder="Agency Code (e.g. MCL-LAB)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                <input type="text" id="agPhone" placeholder="Contact Number (+1 555-000-0000)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <input type="text" id="agContact" placeholder="Contact Person Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold">Register Agency</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.getElementById('newAgForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.state.agencies.push({
+            id: `AGN-${Date.now()}`, 
+            name: document.getElementById('agName').value,
+            code: document.getElementById('agCode').value, 
+            phone: document.getElementById('agPhone').value,
+            contactPerson: document.getElementById('agContact').value,
+            email: document.getElementById('agEmail').value, 
+            accreditation: 'ISO/IEC 17025 Accredited', 
+            status: 'Active'
+          });
+          this.saveState('agencies');
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      openAddUserModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <h3 class="font-bold text-lg text-slate-900">Add System User</h3>
+            <form id="newUserForm" class="space-y-3 text-xs">
+              <input type="text" id="uName" placeholder="Full Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="uUsername" placeholder="Username" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                <input type="password" id="uPassword" placeholder="Password" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <input type="email" id="uEmail" placeholder="Email" class="white-input w-full p-2.5 rounded-xl" required>
+              <select id="uRole" class="white-input w-full p-2.5 rounded-xl">
+                <option value="Admin">Admin</option>
+                <option value="Technician">Technician</option>
+                <option value="AgencyRep">Agency Representative</option>
+                <option value="Auditor">Auditor</option>
+              </select>
+              <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold">Add User</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.getElementById('newUserForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.state.users.push({
+            id: `USR-${Date.now()}`, name: document.getElementById('uName').value,
+            username: document.getElementById('uUsername').value, password: document.getElementById('uPassword').value,
+            email: document.getElementById('uEmail').value, role: document.getElementById('uRole').value,
+            department: 'Metrology Dept', avatar: 'MK'
+          });
+          this.saveState('users');
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { window.app = new CalibGuardApp(); });
+  </script>
+</body>
+</html>
