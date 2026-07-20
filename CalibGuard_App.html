@@ -102,6 +102,7 @@
         email: "r.vance@precisionmetrology.com", 
         accreditation: "ISO/IEC 17025 Accredited (NABL)", 
         nablCertNo: "NABL-CC-2894",
+        nablDueDate: "2026-07-25", // Expiring in 7 days alert
         nablScopeName: "NABL_Scope_Precision_Metrology.pdf",
         nablScopeData: null,
         status: "Active" 
@@ -115,6 +116,7 @@
         email: "s.jenkins@nist-standards.org", 
         accreditation: "National Standards Body / NABL ISO 17025", 
         nablCertNo: "NABL-CC-1102",
+        nablDueDate: "2026-08-15", // Valid
         nablScopeName: "NABL_Scope_NIST_CSL.pdf",
         nablScopeData: null,
         status: "Active" 
@@ -128,6 +130,7 @@
         email: "mchang@apexcal.com", 
         accreditation: "ISO/IEC 17025 Accredited (NABL)", 
         nablCertNo: "NABL-CC-4491",
+        nablDueDate: "2026-07-10", // Overdue / Expired
         nablScopeName: null,
         nablScopeData: null,
         status: "Active" 
@@ -141,6 +144,7 @@
         email: "metrology@internal-plant.com", 
         accreditation: "Internal Quality Management System", 
         nablCertNo: "INT-QMS-001",
+        nablDueDate: "2026-12-31", // Valid
         nablScopeName: null,
         nablScopeData: null,
         status: "Active" 
@@ -267,6 +271,13 @@
       if (days < 0) return { key: 'overdue', label: `OVERDUE (${Math.abs(days)}d ago)`, shortLabel: 'Overdue', days, badgeClass: 'badge-red' };
       if (days <= thresholdDays) return { key: 'due-urgent', label: `DUE IN ${days} DAY${days === 1 ? '' : 'S'} (${thresholdDays}-Day Window)`, shortLabel: `Due in ${days}d`, days, badgeClass: 'badge-amber' };
       return { key: 'valid', label: `Compliant (${days} days left)`, shortLabel: 'Compliant', days, badgeClass: 'badge-green' };
+    }
+
+    function getNABLAgencyAlertInfo(nablDueDate, thresholdDays = 7) {
+      const days = getDaysUntilDue(nablDueDate);
+      if (days < 0) return { key: 'expired', label: `NABL ACCREDITATION EXPIRED (${Math.abs(days)}d ago)`, shortLabel: 'Expired', days, badgeClass: 'badge-red' };
+      if (days <= thresholdDays) return { key: 'expiring-soon', label: `NABL SCOPE EXPIRING IN ${days} DAY${days === 1 ? '' : 'S'}`, shortLabel: `Expiring in ${days}d`, days, badgeClass: 'badge-amber' };
+      return { key: 'valid', label: `NABL Accredited (${days} days valid)`, shortLabel: 'Valid', days, badgeClass: 'badge-green' };
     }
 
     function calculateNextDueDate(lastDateStr, months) {
@@ -588,7 +599,10 @@
         const threshold = this.state.alertThresholdDays;
         const dueUrgentCount = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; }).length;
         const overdueCount = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0).length;
-        const total = dueUrgentCount + overdueCount;
+        
+        const nablAlertCount = this.state.agencies.filter(a => { const d = getDaysUntilDue(a.nablDueDate); return d <= threshold; }).length;
+
+        const total = dueUrgentCount + overdueCount + nablAlertCount;
         const badge = document.getElementById('urgentAlertCountBadge');
         if (badge) badge.innerText = total;
       }
@@ -614,13 +628,14 @@
         const threshold = this.state.alertThresholdDays;
         const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
         const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+        const nablAlerts = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
 
         c.innerHTML = `
           <div class="space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 class="text-2xl font-bold text-slate-900">Welcome, ${this.getActiveUser().name}!</h2>
-                <p class="text-sm text-slate-500">Measuring Instruments Calibration System Dashboard</p>
+                <p class="text-sm text-slate-500">Measuring Instruments & NABL Accreditation Monitoring System</p>
               </div>
               <div class="px-3.5 py-1.5 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold w-fit">
                 Logged in as: ${this.getActiveUser().name} (${this.getActiveUser().role})
@@ -640,9 +655,9 @@
                 <div class="text-xs text-amber-800 uppercase font-semibold">Due in ≤ ${threshold} Days</div>
                 <div class="text-3xl font-extrabold text-amber-800 mt-1">${urgent.length}</div>
               </div>
-              <div class="white-card p-4 rounded-2xl border border-emerald-200 bg-emerald-50">
-                <div class="text-xs text-emerald-800 uppercase font-semibold">Registered Agencies</div>
-                <div class="text-3xl font-extrabold text-emerald-800 mt-1">${this.state.agencies.length}</div>
+              <div class="white-card p-4 rounded-2xl border border-purple-200 bg-purple-50">
+                <div class="text-xs text-purple-800 uppercase font-semibold">NABL Scope Expiry Alerts</div>
+                <div class="text-3xl font-extrabold text-purple-800 mt-1">${nablAlerts.length}</div>
               </div>
             </div>
           </div>
@@ -714,7 +729,6 @@
                           <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
                           <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
                           
-                          <!-- PDF Report Upload & View Options -->
                           <td class="py-3 px-3 text-center space-y-1">
                             ${hasPdf ? `
                               <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
@@ -804,22 +818,25 @@
       }
 
       // ==========================================
-      // VIEW 4: AGENCIES WITH NABL SCOPE UPLOAD & VIEW OPTIONS
+      // VIEW 4: AGENCIES WITH NABL SCOPE DUE DATE & EXPIRY ALERTS
       // ==========================================
       renderAgencies(c) {
+        const threshold = this.state.alertThresholdDays;
         c.innerHTML = `
           <div class="space-y-6">
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Reports</h2>
-                <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Certificate Upload & Viewing</p>
+                <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Expiry</h2>
+                <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Due Dates & Expiry Warning Alerts</p>
               </div>
               <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${this.state.agencies.map(a => {
+                const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
                 const hasNablScope = a.nablScopeName || a.nablScopeData;
+
                 return `
                   <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
                     <div class="space-y-2">
@@ -827,6 +844,7 @@
                         <span>${a.name}</span>
                         <span class="text-sky-700 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 border border-slate-200">${a.code}</span>
                       </div>
+
                       <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
                       <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
                         <span>📞 Contact Number:</span>
@@ -835,16 +853,23 @@
                       <div class="text-xs text-slate-600">Email: ${a.email}</div>
                       <div class="text-xs text-sky-700 font-semibold">${a.accreditation}</div>
                       
-                      <div class="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-1">
-                        <div class="font-bold text-sky-800 flex justify-between">
-                          <span>📜 NABL Certificate No:</span>
-                          <span class="font-mono">${a.nablCertNo || 'NABL-CC-2894'}</span>
+                      <!-- NABL Due Date & Expiry Status Badge -->
+                      <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                          <span class="font-bold text-slate-700">📜 NABL Scope Due Date:</span>
+                          <strong class="font-mono font-bold text-slate-900 text-xs">${formatDate(a.nablDueDate || '2026-08-15')}</strong>
                         </div>
-                        <div class="text-[11px] text-slate-600">Scope Document: <strong class="text-slate-900">${a.nablScopeName || 'NABL_Scope_Certificate.pdf'}</strong></div>
+                        
+                        <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+                          <span class="text-[11px] text-slate-500 font-semibold">Accreditation Status:</span>
+                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
+                            ${nablInfo.label}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- NABL Scope Upload & View Controls -->
+                    <!-- NABL Scope Controls -->
                     <div class="pt-3 border-t border-slate-200 space-y-2">
                       <div class="grid grid-cols-2 gap-2">
                         <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
@@ -868,7 +893,6 @@
 
         c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
 
-        // View NABL Scope Event
         c.querySelectorAll('.btnViewNABLScope').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const agencyId = e.currentTarget.dataset.agencyId;
@@ -876,7 +900,6 @@
           });
         });
 
-        // Upload NABL Scope Event
         const nablInput = document.getElementById('nablScopeFileInput');
         let currentAgencyId = null;
 
@@ -917,7 +940,138 @@
         });
       }
 
-      // --- NABL SCOPE VIEWER MODAL ---
+      // ==========================================
+      // VIEW 3: ALERT CENTER INCLUDING INSTRUMENTS & NABL SCOPE EXPIRIES
+      // ==========================================
+      renderAlerts(c) {
+        const threshold = this.state.alertThresholdDays;
+        
+        // Instrument Alerts
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+
+        // NABL Agency Scope Alerts
+        const nablAlertAgencies = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
+
+        c.innerHTML = `
+          <div class="space-y-6">
+            <div>
+              <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day System Alert Center</h2>
+              <p class="text-sm text-slate-500">Real-time alerts for Instrument Calibrations and NABL Accreditation Expiries</p>
+            </div>
+
+            <!-- NABL Scope Agency Alerts Section -->
+            <div class="space-y-3">
+              <h3 class="font-bold text-base text-purple-900 flex items-center space-x-2">
+                <span>📜 NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
+              </h3>
+
+              ${nablAlertAgencies.length > 0 ? `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${nablAlertAgencies.map(a => {
+                    const nablInfo = getNABLAgencyAlertInfo(a.nablDueDate, threshold);
+                    return `
+                      <div class="white-card p-5 rounded-2xl border ${nablInfo.badgeClass} space-y-3">
+                        <div class="flex justify-between font-bold text-slate-900 text-base">
+                          <span>${a.name}</span>
+                          <span class="font-mono text-xs text-sky-700">${a.code}</span>
+                        </div>
+                        <div class="text-xs text-slate-600">Contact: <strong>${a.contactPerson} (${a.phone})</strong></div>
+                        <div class="text-xs font-bold text-slate-900">NABL Scope Due Date: ${formatDate(a.nablDueDate)}</div>
+                        <div class="pt-2">
+                          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${nablInfo.badgeClass}">
+                            ${nablInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : `
+                <div class="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                  ✅ All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
+                </div>
+              `}
+            </div>
+
+            <!-- Instrument Calibration Alerts Section -->
+            <div class="space-y-3 pt-4 border-t border-slate-200">
+              <h3 class="font-bold text-base text-slate-900 flex items-center space-x-2">
+                <span>⚖️ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                ${[...overdue, ...urgent].map(ins => {
+                  const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                  const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+                  return `
+                    <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
+                      <div class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</div>
+                      <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
+                      <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
+                      <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
+                      <div class="text-xs font-bold text-amber-800">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
+                      <div class="text-xs text-slate-500">Agency: ${agency ? agency.name : 'Unassigned'}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      openAddAgencyModal() {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <h3 class="font-bold text-lg text-slate-900">Register Calibration Agency</h3>
+            <form id="newAgForm" class="space-y-3 text-xs">
+              <input type="text" id="agName" placeholder="Agency Name" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="agCode" placeholder="Agency Code (e.g. MCL-LAB)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                <input type="text" id="agPhone" placeholder="Contact Number (+1 555-000-0000)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="agContact" placeholder="Contact Person Name" class="white-input w-full p-2.5 rounded-xl" required>
+                <input type="text" id="agCertNo" placeholder="NABL Cert No (NABL-CC-2894)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1">NABL Scope Expiry / Due Date</label>
+                <input type="date" id="agNablDueDate" value="2026-08-15" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+              </div>
+              <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
+              <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Agency</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.getElementById('newAgForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.state.agencies.push({
+            id: `AGN-${Date.now()}`, 
+            name: document.getElementById('agName').value,
+            code: document.getElementById('agCode').value, 
+            phone: document.getElementById('agPhone').value,
+            contactPerson: document.getElementById('agContact').value,
+            email: document.getElementById('agEmail').value, 
+            accreditation: 'ISO/IEC 17025 Accredited (NABL)', 
+            nablCertNo: document.getElementById('agCertNo').value || 'NABL-CC-2894',
+            nablDueDate: document.getElementById('agNablDueDate').value || '2026-08-15',
+            nablScopeName: null,
+            nablScopeData: null,
+            status: 'Active'
+          });
+          this.saveState('agencies');
+          showToast(`💾 Agency ${document.getElementById('agName').value} Saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
       openNABLScopeViewer(agencyId) {
         const agency = this.state.agencies.find(a => a.id === agencyId);
         if (!agency) return;
@@ -939,12 +1093,10 @@
             </div>
 
             ${agency.nablScopeData ? `
-              <!-- Embed uploaded NABL document -->
               <div class="w-full h-96 rounded-xl border border-slate-300 overflow-hidden">
                 <iframe src="${agency.nablScopeData}" class="w-full h-full"></iframe>
               </div>
             ` : `
-              <!-- Render NABL Certificate Scope Template -->
               <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
                 <div class="flex justify-between items-start border-b border-slate-200 pb-3">
                   <div>
@@ -983,7 +1135,7 @@
                 <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 flex justify-between items-center text-xs">
                   <div>
                     <span class="text-sky-900 font-bold block">ISO/IEC 17025:2017 NABL ACCREDITED LAB</span>
-                    <span class="text-sky-700 text-[11px]">Validity: Active & Certified till October 2028</span>
+                    <span class="text-sky-700 text-[11px]">NABL Scope Due Date: <strong>${formatDate(agency.nablDueDate || '2026-08-15')}</strong></span>
                   </div>
                   <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">ACTIVE</span>
                 </div>
@@ -1002,31 +1154,189 @@
         `;
       }
 
-      renderAlerts(c) {
-        const threshold = this.state.alertThresholdDays;
-        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
-        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+      openPDFReportViewer(insId) {
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
 
-        c.innerHTML = `
-          <div class="space-y-6">
-            <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day Alert Engine Center</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              ${[...overdue, ...urgent].map(ins => {
-                const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
-                const agency = this.state.agencies.find(a => a.id === ins.agencyId);
-                return `
-                  <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
-                    <div class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</div>
-                    <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
-                    <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
-                    <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
-                    <div class="text-xs text-amber-800 font-bold">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
+        const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+
+        modal.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📄</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">Calibration Certificate Report (PDF Format)</h3>
+                  <p class="text-xs text-slate-500">${ins.pdfReportName || 'Official Calibration Certificate'}</p>
+                </div>
+              </div>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+            </div>
+
+            ${ins.pdfReportData ? `
+              <div class="w-full h-96 rounded-xl border border-slate-300 overflow-hidden">
+                <iframe src="${ins.pdfReportData}" class="w-full h-full"></iframe>
+              </div>
+            ` : `
+              <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+                <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                  <div>
+                    <h4 class="font-extrabold text-sky-700 text-base">${agency ? agency.name : 'Precision Metrology Services'}</h4>
+                    <p class="text-[11px] text-slate-500">${agency ? agency.accreditation : 'ISO/IEC 17025 Accredited Calibration Lab'}</p>
+                    <p class="text-[11px] text-slate-500">Contact: ${agency ? agency.phone : '+1 (555) 234-8901'}</p>
                   </div>
-                `;
-              }).join('')}
+                  <div class="text-right">
+                    <span class="text-[10px] text-slate-400 font-bold block">CERTIFICATE NO</span>
+                    <span class="font-mono font-extrabold text-slate-900 text-sm">CERT-2026-${ins.tagId}</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-white border border-slate-200">
+                  <div><span class="text-slate-500">Instrument Name:</span> <strong class="text-slate-900 block font-bold">${ins.name}</strong></div>
+                  <div><span class="text-slate-500">Tag / Asset ID:</span> <strong class="text-sky-700 block font-mono font-bold">${ins.tagId}</strong></div>
+                  <div><span class="text-slate-500">Make / Manufacturer:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'}</strong></div>
+                  <div><span class="text-slate-500">Serial Number:</span> <strong class="text-slate-900 block font-mono font-semibold">${ins.serialNo || 'SN-000'}</strong></div>
+                  <div><span class="text-slate-500">Range & Least Count:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
+                  <div><span class="text-slate-500">Shop Location:</span> <strong class="text-slate-900 block font-semibold">${ins.location}</strong></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200 text-center">
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Calibration On Date</span>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.lastCalibratedDate)}</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Frequency Interval</span>
+                    <strong class="text-sky-700 font-extrabold text-sm">${ins.frequencyMonths || 6} Months</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 text-[10px] block uppercase font-bold">Next Due Date</span>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.nextDueDate)}</strong>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+                  <div>
+                    <span class="text-emerald-800 font-bold block text-sm">CALIBRATION RESULT: PASSED</span>
+                    <span class="text-emerald-700 text-[11px]">All measurements within allowable ISO tolerance limits.</span>
+                  </div>
+                  <div class="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 font-bold flex items-center justify-center text-xs">
+                    PASSED
+                  </div>
+                </div>
+              </div>
+            `}
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                🖨️ Print Report PDF
+              </button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
+                Close
+              </button>
             </div>
           </div>
         `;
+      }
+
+      openEditInstrumentModal(insId) {
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 class="font-bold text-lg text-slate-900">Edit Instrument Specs</h3>
+              <span class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</span>
+            </div>
+
+            <form id="editInsForm" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1">Instrument Name</label>
+                <input type="text" id="eName" value="${ins.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Make</label>
+                  <input type="text" id="eMake" value="${ins.make || 'Mitutoyo'}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Serial Number</label>
+                  <input type="text" id="eSerial" value="${ins.serialNo || 'SN-000'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Range</label>
+                  <input type="text" id="eRange" value="${ins.range || '0-150 mm'}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Least Count</label>
+                  <input type="text" id="eLeastCount" value="${ins.leastCount || '0.01 mm'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
+                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
+                  <input type="number" id="eFreq" value="${ins.frequencyMonths || 6}" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Location</label>
+                  <input type="text" id="eLocation" value="${ins.location}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Assigned Agency</label>
+                  <select id="eAgency" class="white-input w-full p-2.5 rounded-xl">
+                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
+                  💾 Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('editInsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const lastCal = document.getElementById('eLastCalib').value;
+          const freq = parseInt(document.getElementById('eFreq').value, 10);
+
+          ins.name = document.getElementById('eName').value;
+          ins.make = document.getElementById('eMake').value;
+          ins.serialNo = document.getElementById('eSerial').value;
+          ins.range = document.getElementById('eRange').value;
+          ins.leastCount = document.getElementById('eLeastCount').value;
+          ins.lastCalibratedDate = lastCal;
+          ins.frequencyMonths = freq;
+          ins.nextDueDate = calculateNextDueDate(lastCal, freq);
+          ins.location = document.getElementById('eLocation').value;
+          ins.agencyId = document.getElementById('eAgency').value;
+
+          this.saveState('instruments');
+          showToast(`💾 Instrument ${ins.tagId} changes saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
       }
 
       renderUsers(c) {
@@ -1060,124 +1370,6 @@
               this.renderCurrentTab();
             }
           });
-        });
-      }
-
-      openAddInstrumentModal() {
-        const m = document.getElementById('modalContainer');
-        m.classList.remove('hidden');
-        m.innerHTML = `
-          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
-            <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
-            <form id="newInsForm" class="space-y-3 text-xs">
-              <input type="text" id="mTagId" value="EQ-NEW-${Math.floor(100+Math.random()*900)}" class="white-input w-full p-2.5 rounded-xl font-mono text-sky-700 font-bold" placeholder="Tag ID" required>
-              <input type="text" id="mName" placeholder="Instrument Name (e.g. Vernier Caliper)" class="white-input w-full p-2.5 rounded-xl" required>
-              
-              <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="mMake" placeholder="Make (e.g. Mitutoyo)" class="white-input w-full p-2.5 rounded-xl" required>
-                <input type="text" id="mSerial" placeholder="Serial Number" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="mRange" placeholder="Range (e.g. 0-150 mm)" class="white-input w-full p-2.5 rounded-xl" required>
-                <input type="text" id="mLeastCount" placeholder="Least Count (e.g. 0.01 mm)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
-                  <input type="date" id="mLastCalib" value="2026-01-18" class="white-input w-full p-2 rounded-xl">
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
-                  <input type="number" id="mFreq" value="6" placeholder="Months" class="white-input w-full p-2 rounded-xl" required>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="mLocation" placeholder="Location (e.g. Bay 2)" class="white-input w-full p-2.5 rounded-xl" required>
-                <select id="mAgency" class="white-input w-full p-2.5 rounded-xl">${this.state.agencies.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select>
-              </div>
-
-              <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Instrument</button>
-              </div>
-            </form>
-          </div>
-        `;
-        document.getElementById('newInsForm').addEventListener('submit', (e) => {
-          e.preventDefault();
-          const lastCal = document.getElementById('mLastCalib').value || '2026-01-18';
-          const freq = parseInt(document.getElementById('mFreq').value, 10);
-          this.state.instruments.unshift({
-            id: `INS-${Date.now()}`, 
-            tagId: document.getElementById('mTagId').value,
-            name: document.getElementById('mName').value, 
-            make: document.getElementById('mMake').value,
-            serialNo: document.getElementById('mSerial').value,
-            range: document.getElementById('mRange').value,
-            leastCount: document.getElementById('mLeastCount').value,
-            category: 'Dimensional',
-            location: document.getElementById('mLocation').value,
-            frequencyMonths: freq, 
-            lastCalibratedDate: lastCal, 
-            nextDueDate: calculateNextDueDate(lastCal, freq),
-            agencyId: document.getElementById('mAgency').value, 
-            status: 'Active',
-            pdfReportName: null,
-            pdfReportData: null
-          });
-          this.saveState('instruments');
-          showToast(`💾 New Instrument ${document.getElementById('mTagId').value} Saved!`);
-          m.classList.add('hidden');
-          this.renderCurrentTab();
-        });
-      }
-
-      openAddAgencyModal() {
-        const m = document.getElementById('modalContainer');
-        m.classList.remove('hidden');
-        m.innerHTML = `
-          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
-            <h3 class="font-bold text-lg text-slate-900">Register Calibration Agency</h3>
-            <form id="newAgForm" class="space-y-3 text-xs">
-              <input type="text" id="agName" placeholder="Agency Name" class="white-input w-full p-2.5 rounded-xl" required>
-              <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="agCode" placeholder="Agency Code (e.g. MCL-LAB)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-                <input type="text" id="agPhone" placeholder="Contact Number (+1 555-000-0000)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="agContact" placeholder="Contact Person Name" class="white-input w-full p-2.5 rounded-xl" required>
-                <input type="text" id="agCertNo" placeholder="NABL Cert No (NABL-CC-2894)" class="white-input w-full p-2.5 rounded-xl font-mono" required>
-              </div>
-              <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
-              <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Agency</button>
-              </div>
-            </form>
-          </div>
-        `;
-        document.getElementById('newAgForm').addEventListener('submit', (e) => {
-          e.preventDefault();
-          this.state.agencies.push({
-            id: `AGN-${Date.now()}`, 
-            name: document.getElementById('agName').value,
-            code: document.getElementById('agCode').value, 
-            phone: document.getElementById('agPhone').value,
-            contactPerson: document.getElementById('agContact').value,
-            email: document.getElementById('agEmail').value, 
-            accreditation: 'ISO/IEC 17025 Accredited (NABL)', 
-            nablCertNo: document.getElementById('agCertNo').value || 'NABL-CC-2894',
-            nablScopeName: null,
-            nablScopeData: null,
-            status: 'Active'
-          });
-          this.saveState('agencies');
-          showToast(`💾 Agency ${document.getElementById('agName').value} Saved!`);
-          m.classList.add('hidden');
-          this.renderCurrentTab();
         });
       }
 
