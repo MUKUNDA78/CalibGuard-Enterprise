@@ -80,10 +80,22 @@
       from { opacity: 0; transform: scale(0.95) translateY(10px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
     }
+    .toast-enter {
+      animation: toastIn 0.3s ease-out forwards;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body class="bg-white text-slate-900 antialiased">
   <div id="app"></div>
+
+  <!-- Global Toast Notification Banner -->
+  <div id="toastNotification" class="fixed top-4 right-4 z-50 hidden modal-enter flex items-center space-x-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xl border border-emerald-500">
+    <span id="toastMessage">✅ Changes Saved Successfully!</span>
+  </div>
 
   <script>
     // --- Data Seed ---
@@ -267,6 +279,16 @@
       ]);
     }
 
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const text = document.getElementById('toastMessage');
+      if (toast && text) {
+        text.innerText = msg || '✅ Changes Saved Successfully!';
+        toast.classList.remove('hidden');
+        setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+      }
+    }
+
     const StorageManager = {
       get: (key, def) => { try { const item = localStorage.getItem(`calibguard_${key}`); return item ? JSON.parse(item) : def; } catch (e) { return def; } },
       set: (key, val) => { try { localStorage.setItem(`calibguard_${key}`, JSON.stringify(val)); } catch (e) {} }
@@ -304,7 +326,21 @@
         return this.state.users.find(u => u.id === this.state.activeUserId) || this.state.users[0];
       }
 
-      saveState(k) { StorageManager.set(k, this.state[k]); }
+      // --- AUTO-SAVE DATA INSTANTLY AND TRIGGER TOAST ---
+      saveState(k, showToastMsg = true) {
+        StorageManager.set(k, this.state[k]);
+        if (showToastMsg) {
+          showToast(`✅ Data Auto-Saved to Storage!`);
+        }
+      }
+
+      saveAllData() {
+        StorageManager.set('instruments', this.state.instruments);
+        StorageManager.set('agencies', this.state.agencies);
+        StorageManager.set('users', this.state.users);
+        StorageManager.set('alertThresholdDays', this.state.alertThresholdDays);
+        showToast('💾 All Data Successfully Saved!');
+      }
 
       renderLoginScreen() {
         document.getElementById('app').innerHTML = `
@@ -358,8 +394,8 @@
           if (foundUser) {
             this.state.isLoggedIn = true;
             this.state.activeUserId = foundUser.id;
-            this.saveState('isLoggedIn');
-            this.saveState('activeUserId');
+            this.saveState('isLoggedIn', false);
+            this.saveState('activeUserId', false);
             this.renderMainApp();
           } else {
             alert('Invalid credentials! Please use Username: Mukunda and Password: Tejas');
@@ -379,7 +415,12 @@
               </div>
             </div>
 
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
+              <!-- Explicit Save All Data Button -->
+              <button id="btnHeaderSaveAll" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
+                <span>💾 Save All Changes</span>
+              </button>
+
               <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
                 <span class="text-xs text-slate-600">Alert Window:</span>
                 <select id="globalThresholdSelect" class="bg-transparent text-slate-800 text-xs font-bold cursor-pointer focus:outline-none">
@@ -390,7 +431,7 @@
                 </select>
               </div>
 
-              <button id="quickAlertBtn" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200">
+              <button id="quickAlertBtn" class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200">
                 <span class="text-xs font-semibold text-slate-800">${this.state.alertThresholdDays}-Day Alerts</span>
                 <span id="urgentAlertCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500 text-white">0</span>
               </button>
@@ -450,15 +491,18 @@
       bindEvents() {
         document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab)));
         document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
+        document.getElementById('btnHeaderSaveAll')?.addEventListener('click', () => this.saveAllData());
+
         document.getElementById('globalThresholdSelect')?.addEventListener('change', (e) => {
           this.state.alertThresholdDays = parseInt(e.target.value, 10);
           this.saveState('alertThresholdDays');
           this.updateGlobalBadges();
           this.renderCurrentTab();
         });
+
         document.getElementById('btnLogout')?.addEventListener('click', () => {
           this.state.isLoggedIn = false;
-          this.saveState('isLoggedIn');
+          this.saveState('isLoggedIn', false);
           this.renderLoginScreen();
         });
 
@@ -492,7 +536,7 @@
                 }
               });
               this.saveState('instruments');
-              alert(`Imported ${added} instruments from CSV!`);
+              showToast(`📁 ${added} Instruments imported & auto-saved!`);
               this.renderCurrentTab();
             }
           };
@@ -566,20 +610,26 @@
       }
 
       // ==========================================
-      // VIEW 2: MASTER LIST WITH DATES, FREQ & PDF REPORT UPLOAD/VIEW
+      // VIEW 2: MASTER LIST WITH SAVE BUTTON & AUTO-SAVE
       // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
         c.innerHTML = `
           <div class="space-y-6">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
-                <p class="text-sm text-slate-500">Master List with Calibration On Date, Frequency, Due Date & PDF Reports</p>
+                <p class="text-sm text-slate-500">Auto-saves instantly after any update with explicit 💾 Save option</p>
               </div>
-              <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
-                + Add New Instrument
-              </button>
+
+              <div class="flex items-center space-x-2">
+                <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
+                  💾 Save Inventory Data
+                </button>
+                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                  + Add New Instrument
+                </button>
+              </div>
             </div>
 
             <div class="white-card rounded-2xl border border-slate-200 overflow-hidden">
@@ -641,8 +691,13 @@
                             </button>
                           </td>
 
-                          <td class="py-3 px-3 text-right">
-                            <button class="btnDeleteIns px-2 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-ins-id="${ins.id}">🗑️ Delete</button>
+                          <td class="py-3 px-3 text-right space-y-1">
+                            <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
+                              ✏️ Edit & Save
+                            </button>
+                            <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
+                              🗑️ Delete
+                            </button>
                           </td>
                         </tr>
                       `;
@@ -654,7 +709,16 @@
           </div>
         `;
 
+        c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
+
+        // Edit Instrument Event
+        c.querySelectorAll('.btnEditIns').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const insId = e.currentTarget.dataset.insId;
+            this.openEditInstrumentModal(insId);
+          });
+        });
 
         // Delete Instrument Event
         c.querySelectorAll('.btnDeleteIns').forEach(btn => {
@@ -696,14 +760,113 @@
             const ins = this.state.instruments.find(i => i.id === currentUploadInsId);
             if (ins) {
               ins.pdfReportName = file.name;
-              ins.pdfReportData = evt.target.result; // Data URL for PDF preview
+              ins.pdfReportData = evt.target.result;
               this.saveState('instruments');
-              alert(`Successfully uploaded Calibration PDF Report "${file.name}" for ${ins.tagId}!`);
+              showToast(`📄 PDF Report "${file.name}" uploaded and saved!`);
               this.renderCurrentTab();
             }
           };
           reader.readAsDataURL(file);
         };
+      }
+
+      // --- EDIT INSTRUMENT MODAL WITH SAVE BUTTON ---
+      openEditInstrumentModal(insId) {
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 class="font-bold text-lg text-slate-900">Edit Instrument Specs</h3>
+              <span class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</span>
+            </div>
+
+            <form id="editInsForm" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1">Instrument Name</label>
+                <input type="text" id="eName" value="${ins.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Make</label>
+                  <input type="text" id="eMake" value="${ins.make || 'Mitutoyo'}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Serial Number</label>
+                  <input type="text" id="eSerial" value="${ins.serialNo || 'SN-000'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Range</label>
+                  <input type="text" id="eRange" value="${ins.range || '0-150 mm'}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Least Count</label>
+                  <input type="text" id="eLeastCount" value="${ins.leastCount || '0.01 mm'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
+                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
+                  <input type="number" id="eFreq" value="${ins.frequencyMonths || 6}" class="white-input w-full p-2 rounded-xl" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Location</label>
+                  <input type="text" id="eLocation" value="${ins.location}" class="white-input w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Assigned Agency</label>
+                  <select id="eAgency" class="white-input w-full p-2.5 rounded-xl">
+                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
+                  💾 Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('editInsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const lastCal = document.getElementById('eLastCalib').value;
+          const freq = parseInt(document.getElementById('eFreq').value, 10);
+
+          ins.name = document.getElementById('eName').value;
+          ins.make = document.getElementById('eMake').value;
+          ins.serialNo = document.getElementById('eSerial').value;
+          ins.range = document.getElementById('eRange').value;
+          ins.leastCount = document.getElementById('eLeastCount').value;
+          ins.lastCalibratedDate = lastCal;
+          ins.frequencyMonths = freq;
+          ins.nextDueDate = calculateNextDueDate(lastCal, freq);
+          ins.location = document.getElementById('eLocation').value;
+          ins.agencyId = document.getElementById('eAgency').value;
+
+          this.saveState('instruments');
+          showToast(`💾 Instrument ${ins.tagId} changes saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
       }
 
       // --- PDF REPORT VIEWER MODAL ---
@@ -940,7 +1103,7 @@
 
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold">Save Master Instrument</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Instrument</button>
               </div>
             </form>
           </div>
@@ -968,6 +1131,7 @@
             pdfReportData: null
           });
           this.saveState('instruments');
+          showToast(`💾 New Instrument ${document.getElementById('mTagId').value} Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -989,7 +1153,7 @@
               <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold">Register Agency</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Agency</button>
               </div>
             </form>
           </div>
@@ -1007,6 +1171,7 @@
             status: 'Active'
           });
           this.saveState('agencies');
+          showToast(`💾 Agency ${document.getElementById('agName').value} Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -1033,7 +1198,7 @@
               </select>
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold">Add User</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User</button>
               </div>
             </form>
           </div>
@@ -1047,6 +1212,7 @@
             department: 'Metrology Dept', avatar: 'MK'
           });
           this.saveState('users');
+          showToast(`💾 User ${document.getElementById('uUsername').value} Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
