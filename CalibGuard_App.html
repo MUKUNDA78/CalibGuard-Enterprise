@@ -309,7 +309,7 @@
         return cell.search(/("|,|\n)/g) >= 0 ? `"${cell}"` : cell;
       }).join(separator)).join('\n');
 
-      const blob = new Blob([csvContent], { type: 'type/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = filename;
@@ -348,14 +348,37 @@
       }
     }
 
-    // --- BULLETPROOF ROBUST STORAGE MANAGER WITH FALLBACK ---
+    // --- BULLETPROOF ROBUST STORAGE MANAGER WITH SCHEMA MIGRATION ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
           const item = localStorage.getItem(`calibguard_${key}`); 
           if (item) {
             const parsed = JSON.parse(item);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              if (key === 'instruments') {
+                // Merge schema defaults so older cached items gain all master fields
+                return parsed.map(ins => ({
+                  id: ins.id || `INS-${Math.random()}`,
+                  tagId: ins.tagId || 'EQ-CAL-000',
+                  name: ins.name || 'Measuring Instrument',
+                  make: ins.make || 'Mitutoyo',
+                  serialNo: ins.serialNo || 'SN-000',
+                  range: ins.range || '0-150 mm',
+                  leastCount: ins.leastCount || '0.01 mm',
+                  category: ins.category || 'Dimensional',
+                  location: ins.location || 'Quality Inspection Shop',
+                  frequencyMonths: parseInt(ins.frequencyMonths || 6, 10),
+                  lastCalibratedDate: ins.lastCalibratedDate || '2026-01-18',
+                  nextDueDate: ins.nextDueDate || calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths),
+                  agencyId: ins.agencyId || 'AGN-001',
+                  status: ins.status || 'Active',
+                  pdfReportName: ins.pdfReportName || null,
+                  pdfReportData: ins.pdfReportData || null
+                }));
+              }
+              return parsed;
+            }
           }
           return def; 
         } catch (e) { 
@@ -368,7 +391,6 @@
         } catch (e) { 
           console.warn(`localStorage quota error, stripping binary attachments for ${key}`);
           try {
-            // Strip data URLs to stay within quota
             const cleanVal = JSON.parse(JSON.stringify(val, (k, v) => (k === 'pdfReportData' || k === 'nablScopeData') ? null : v));
             localStorage.setItem(`calibguard_${key}`, JSON.stringify(cleanVal));
           } catch (err) {
@@ -396,7 +418,7 @@
           isLoggedIn: StorageManager.get('isLoggedIn', false),
           activeUserId: StorageManager.get('activeUserId', 'USR-000'),
           alertThresholdDays: StorageManager.get('alertThresholdDays', 7),
-          activeTab: 'dashboard'
+          activeTab: 'master'
         };
         this.init();
       }
@@ -423,11 +445,11 @@
         StorageManager.set('agencies', this.state.agencies);
         StorageManager.set('users', this.state.users);
         StorageManager.set('alertThresholdDays', this.state.alertThresholdDays);
-        showToast('💾 All Data Successfully Saved!');
+        showToast('💾 All Master Data Successfully Saved & Persisted!');
       }
 
       resetToDefaultSeed() {
-        if (confirm('Are you sure you want to reset all instruments and agencies to initial default data?')) {
+        if (confirm('Are you sure you want to reload default seed instruments and agencies?')) {
           this.state.instruments = INITIAL_INSTRUMENTS;
           this.state.agencies = INITIAL_AGENCIES;
           this.state.users = INITIAL_USERS;
@@ -545,8 +567,8 @@
             <aside class="w-64 bg-white border-r border-slate-200 p-4 space-y-4 hidden lg:block shrink-0 shadow-sm">
               <div class="space-y-1">
                 <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Navigation</div>
+                <button data-tab="master" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-sky-700 font-bold">Master Instruments List</button>
                 <button data-tab="dashboard" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Dashboard</button>
-                <button data-tab="master" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-sky-700">Master Instruments List</button>
                 <button data-tab="alerts" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-amber-700">Alert Center</button>
                 <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Calibration Agencies</button>
                 <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
@@ -712,7 +734,7 @@
       }
 
       // ==========================================
-      // VIEW 2: MASTER INSTRUMENTS LIST WITH FULL PERSISTENCE
+      // VIEW 2: MASTER INSTRUMENTS INVENTORY (FULLY UPDATED & PERSISTED)
       // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
@@ -720,15 +742,21 @@
           <div class="space-y-6">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory (${this.state.instruments.length})</h2>
-                <p class="text-sm text-slate-500">Real-time Master Specifications (Make, Serial No, Range, Least Count, Calibration Date, Due Date, Agency)</p>
+                <div class="flex items-center space-x-2">
+                  <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
+                  <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">${this.state.instruments.length} Registered</span>
+                </div>
+                <p class="text-sm text-slate-500">Live Inventory: Make, Serial No, Range, Least Count, Calibration Date, Due Date, Agency</p>
               </div>
 
               <div class="flex items-center space-x-2">
-                <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
+                <button id="btnSyncRefresh" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm flex items-center space-x-1">
+                  <span>🔄 Sync & Refresh</span>
+                </button>
+                <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
                   💾 Save Inventory Data
                 </button>
-                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
+                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md">
                   + Add New Instrument
                 </button>
               </div>
@@ -810,6 +838,12 @@
           </div>
         `;
 
+        c.querySelector('#btnSyncRefresh')?.addEventListener('click', () => {
+          this.state.instruments = StorageManager.get('instruments', INITIAL_INSTRUMENTS);
+          showToast('🔄 Inventory Synced & Refreshed!');
+          this.renderCurrentTab();
+        });
+
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
 
@@ -867,7 +901,6 @@
         };
       }
 
-      // --- ADD INSTRUMENT MODAL ---
       openAddInstrumentModal() {
         const m = document.getElementById('modalContainer');
         m.classList.remove('hidden');
@@ -1588,7 +1621,7 @@
               </div>
 
               <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
-                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
                 <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
                   💾 Save Changes
                 </button>
@@ -1602,15 +1635,15 @@
           const lastCal = document.getElementById('eLastCalib').value;
           const freq = parseInt(document.getElementById('eFreq').value, 10);
 
-          ins.name = document.getElementById('eName').value;
-          ins.make = document.getElementById('eMake').value;
-          ins.serialNo = document.getElementById('eSerial').value;
-          ins.range = document.getElementById('eRange').value;
-          ins.leastCount = document.getElementById('eLeastCount').value;
+          ins.name = document.getElementById('eName').value.trim();
+          ins.make = document.getElementById('eMake').value.trim();
+          ins.serialNo = document.getElementById('eSerial').value.trim();
+          ins.range = document.getElementById('eRange').value.trim();
+          ins.leastCount = document.getElementById('eLeastCount').value.trim();
           ins.lastCalibratedDate = lastCal;
           ins.frequencyMonths = freq;
           ins.nextDueDate = calculateNextDueDate(lastCal, freq);
-          ins.location = document.getElementById('eLocation').value;
+          ins.location = document.getElementById('eLocation').value.trim();
           ins.agencyId = document.getElementById('eAgency').value;
 
           this.saveState('instruments');
