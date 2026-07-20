@@ -21,6 +21,9 @@
     }
   </script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- SheetJS CDN for Native Excel (.xlsx, .xls, .csv) Parsing & Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
@@ -299,43 +302,41 @@
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    function exportToCSV(filename, rows) {
-      if (!rows || !rows.length) return;
-      const separator = ',';
-      const keys = Object.keys(rows[0]);
-      const csvContent = keys.join(separator) + '\n' + rows.map(row => keys.map(k => {
-        let cell = row[k] === null || row[k] === undefined ? '' : row[k];
-        cell = cell.toString().replace(/"/g, '""');
-        return cell.search(/("|,|\n)/g) >= 0 ? `"${cell}"` : cell;
-      }).join(separator)).join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-    }
-
-    function parseCSV(text) {
-      const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
-      if (lines.length < 2) return [];
-      const headers = lines[0].split(',').map(h => h.trim().replace(/^"(.*)"$/, '$1'));
-      const results = [];
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
-        if (row.length === headers.length) {
-          const obj = {};
-          headers.forEach((h, idx) => obj[h] = row[idx]);
-          results.push(obj);
+    // --- NATIVE EXCEL (.XLSX) GENERATION & TEMPLATE EXPORT ---
+    function downloadExcelTemplate() {
+      const templateData = [
+        {
+          "Tag ID": "EQ-EXP-101",
+          "Instrument Name": "Digital Height Gauge 300mm",
+          "Make": "Mitutoyo",
+          "Serial Number": "MT-992019",
+          "Range": "0-300 mm",
+          "Least Count": "0.01 mm",
+          "Category": "Dimensional",
+          "Location": "QA Inspection Shop",
+          "Calibration On Date": "2026-02-15",
+          "Frequency (Months)": 6,
+          "Agency Code": "PMS-LAB"
+        },
+        {
+          "Tag ID": "EQ-EXP-102",
+          "Instrument Name": "Digital Pressure Calibrator",
+          "Make": "Fluke",
+          "Serial Number": "FK-88201",
+          "Range": "0-500 PSI",
+          "Least Count": "0.01 PSI",
+          "Category": "Pressure",
+          "Location": "Hydraulics Test Lab",
+          "Calibration On Date": "2026-03-01",
+          "Frequency (Months)": 12,
+          "Agency Code": "APEX-CAL"
         }
-      }
-      return results;
-    }
+      ];
 
-    function downloadCSVTemplate() {
-      exportToCSV('CalibGuard_Instrument_Import_Template.csv', [
-        { TagID: "EQ-IMP-101", Name: "Digital Height Gauge", Make: "Mitutoyo", SerialNumber: "MT-992019", Range: "0-300 mm", LeastCount: "0.01 mm", Category: "Dimensional", Location: "QA Inspection Room", FrequencyMonths: "6", LastCalibratedDate: "2026-02-15", AgencyCode: "PMS-LAB" }
-      ]);
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Master_Instruments");
+      XLSX.writeFile(workbook, "CalibGuard_Master_Instruments_Template.xlsx");
     }
 
     function showToast(msg) {
@@ -348,7 +349,6 @@
       }
     }
 
-    // --- BULLETPROOF ROBUST STORAGE MANAGER WITH SCHEMA MIGRATION ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
@@ -357,7 +357,6 @@
             const parsed = JSON.parse(item);
             if (Array.isArray(parsed) && parsed.length > 0) {
               if (key === 'instruments') {
-                // Merge schema defaults so older cached items gain all master fields
                 return parsed.map(ins => ({
                   id: ins.id || `INS-${Math.random()}`,
                   tagId: ins.tagId || 'EQ-CAL-000',
@@ -373,8 +372,7 @@
                   nextDueDate: ins.nextDueDate || calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths),
                   agencyId: ins.agencyId || 'AGN-001',
                   status: ins.status || 'Active',
-                  pdfReportName: ins.pdfReportName || null,
-                  pdfReportData: ins.pdfReportData || null
+                  pdfReportName: ins.pdfReportName || null
                 }));
               }
               return parsed;
@@ -458,6 +456,101 @@
         }
       }
 
+      // --- EXCEL & CSV UPLOAD & UPSERT ENGINE ---
+      handleExcelUpload(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+            if (!rawRows || rawRows.length === 0) {
+              alert('Uploaded Excel sheet is empty!');
+              return;
+            }
+
+            let updatedCount = 0;
+            let addedCount = 0;
+
+            rawRows.forEach((row, idx) => {
+              // Flexible column header mapping
+              const tagId = (row['Tag ID'] || row['TagID'] || row['Asset ID'] || row['Tag/Asset ID'] || row['tagId'] || '').toString().trim();
+              const name = (row['Instrument Name'] || row['Name'] || row['Instrument'] || row['name'] || '').toString().trim();
+              
+              if (!tagId && !name) return;
+
+              const make = (row['Make'] || row['Brand'] || row['Manufacturer'] || row['make'] || 'Mitutoyo').toString().trim();
+              const serialNo = (row['Serial Number'] || row['SerialNumber'] || row['Serial No'] || row['Serial'] || row['serialNo'] || 'SN-000').toString().trim();
+              const range = (row['Range'] || row['range'] || '0-150 mm').toString().trim();
+              const leastCount = (row['Least Count'] || row['LeastCount'] || row['LC'] || row['leastCount'] || '0.01 mm').toString().trim();
+              const category = (row['Category'] || row['category'] || 'Dimensional').toString().trim();
+              const location = (row['Location'] || row['Shop'] || row['location'] || 'Plant Quality Shop').toString().trim();
+              
+              // Date handling
+              let lastCal = row['Calibration On Date'] || row['Calibration Date'] || row['LastCalibratedDate'] || row['lastCalibratedDate'] || '2026-01-18';
+              if (lastCal instanceof Date) {
+                lastCal = lastCal.toISOString().split('T')[0];
+              } else {
+                lastCal = lastCal.toString().trim();
+              }
+
+              const freq = parseInt(row['Frequency (Months)'] || row['Frequency'] || row['FrequencyMonths'] || row['frequencyMonths'] || '6', 10);
+              const agencyCode = (row['Agency Code'] || row['Agency'] || row['AgencyCode'] || row['agencyCode'] || '').toString().trim();
+              
+              let agency = this.state.agencies.find(a => a.code.toLowerCase() === agencyCode.toLowerCase() || a.name.toLowerCase() === agencyCode.toLowerCase());
+              if (!agency) agency = this.state.agencies[0];
+
+              const nextDue = calculateNextDueDate(lastCal, freq);
+
+              // Check if instrument already exists by Tag ID
+              const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
+
+              if (existingIdx >= 0) {
+                // Update existing record
+                this.state.instruments[existingIdx] = {
+                  ...this.state.instruments[existingIdx],
+                  tagId: tagId || this.state.instruments[existingIdx].tagId,
+                  name: name || this.state.instruments[existingIdx].name,
+                  make, serialNo, range, leastCount, category, location,
+                  frequencyMonths: freq,
+                  lastCalibratedDate: lastCal,
+                  nextDueDate: nextDue,
+                  agencyId: agency.id
+                };
+                updatedCount++;
+              } else {
+                // Insert new record
+                this.state.instruments.unshift({
+                  id: `INS-${Date.now()}-${idx}`,
+                  tagId: tagId || `EQ-IMP-${Date.now()}`,
+                  name: name || 'Uploaded Instrument',
+                  make, serialNo, range, leastCount, category, location,
+                  frequencyMonths: freq,
+                  lastCalibratedDate: lastCal,
+                  nextDueDate: nextDue,
+                  agencyId: agency.id,
+                  status: 'Active',
+                  pdfReportName: null
+                });
+                addedCount++;
+              }
+            });
+
+            this.saveState('instruments');
+            showToast(`📊 Excel Import Successful! ${updatedCount} Updated, ${addedCount} Added!`);
+            this.renderCurrentTab();
+          } catch (err) {
+            alert('Error parsing Excel sheet: ' + err.message);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
       renderLoginScreen() {
         document.getElementById('app').innerHTML = `
           <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -532,6 +625,11 @@
             </div>
 
             <div class="flex items-center space-x-3">
+              <!-- Header Excel Upload Button -->
+              <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
+                <span>📊 Upload Excel Sheet</span>
+              </button>
+
               <button id="btnHeaderSaveAll" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
                 <span>💾 Save All Changes</span>
               </button>
@@ -574,14 +672,17 @@
                 <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles</button>
               </div>
 
-              <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
-                <div class="text-xs font-semibold text-slate-800">Bulk Excel / CSV Upload</div>
-                <input type="file" id="excelFileInput" accept=".csv" class="hidden">
-                <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-sm">
-                  📁 Import Instruments CSV
+              <!-- Dedicated Native Excel Import Section -->
+              <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 space-y-2.5">
+                <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
+                  <span>📊 Master Excel / CSV Import</span>
+                </div>
+                <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files to batch update inventory</p>
+                <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
+                  <span>📊 Upload Excel Sheet</span>
                 </button>
-                <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-700 hover:underline text-center block font-medium">
-                  Download Sample CSV Template
+                <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-800 hover:underline text-center block font-bold">
+                  📥 Download Excel Template (.xlsx)
                 </button>
               </div>
 
@@ -599,6 +700,8 @@
 
           <div id="modalContainer" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"></div>
           
+          <!-- Unified Excel & CSV Input -->
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
           <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
           <input type="file" id="nablScopeFileInput" accept="application/pdf,image/*" class="hidden">
         `;
@@ -627,41 +730,19 @@
           this.renderLoginScreen();
         });
 
-        const fileInput = document.getElementById('excelFileInput');
-        document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => fileInput.click());
-        document.getElementById('btnDownloadTemplate')?.addEventListener('click', () => downloadCSVTemplate());
+        // Excel upload handlers
+        const excelInput = document.getElementById('excelFileInput');
+        
+        document.getElementById('btnHeaderUploadExcel')?.addEventListener('click', () => excelInput.click());
+        document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => excelInput.click());
+        document.getElementById('btnDownloadTemplate')?.addEventListener('click', () => downloadExcelTemplate());
 
-        fileInput?.addEventListener('change', (e) => {
+        excelInput?.addEventListener('change', (e) => {
           const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            const rows = parseCSV(evt.target.result);
-            if (rows.length > 0) {
-              let added = 0;
-              rows.forEach(r => {
-                if (r.TagID && r.Name) {
-                  const freq = parseInt(r.FrequencyMonths || '6', 10);
-                  const lastCal = r.LastCalibratedDate || '2026-01-01';
-                  let agency = this.state.agencies.find(a => a.code === r.AgencyCode) || this.state.agencies[0];
-                  this.state.instruments.unshift({
-                    id: `INS-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-                    tagId: r.TagID, name: r.Name, make: r.Make || 'Mitutoyo',
-                    serialNo: r.SerialNumber || 'SN-000', range: r.Range || '0-150 mm',
-                    leastCount: r.LeastCount || '0.01 mm', category: r.Category || 'Dimensional',
-                    location: r.Location || 'Plant Shop', frequencyMonths: freq, lastCalibratedDate: lastCal,
-                    nextDueDate: calculateNextDueDate(lastCal, freq), agencyId: agency ? agency.id : 'AGN-001', status: 'Active',
-                    pdfReportName: null
-                  });
-                  added++;
-                }
-              });
-              this.saveState('instruments');
-              showToast(`📁 ${added} Instruments imported & saved!`);
-              this.renderCurrentTab();
-            }
-          };
-          reader.readAsText(file);
+          if (file) {
+            this.handleExcelUpload(file);
+            e.target.value = ''; // Reset input
+          }
         });
       }
 
@@ -734,7 +815,7 @@
       }
 
       // ==========================================
-      // VIEW 2: MASTER INSTRUMENTS INVENTORY (FULLY UPDATED & PERSISTED)
+      // VIEW 2: MASTER INSTRUMENTS INVENTORY (WITH EXCEL UPLOAD)
       // ==========================================
       renderMasterList(c) {
         const threshold = this.state.alertThresholdDays;
@@ -746,17 +827,17 @@
                   <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
                   <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">${this.state.instruments.length} Registered</span>
                 </div>
-                <p class="text-sm text-slate-500">Live Inventory: Make, Serial No, Range, Least Count, Calibration Date, Due Date, Agency</p>
+                <p class="text-sm text-slate-500">Make, Serial No, Range, LC, Calibration On Date, Frequency, Due Date, Agency</p>
               </div>
 
               <div class="flex items-center space-x-2">
-                <button id="btnSyncRefresh" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm flex items-center space-x-1">
-                  <span>🔄 Sync & Refresh</span>
+                <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                  <span>📊 Upload Excel Sheet (.xlsx / .csv)</span>
                 </button>
                 <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
                   💾 Save Inventory Data
                 </button>
-                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md">
+                <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
                   + Add New Instrument
                 </button>
               </div>
@@ -838,11 +919,8 @@
           </div>
         `;
 
-        c.querySelector('#btnSyncRefresh')?.addEventListener('click', () => {
-          this.state.instruments = StorageManager.get('instruments', INITIAL_INSTRUMENTS);
-          showToast('🔄 Inventory Synced & Refreshed!');
-          this.renderCurrentTab();
-        });
+        const excelInput = document.getElementById('excelFileInput');
+        c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput.click());
 
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
