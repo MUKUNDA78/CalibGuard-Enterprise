@@ -205,8 +205,8 @@
         permissions: {
           accessLevel: "modification",
           canAddInstruments: true,
-          canEditInstruments: true,
-          canDeleteInstruments: false,
+          canEditInstruments: false, // Edit restricted to Admin only
+          canDeleteInstruments: false, // Delete restricted to Admin only
           canUploadExcel: true,
           canUploadPDF: true,
           canEditAgencies: false,
@@ -227,8 +227,8 @@
         permissions: {
           accessLevel: "modification",
           canAddInstruments: false,
-          canEditInstruments: true,
-          canDeleteInstruments: false,
+          canEditInstruments: false, // Edit restricted to Admin only
+          canDeleteInstruments: false, // Delete restricted to Admin only
           canUploadExcel: false,
           canUploadPDF: true,
           canEditAgencies: false,
@@ -511,7 +511,7 @@
       }
     }
 
-    // --- SAFE NON-DESTRUCTIVE STORAGE CONTROLLER ---
+    // --- SAFE STORAGE CONTROLLER ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
@@ -619,25 +619,17 @@
       // --- PERMISSION CHECK ENGINE ---
       hasPermission(action) {
         const user = this.getActiveUser();
+        const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
         
-        // Admin user Mukunda has FULL ACCESS to everything!
-        if (user.role === 'Admin' || user.username === 'Mukunda') return true;
+        // Admin user Mukunda has FULL UNRESTRICTED ACCESS to everything!
+        if (isAdmin) return true;
 
-        const p = user.permissions || {
-          accessLevel: "modification",
-          canAddInstruments: true,
-          canEditInstruments: true,
-          canDeleteInstruments: false,
-          canUploadExcel: false,
-          canUploadPDF: true,
-          canEditAgencies: false,
-          canManageUsers: false,
-          readOnlyMode: false
-        };
-
-        if (action === 'manage_users' || action === 'edit_user_access') {
-          return false;
+        // STRICT REQUIREMENT: Edit and Delete Instrument operations are ONLY FOR ADMIN!
+        if (action === 'edit_instrument' || action === 'delete_instrument' || action === 'manage_users' || action === 'edit_user_access' || action === 'edit_agency' || action === 'reset_seed') {
+          return false; // Non-Admin CANNOT edit or delete instruments!
         }
+
+        const p = user.permissions || {};
 
         if (p.accessLevel === 'view' || p.readOnlyMode) {
           if (action === 'view_dashboard' || action === 'view_master' || action === 'view_alerts' || action === 'view_agencies' || action === 'view_pdf' || action === 'export_backup') return true;
@@ -645,12 +637,8 @@
         }
 
         if (action === 'add_instrument') return !!p.canAddInstruments;
-        if (action === 'edit_instrument') return !!p.canEditInstruments;
-        if (action === 'delete_instrument') return !!p.canDeleteInstruments;
         if (action === 'upload_excel') return !!p.canUploadExcel;
         if (action === 'upload_pdf') return !!p.canUploadPDF;
-        if (action === 'edit_agency') return !!p.canEditAgencies;
-        if (action === 'reset_seed') return false;
 
         return true;
       }
@@ -670,7 +658,7 @@
 
       exportBackupJSON() {
         const backupData = {
-          version: "2026.07.21.v2",
+          version: "2026.07.21.v3",
           exportDate: new Date().toISOString(),
           instruments: this.state.instruments,
           agencies: this.state.agencies,
@@ -995,7 +983,7 @@
                 <span>💾 Backup (.json)</span>
               </button>
 
-              ${this.hasPermission('edit_agency') ? `
+              ${isAdmin ? `
                 <button id="btnHeaderImportJSON" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                   <span>📥 Restore (.json)</span>
                 </button>
@@ -1213,6 +1201,7 @@
         const filteredList = this.getFilteredInstruments();
         const totalCount = this.state.instruments.length;
         const user = this.getActiveUser();
+        const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
 
         c.innerHTML = `
           <div class="space-y-4">
@@ -1234,7 +1223,7 @@
                   </button>
                 ` : ''}
 
-                ${user.role === 'Admin' || this.hasPermission('edit_instrument') ? `
+                ${isAdmin ? `
                   <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
                     💾 Save Data
                   </button>
@@ -1306,7 +1295,7 @@
                       <th class="py-3.5 px-3">Agency</th>
                       <th class="py-3.5 px-3">Status</th>
                       <th class="py-3.5 px-3 text-center">PDF REPORT</th>
-                      <th class="py-3.5 px-3 text-right">Actions</th>
+                      <th class="py-3.5 px-3 text-right">Actions (Admin Only)</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200">
@@ -1353,18 +1342,18 @@
                             ` : ''}
                           </td>
 
+                          <!-- EDIT & DELETE BUTTONS RESTRICTED EXCLUSIVELY TO ADMIN ONLY -->
                           <td class="py-3 px-3 text-right space-y-1">
-                            ${this.hasPermission('edit_instrument') ? `
+                            ${isAdmin ? `
                               <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
                                 ✏️ Edit & Save
                               </button>
-                            ` : '<span class="text-[10px] text-slate-400 italic block text-center">View Only</span>'}
-
-                            ${this.hasPermission('delete_instrument') ? `
                               <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
                                 🗑️ Delete
                               </button>
-                            ` : ''}
+                            ` : `
+                              <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">🔒 Admin Edit Only</span>
+                            `}
                           </td>
                         </tr>
                       `;
@@ -1423,23 +1412,25 @@
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
 
-        c.querySelectorAll('.btnEditIns').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const insId = e.currentTarget.dataset.insId;
-            this.openEditInstrumentModal(insId);
+        if (isAdmin) {
+          c.querySelectorAll('.btnEditIns').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const insId = e.currentTarget.dataset.insId;
+              this.openEditInstrumentModal(insId);
+            });
           });
-        });
 
-        c.querySelectorAll('.btnDeleteIns').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const insId = e.currentTarget.dataset.insId;
-            if (confirm(`Are you sure you want to delete instrument ${insId}?`)) {
-              this.state.instruments = this.state.instruments.filter(i => i.id !== insId);
-              this.saveState('instruments');
-              this.renderCurrentTab();
-            }
+          c.querySelectorAll('.btnDeleteIns').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const insId = e.currentTarget.dataset.insId;
+              if (confirm(`Are you sure you want to delete instrument ${insId}?`)) {
+                this.state.instruments = this.state.instruments.filter(i => i.id !== insId);
+                this.saveState('instruments');
+                this.renderCurrentTab();
+              }
+            });
           });
-        });
+        }
 
         c.querySelectorAll('.btnViewPDF').forEach(btn => {
           btn.addEventListener('click', (e) => {
@@ -2163,6 +2154,11 @@
       }
 
       openEditInstrumentModal(insId) {
+        if (!this.hasPermission('edit_instrument')) {
+          alert('Access Denied: Only Admin (Mukunda) is permitted to edit instrument details.');
+          return;
+        }
+
         const ins = this.state.instruments.find(i => i.id === insId);
         if (!ins) return;
 
@@ -2171,7 +2167,7 @@
         m.innerHTML = `
           <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-              <h3 class="font-bold text-lg text-slate-900">Edit Instrument Specs</h3>
+              <h3 class="font-bold text-lg text-slate-900">Edit Instrument Specs (Admin Only)</h3>
               <span class="font-mono text-xs font-bold text-sky-700">${ins.tagId}</span>
             </div>
 
@@ -2324,13 +2320,13 @@
                     <tr class="bg-white">
                       <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Full Admin Control</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Mukunda (Admin)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Full Access (Add/Edit/Delete Instruments, Upload Excel, Edit Agencies, Manage Users)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Unrestricted Access (Edit & Delete Instruments, Add Equipment, Upload Excel, Edit Agencies, Manage Users)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-emerald-700">Master Admin</td>
                     </tr>
                     <tr class="bg-slate-50">
                       <td class="py-2.5 px-3 font-bold text-amber-700">✏️ Modification Access</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Elena (Technician) / David</td>
-                      <td class="py-2.5 px-3 text-slate-700">Can add instruments, edit specs, update calibrations & upload PDF reports (Deletion blocked)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Can add new instruments & upload PDF reports (Edit & Delete Master Instruments is Restricted to Admin Only)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                     <tr class="bg-white">
@@ -2372,17 +2368,14 @@
                       <div class="text-[11px] space-y-1 pt-1">
                         <div class="font-bold text-slate-700">Active Permissions:</div>
                         <div class="space-y-0.5 text-[10px]">
+                          <div class="${isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${isMukunda ? '✓ Edit & Delete Instruments (Admin Only)' : '✕ Edit & Delete Instruments (Admin Only)'}
+                          </div>
                           <div class="${p.canAddInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
                             ${p.canAddInstruments || isMukunda ? '✓ Add New Instruments' : '✕ Add Instruments'}
                           </div>
-                          <div class="${p.canEditInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canEditInstruments || isMukunda ? '✓ Edit Specs & Calib Dates' : '✕ Edit Specifications'}
-                          </div>
                           <div class="${p.canUploadPDF || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
                             ${p.canUploadPDF || isMukunda ? '✓ Upload Calibration PDF' : '✕ Upload PDF Reports'}
-                          </div>
-                          <div class="${p.canDeleteInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canDeleteInstruments || isMukunda ? '✓ Delete Instruments' : '✕ Delete Instruments'}
                           </div>
                         </div>
                       </div>
@@ -2434,18 +2427,7 @@
         const m = document.getElementById('modalContainer');
         m.classList.remove('hidden');
 
-        const p = user.permissions || {
-          accessLevel: "modification",
-          canAddInstruments: true,
-          canEditInstruments: true,
-          canDeleteInstruments: false,
-          canUploadExcel: false,
-          canUploadPDF: true,
-          canEditAgencies: false,
-          canManageUsers: false,
-          readOnlyMode: false
-        };
-
+        const p = user.permissions || {};
         const currentLevel = p.accessLevel || (p.readOnlyMode ? 'view' : (user.role === 'Admin' ? 'admin' : 'modification'));
         const isMukunda = (user.username === 'Mukunda');
 
@@ -2488,23 +2470,23 @@
                     <input type="radio" name="radAccessLevel" value="view" ${currentLevel === 'view' ? 'checked' : ''} class="w-4 h-4 text-sky-600">
                     <div>
                       <strong class="text-sky-900 block font-bold">👁️ View Only Access</strong>
-                      <span class="text-slate-600 text-[11px]">Can view master instruments, dashboard, alerts & print reports. CANNOT add, edit, or upload anything.</span>
+                      <span class="text-slate-600 text-[11px]">Can view master instruments, dashboard, alerts & print reports. CANNOT edit, add, or delete.</span>
                     </div>
                   </label>
 
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'modification' ? 'bg-amber-50 border-amber-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="modification" ${currentLevel === 'modification' ? 'checked' : ''} class="w-4 h-4 text-amber-600">
                     <div>
-                      <strong class="text-amber-900 block font-bold">✏️ Modification Access</strong>
-                      <span class="text-slate-600 text-[11px]">Can add new instruments, edit specs, update calibration dates & upload PDF reports (Deletion blocked).</span>
+                      <strong class="text-amber-900 block font-bold">✏️ Limited Access (Add & Upload)</strong>
+                      <span class="text-slate-600 text-[11px]">Can add new instruments & upload PDF reports. (Edit & Delete Master Instruments is Restricted to Admin Only).</span>
                     </div>
                   </label>
 
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'admin' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="admin" ${currentLevel === 'admin' ? 'checked' : ''} class="w-4 h-4 text-emerald-600">
                     <div>
-                      <strong class="text-emerald-900 block font-bold">👑 Full Admin Control</strong>
-                      <span class="text-slate-600 text-[11px]">Unrestricted access: delete instruments, batch upload Excel, edit agency NABL scope & manage user access.</span>
+                      <strong class="text-emerald-900 block font-bold">👑 Full Admin Control (Mukunda)</strong>
+                      <span class="text-slate-600 text-[11px]">Unrestricted access: Edit & Delete master instruments, batch upload Excel, edit agencies & manage user access.</span>
                     </div>
                   </label>
                 </div>
@@ -2549,8 +2531,8 @@
             user.permissions = {
               accessLevel: 'modification',
               canAddInstruments: true,
-              canEditInstruments: true,
-              canDeleteInstruments: false,
+              canEditInstruments: false, // Restricted to Admin Only
+              canDeleteInstruments: false, // Restricted to Admin Only
               canUploadExcel: true,
               canUploadPDF: true,
               canEditAgencies: false,
@@ -2601,7 +2583,7 @@
               <div>
                 <label class="block text-slate-700 font-bold mb-1">Select Access Permission Level *</label>
                 <select id="uAccessLevel" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-800">
-                  <option value="modification">✏️ Modification Access (Add & Edit Instruments, Upload PDF)</option>
+                  <option value="modification">✏️ Limited Access (Add New Instruments & Upload PDF - Edit/Delete Restricted to Admin)</option>
                   <option value="view">👁️ View Only Access (Read-Only Compliance View)</option>
                   <option value="admin">👑 Full Admin Control (Unrestricted Access)</option>
                 </select>
@@ -2634,7 +2616,7 @@
             permissions: {
               accessLevel: accessLevel,
               canAddInstruments: !isView,
-              canEditInstruments: !isView,
+              canEditInstruments: isAdmin,
               canDeleteInstruments: isAdmin,
               canUploadExcel: !isView,
               canUploadPDF: !isView,
