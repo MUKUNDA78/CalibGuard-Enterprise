@@ -259,6 +259,9 @@
       }
     ];
 
+    // CLEAN CATEGORY LIST REQUIRED BY USER: MPI, Heat Treatment, Quality, Production
+    const ALLOWED_CATEGORIES = ["MPI", "Heat Treatment", "Quality", "Production"];
+
     const INITIAL_INSTRUMENTS = [
       { 
         id: "INS-001", 
@@ -269,7 +272,7 @@
         serialNo: "MT-8849201", 
         range: "0-150 mm", 
         leastCount: "0.01 mm", 
-        category: "Dimensional", 
+        category: "Quality", 
         model: "500-196-30", 
         location: "Machining Shop - Bay 2", 
         frequencyMonths: 6, 
@@ -283,14 +286,14 @@
         id: "INS-002", 
         tagId: "EQ-MIC-002", 
         historyCardNo: "HC-2026-002",
-        name: "Outside Digital Micrometer", 
-        make: "Starrett", 
+        name: "MPI Yoke Magnetic Flaw Detector", 
+        make: "Magnaflux", 
         serialNo: "ST-7739102", 
-        range: "0-25 mm", 
-        leastCount: "0.001 mm", 
-        category: "Dimensional", 
-        model: "733.1XFL-1", 
-        location: "Precision Grinding Line", 
+        range: "0-10 kg Lift", 
+        leastCount: "0.1 kg", 
+        category: "MPI", 
+        model: "Y-7 Yoke", 
+        location: "MPI Inspection Line", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-20", 
         nextDueDate: "2026-07-20", 
@@ -302,14 +305,14 @@
         id: "INS-003", 
         tagId: "EQ-PRS-003", 
         historyCardNo: "HC-2026-003",
-        name: "Digital Master Pressure Gauge", 
+        name: "Production Master Pressure Gauge", 
         make: "Fluke Calibration", 
         serialNo: "FK-992314", 
         range: "0-100 PSI", 
         leastCount: "0.01 PSI", 
-        category: "Pressure", 
+        category: "Production", 
         model: "700G08", 
-        location: "Hydraulics Test Bench", 
+        location: "Production Line Test Bench", 
         frequencyMonths: 12, 
         lastCalibratedDate: "2025-07-10", 
         nextDueDate: "2026-07-10", 
@@ -326,7 +329,7 @@
         serialNo: "SO-441029", 
         range: "10-100 Nm", 
         leastCount: "0.5 Nm", 
-        category: "Torque & Force", 
+        category: "Quality", 
         model: "ATECH2FR100B", 
         location: "Final Assembly Station 4", 
         frequencyMonths: 6, 
@@ -359,14 +362,14 @@
         id: "INS-006", 
         tagId: "EQ-FRG-006", 
         historyCardNo: "HC-2026-006",
-        name: "Forging Press Load Cell Sensor", 
+        name: "Production Load Cell Sensor", 
         make: "HBM Sensors", 
         serialNo: "HBM-44102", 
         range: "0 to 500 Tons", 
         leastCount: "0.1 Ton", 
-        category: "Forging Process", 
+        category: "Production", 
         model: "C16i-50T", 
-        location: "Heavy Forging Press Line", 
+        location: "Heavy Production Press Line", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-02-01", 
         nextDueDate: "2026-08-01", 
@@ -468,7 +471,7 @@
           "Serial Number": "MT-992019",
           "Range": "0-300 mm",
           "Least Count": "0.01 mm",
-          "Category": "Dimensional",
+          "Category": "Quality",
           "Location": "QA Inspection Shop",
           "Calibration On Date": "2026-02-15",
           "Frequency (Months)": 6,
@@ -491,13 +494,13 @@
         {
           "Tag ID": "EQ-EXP-103",
           "History Card No": "HC-2026-103",
-          "Instrument Name": "Forging Press Load Cell 500T",
-          "Make": "HBM",
-          "Serial Number": "HBM-77102",
-          "Range": "0-500 Tons",
-          "Least Count": "0.1 Ton",
-          "Category": "Forging Process",
-          "Location": "Heavy Forging Press Shop",
+          "Instrument Name": "MPI Flaw Detector Yoke",
+          "Make": "Magnaflux",
+          "Serial Number": "MF-77102",
+          "Range": "0-10 kg",
+          "Least Count": "0.1 kg",
+          "Category": "MPI",
+          "Location": "MPI Inspection Shop",
           "Calibration On Date": "2026-02-20",
           "Frequency (Months)": 6,
           "Agency Code": "PMS-LAB"
@@ -545,24 +548,34 @@
                 }));
               }
               if (key === 'instruments') {
-                return parsed.map((ins, index) => ({
-                  id: ins.id || `INS-${Math.random()}`,
-                  tagId: ins.tagId || 'EQ-CAL-000',
-                  historyCardNo: ins.historyCardNo || `HC-2026-${(index + 1).toString().padStart(3, '0')}`,
-                  name: ins.name || 'Measuring Instrument',
-                  make: ins.make || 'Mitutoyo',
-                  serialNo: ins.serialNo || 'SN-000',
-                  range: ins.range || '0-150 mm',
-                  leastCount: ins.leastCount || '0.01 mm',
-                  category: ins.category || 'Dimensional',
-                  location: ins.location || 'Quality Inspection Shop',
-                  frequencyMonths: parseInt(ins.frequencyMonths || 6, 10),
-                  lastCalibratedDate: ins.lastCalibratedDate || '2026-01-18',
-                  nextDueDate: ins.nextDueDate || calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths),
-                  agencyId: ins.agencyId || 'AGN-001',
-                  status: ins.status || 'Active',
-                  pdfReportName: ins.pdfReportName || null
-                }));
+                return parsed.map((ins, index) => {
+                  let mappedCat = ins.category || 'Quality';
+                  if (!ALLOWED_CATEGORIES.includes(mappedCat)) {
+                    if (mappedCat.toLowerCase().includes('heat')) mappedCat = 'Heat Treatment';
+                    else if (mappedCat.toLowerCase().includes('mpi')) mappedCat = 'MPI';
+                    else if (mappedCat.toLowerCase().includes('prod')) mappedCat = 'Production';
+                    else mappedCat = 'Quality';
+                  }
+
+                  return {
+                    id: ins.id || `INS-${Math.random()}`,
+                    tagId: ins.tagId || 'EQ-CAL-000',
+                    historyCardNo: ins.historyCardNo || `HC-2026-${(index + 1).toString().padStart(3, '0')}`,
+                    name: ins.name || 'Measuring Instrument',
+                    make: ins.make || 'Mitutoyo',
+                    serialNo: ins.serialNo || 'SN-000',
+                    range: ins.range || '0-150 mm',
+                    leastCount: ins.leastCount || '0.01 mm',
+                    category: mappedCat,
+                    location: ins.location || 'Quality Inspection Shop',
+                    frequencyMonths: parseInt(ins.frequencyMonths || 6, 10),
+                    lastCalibratedDate: ins.lastCalibratedDate || '2026-01-18',
+                    nextDueDate: ins.nextDueDate || calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths),
+                    agencyId: ins.agencyId || 'AGN-001',
+                    status: ins.status || 'Active',
+                    pdfReportName: ins.pdfReportName || null
+                  };
+                });
               }
               return parsed;
             }
@@ -668,7 +681,7 @@
 
       exportBackupJSON() {
         const backupData = {
-          version: "2026.07.21.v4",
+          version: "2026.07.21.v5",
           exportDate: new Date().toISOString(),
           instruments: this.state.instruments,
           agencies: this.state.agencies,
@@ -724,6 +737,7 @@
         }
       }
 
+      // --- FULL ROBUST SEARCH ENGINE ---
       getFilteredInstruments() {
         const user = this.getActiveUser();
         const query = (this.state.searchQuery || '').toLowerCase().trim();
@@ -741,14 +755,17 @@
           const agencyCode = agency ? agency.code.toLowerCase() : '';
 
           const matchesQuery = !query || 
-            ins.tagId.toLowerCase().includes(query) ||
+            (ins.tagId && ins.tagId.toLowerCase().includes(query)) ||
             (ins.historyCardNo && ins.historyCardNo.toLowerCase().includes(query)) ||
-            ins.name.toLowerCase().includes(query) ||
+            (ins.name && ins.name.toLowerCase().includes(query)) ||
             (ins.make && ins.make.toLowerCase().includes(query)) ||
             (ins.serialNo && ins.serialNo.toLowerCase().includes(query)) ||
             (ins.range && ins.range.toLowerCase().includes(query)) ||
             (ins.leastCount && ins.leastCount.toLowerCase().includes(query)) ||
+            (ins.category && ins.category.toLowerCase().includes(query)) ||
             (ins.location && ins.location.toLowerCase().includes(query)) ||
+            (ins.lastCalibratedDate && ins.lastCalibratedDate.toLowerCase().includes(query)) ||
+            (ins.nextDueDate && ins.nextDueDate.toLowerCase().includes(query)) ||
             agencyName.includes(query) ||
             agencyCode.includes(query);
 
@@ -813,7 +830,15 @@
               const serialNo = (findValue(row, ['serialnumber', 'serialno', 'serial', 'slno', 'srno', 'sn', 'machineno']) || 'SN-000').toString().trim();
               const range = (findValue(row, ['range', 'capacity', 'specification', 'size']) || '0-150 mm').toString().trim();
               const leastCount = (findValue(row, ['leastcount', 'lc', 'resolution', 'accuracy']) || '0.01 mm').toString().trim();
-              const category = (findValue(row, ['category', 'type', 'discipline', 'dept']) || 'Dimensional').toString().trim();
+              
+              let categoryVal = (findValue(row, ['category', 'type', 'discipline', 'dept']) || 'Quality').toString().trim();
+              if (!ALLOWED_CATEGORIES.includes(categoryVal)) {
+                if (categoryVal.toLowerCase().includes('heat')) categoryVal = 'Heat Treatment';
+                else if (categoryVal.toLowerCase().includes('mpi')) categoryVal = 'MPI';
+                else if (categoryVal.toLowerCase().includes('prod')) categoryVal = 'Production';
+                else categoryVal = 'Quality';
+              }
+
               const location = (findValue(row, ['location', 'shop', 'area', 'department', 'plant', 'locationdept']) || 'Quality Inspection Shop').toString().trim();
               
               const rawCalDate = findValue(row, ['calibrationondate', 'calibrationdate', 'lastcalibrateddate', 'caldate', 'calibratedon', 'dateofcalibration', 'caldate']);
@@ -839,7 +864,7 @@
                   tagId: tagId,
                   historyCardNo: historyCardNo,
                   name: name,
-                  make, serialNo, range, leastCount, category, location,
+                  make, serialNo, range, leastCount, category: categoryVal, location,
                   frequencyMonths: freq,
                   lastCalibratedDate: lastCal,
                   nextDueDate: nextDue,
@@ -853,7 +878,7 @@
                   tagId: tagId,
                   historyCardNo: historyCardNo,
                   name: name,
-                  make, serialNo, range, leastCount, category, location,
+                  make, serialNo, range, leastCount, category: categoryVal, location,
                   frequencyMonths: freq,
                   lastCalibratedDate: lastCal,
                   nextDueDate: nextDue,
@@ -1210,228 +1235,92 @@
         `;
       }
 
-      renderMasterList(c) {
+      renderMasterTableRows(filteredList) {
         const threshold = this.state.alertThresholdDays;
-        const filteredList = this.getFilteredInstruments();
-        const totalCount = this.state.instruments.length;
         const user = this.getActiveUser();
         const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
 
-        c.innerHTML = `
-          <div class="space-y-4">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <div class="flex items-center space-x-2">
-                  <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
-                  <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">
-                    Showing ${filteredList.length} of ${totalCount} Registered Instruments
-                  </span>
-                </div>
-                <p class="text-sm text-slate-500">Live search & filter across Tag ID, History Card No, Name, Make, Serial, Range, Location, & Agency</p>
-              </div>
+        if (filteredList.length === 0) {
+          return `
+            <tr>
+              <td colspan="12" class="py-8 text-center text-slate-500 space-y-2">
+                <div class="text-2xl">🔍 No Matching Measuring Instruments Found</div>
+                <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
+                <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
+                  Reset Search & Filters
+                </button>
+              </td>
+            </tr>
+          `;
+        }
 
-              <div class="flex items-center space-x-2">
-                ${this.hasPermission('upload_excel') ? `
-                  <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
-                    <span>📊 Upload Excel Sheet</span>
+        return filteredList.map(ins => {
+          const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+          const agency = this.state.agencies.find(a => a.id === ins.agencyId);
+          const hasPdf = ins.pdfReportName || ins.pdfReportData;
+
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-3">
+                <div class="font-bold text-slate-900">${ins.name}</div>
+                <div class="font-mono text-sky-700 text-[10px] font-semibold">${ins.tagId}</div>
+                <div class="text-[9px] text-slate-400 font-bold">${ins.category || 'Quality'}</div>
+              </td>
+              <td class="py-3 px-3">
+                <span class="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
+                  ${ins.historyCardNo || 'HC-2026-001'}
+                </span>
+              </td>
+              <td class="py-3 px-3">
+                <div class="font-semibold text-slate-800">${ins.make || 'Mitutoyo'}</div>
+                <div class="font-mono text-slate-500 text-[10px]">${ins.serialNo || 'SN-000'}</div>
+              </td>
+              <td class="py-3 px-3">
+                <div class="text-slate-800 font-medium">${ins.range || '0-150 mm'}</div>
+                <div class="text-sky-700 font-mono text-[10px]">LC: ${ins.leastCount || '0.01 mm'}</div>
+              </td>
+              <td class="py-3 px-3 text-slate-600">${ins.location}</td>
+              <td class="py-3 px-3 font-semibold text-slate-800">${formatDate(ins.lastCalibratedDate)}</td>
+              <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
+              <td class="py-3 px-3 font-bold text-slate-900">${formatDate(ins.nextDueDate)}</td>
+              <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
+              <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
+              
+              <td class="py-3 px-3 text-center space-y-1">
+                ${hasPdf ? `
+                  <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
+                    📄 View PDF Report
+                  </button>
+                ` : `
+                  <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
+                `}
+
+                ${this.hasPermission('upload_pdf') ? `
+                  <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
+                    📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
                   </button>
                 ` : ''}
+              </td>
 
+              <!-- EDIT & DELETE BUTTONS RESTRICTED EXCLUSIVELY TO ADMIN ONLY -->
+              <td class="py-3 px-3 text-right space-y-1">
                 ${isAdmin ? `
-                  <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                    💾 Save Data
+                  <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
+                    ✏️ Edit & Save
                   </button>
-                ` : ''}
-
-                ${this.hasPermission('add_instrument') ? `
-                  <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
-                    + Add New Instrument
+                  <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
+                    🗑️ Delete
                   </button>
-                ` : ''}
-              </div>
-            </div>
+                ` : `
+                  <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">🔒 Admin Edit Only</span>
+                `}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
 
-            <!-- Single Unified Search Bar & Category Filter Toolbar -->
-            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div class="flex-1 min-w-[280px] relative">
-                <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, History Card No, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
-                <span class="absolute left-3 top-3 text-slate-400 font-bold">🔍</span>
-                ${this.state.searchQuery ? `<button id="btnClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 font-bold text-xs">✕ Clear</button>` : ''}
-              </div>
-
-              <div class="flex items-center space-x-3 flex-wrap gap-2">
-                <div class="flex items-center space-x-1.5">
-                  <span class="font-bold text-slate-600">Category:</span>
-                  <select id="filterCategorySelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
-                    <option value="All" ${this.state.filterCategory === 'All' ? 'selected' : ''}>All Categories</option>
-                    <option value="Dimensional" ${this.state.filterCategory === 'Dimensional' ? 'selected' : ''}>Dimensional</option>
-                    <option value="Pressure" ${this.state.filterCategory === 'Pressure' ? 'selected' : ''}>Pressure</option>
-                    <option value="Thermal" ${this.state.filterCategory === 'Thermal' ? 'selected' : ''}>Thermal</option>
-                    <option value="Heat Treatment" ${this.state.filterCategory === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
-                    <option value="Forging Process" ${this.state.filterCategory === 'Forging Process' ? 'selected' : ''}>⚙️ Forging Process</option>
-                    <option value="Torque & Force" ${this.state.filterCategory === 'Torque & Force' ? 'selected' : ''}>Torque & Force</option>
-                    <option value="Electrical" ${this.state.filterCategory === 'Electrical' ? 'selected' : ''}>Electrical</option>
-                    <option value="Mass & Weight" ${this.state.filterCategory === 'Mass & Weight' ? 'selected' : ''}>Mass & Weight</option>
-                    <option value="Other" ${this.state.filterCategory === 'Other' ? 'selected' : ''}>Other</option>
-                  </select>
-                </div>
-
-                <div class="flex items-center space-x-1.5">
-                  <span class="font-bold text-slate-600">Status:</span>
-                  <select id="filterStatusSelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
-                    <option value="All" ${this.state.filterStatus === 'All' ? 'selected' : ''}>All Statuses</option>
-                    <option value="Compliant" ${this.state.filterStatus === 'Compliant' ? 'selected' : ''}>🟢 Compliant</option>
-                    <option value="Urgent" ${this.state.filterStatus === 'Urgent' ? 'selected' : ''}>🟡 Due Soon (≤ ${threshold}d)</option>
-                    <option value="Overdue" ${this.state.filterStatus === 'Overdue' ? 'selected' : ''}>🔴 Overdue</option>
-                  </select>
-                </div>
-
-                ${(this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All') ? `
-                  <button id="btnResetAllFilters" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors">
-                    ✕ Reset Filters
-                  </button>
-                ` : ''}
-              </div>
-            </div>
-
-            <div class="white-card rounded-2xl border border-slate-200 overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase text-[10px] font-extrabold">
-                    <tr>
-                      <th class="py-3.5 px-3">Tag ID & Name</th>
-                      <th class="py-3.5 px-3">HISTORY CARD NO</th>
-                      <th class="py-3.5 px-3">Make / Serial</th>
-                      <th class="py-3.5 px-3">Range & LC</th>
-                      <th class="py-3.5 px-3">Location</th>
-                      <th class="py-3.5 px-3">CALIBRATION ON DATE</th>
-                      <th class="py-3.5 px-3">FREQUENCY</th>
-                      <th class="py-3.5 px-3">DUE DATE</th>
-                      <th class="py-3.5 px-3">Agency</th>
-                      <th class="py-3.5 px-3">Status</th>
-                      <th class="py-3.5 px-3 text-center">PDF REPORT</th>
-                      <th class="py-3.5 px-3 text-right">Actions (Admin Only)</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200">
-                    ${filteredList.length > 0 ? filteredList.map(ins => {
-                      const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
-                      const agency = this.state.agencies.find(a => a.id === ins.agencyId);
-                      const hasPdf = ins.pdfReportName || ins.pdfReportData;
-
-                      return `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                          <td class="py-3 px-3">
-                            <div class="font-bold text-slate-900">${ins.name}</div>
-                            <div class="font-mono text-sky-700 text-[10px] font-semibold">${ins.tagId}</div>
-                            <div class="text-[9px] text-slate-400 font-bold">${ins.category || 'Dimensional'}</div>
-                          </td>
-                          <td class="py-3 px-3">
-                            <span class="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
-                              ${ins.historyCardNo || 'HC-2026-001'}
-                            </span>
-                          </td>
-                          <td class="py-3 px-3">
-                            <div class="font-semibold text-slate-800">${ins.make || 'Mitutoyo'}</div>
-                            <div class="font-mono text-slate-500 text-[10px]">${ins.serialNo || 'SN-000'}</div>
-                          </td>
-                          <td class="py-3 px-3">
-                            <div class="text-slate-800 font-medium">${ins.range || '0-150 mm'}</div>
-                            <div class="text-sky-700 font-mono text-[10px]">LC: ${ins.leastCount || '0.01 mm'}</div>
-                          </td>
-                          <td class="py-3 px-3 text-slate-600">${ins.location}</td>
-                          <td class="py-3 px-3 font-semibold text-slate-800">${formatDate(ins.lastCalibratedDate)}</td>
-                          <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
-                          <td class="py-3 px-3 font-bold text-slate-900">${formatDate(ins.nextDueDate)}</td>
-                          <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
-                          <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
-                          
-                          <td class="py-3 px-3 text-center space-y-1">
-                            ${hasPdf ? `
-                              <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
-                                📄 View PDF Report
-                              </button>
-                            ` : `
-                              <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
-                            `}
-
-                            ${this.hasPermission('upload_pdf') ? `
-                              <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
-                                📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
-                              </button>
-                            ` : ''}
-                          </td>
-
-                          <!-- EDIT & DELETE BUTTONS RESTRICTED EXCLUSIVELY TO ADMIN ONLY -->
-                          <td class="py-3 px-3 text-right space-y-1">
-                            ${isAdmin ? `
-                              <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
-                                ✏️ Edit & Save
-                              </button>
-                              <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
-                                🗑️ Delete
-                              </button>
-                            ` : `
-                              <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">🔒 Admin Edit Only</span>
-                            `}
-                          </td>
-                        </tr>
-                      `;
-                    }).join('') : `
-                      <tr>
-                        <td colspan="12" class="py-8 text-center text-slate-500 space-y-2">
-                          <div class="text-2xl">🔍 No Matching Measuring Instruments Found</div>
-                          <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
-                          <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
-                            Reset Search & Filters
-                          </button>
-                        </td>
-                      </tr>
-                    `}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        const searchInput = c.querySelector('#masterSearchInput');
-        searchInput?.addEventListener('input', (e) => {
-          this.state.searchQuery = e.target.value;
-          this.renderCurrentTab();
-        });
-
-        c.querySelector('#btnClearSearch')?.addEventListener('click', () => {
-          this.state.searchQuery = '';
-          this.renderCurrentTab();
-        });
-
-        c.querySelector('#filterCategorySelect')?.addEventListener('change', (e) => {
-          this.state.filterCategory = e.target.value;
-          this.renderCurrentTab();
-        });
-
-        c.querySelector('#filterStatusSelect')?.addEventListener('change', (e) => {
-          this.state.filterStatus = e.target.value;
-          this.renderCurrentTab();
-        });
-
-        const resetFn = () => {
-          this.state.searchQuery = '';
-          this.state.filterCategory = 'All';
-          this.state.filterStatus = 'All';
-          this.renderCurrentTab();
-        };
-
-        c.querySelector('#btnResetAllFilters')?.addEventListener('click', resetFn);
-        c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
-
-        const excelInput = document.getElementById('excelFileInput');
-        c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput?.click());
-
-        c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
-        c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
-
+      bindRowActions(c, isAdmin) {
         if (isAdmin) {
           c.querySelectorAll('.btnEditIns').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1488,6 +1377,166 @@
         };
       }
 
+      renderMasterList(c) {
+        const threshold = this.state.alertThresholdDays;
+        const filteredList = this.getFilteredInstruments();
+        const totalCount = this.state.instruments.length;
+        const user = this.getActiveUser();
+        const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
+
+        c.innerHTML = `
+          <div class="space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h2 class="text-2xl font-bold text-slate-900">Master Instruments Inventory</h2>
+                  <span id="masterListCounterBadge" class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-xs">
+                    Showing ${filteredList.length} of ${totalCount} Registered Instruments
+                  </span>
+                </div>
+                <p class="text-sm text-slate-500">Live search & filter across Tag ID, History Card No, Name, Make, Serial, Range, Location, & Agency</p>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                ${this.hasPermission('upload_excel') ? `
+                  <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                    <span>📊 Upload Excel Sheet</span>
+                  </button>
+                ` : ''}
+
+                ${isAdmin ? `
+                  <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                    💾 Save Data
+                  </button>
+                ` : ''}
+
+                ${this.hasPermission('add_instrument') ? `
+                  <button id="btnAddInstrument" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
+                    + Add New Instrument
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Single Unified Search Bar & Clean Category Filter Toolbar -->
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex-1 min-w-[280px] relative">
+                <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, History Card No, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
+                <span class="absolute left-3 top-3 text-slate-400 font-bold">🔍</span>
+                ${this.state.searchQuery ? `<button id="btnClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 font-bold text-xs">✕ Clear</button>` : ''}
+              </div>
+
+              <div class="flex items-center space-x-3 flex-wrap gap-2">
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-bold text-slate-600">Category:</span>
+                  <select id="filterCategorySelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
+                    <option value="All" ${this.state.filterCategory === 'All' ? 'selected' : ''}>All Categories</option>
+                    <option value="MPI" ${this.state.filterCategory === 'MPI' ? 'selected' : ''}>🔍 MPI</option>
+                    <option value="Heat Treatment" ${this.state.filterCategory === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
+                    <option value="Quality" ${this.state.filterCategory === 'Quality' ? 'selected' : ''}>🎯 Quality</option>
+                    <option value="Production" ${this.state.filterCategory === 'Production' ? 'selected' : ''}>⚙️ Production</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-bold text-slate-600">Status:</span>
+                  <select id="filterStatusSelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
+                    <option value="All" ${this.state.filterStatus === 'All' ? 'selected' : ''}>All Statuses</option>
+                    <option value="Compliant" ${this.state.filterStatus === 'Compliant' ? 'selected' : ''}>🟢 Compliant</option>
+                    <option value="Urgent" ${this.state.filterStatus === 'Urgent' ? 'selected' : ''}>🟡 Due Soon (≤ ${threshold}d)</option>
+                    <option value="Overdue" ${this.state.filterStatus === 'Overdue' ? 'selected' : ''}>🔴 Overdue</option>
+                  </select>
+                </div>
+
+                ${(this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All') ? `
+                  <button id="btnResetAllFilters" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors">
+                    ✕ Reset Filters
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="white-card rounded-2xl border border-slate-200 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase text-[10px] font-extrabold">
+                    <tr>
+                      <th class="py-3.5 px-3">Tag ID & Name</th>
+                      <th class="py-3.5 px-3">HISTORY CARD NO</th>
+                      <th class="py-3.5 px-3">Make / Serial</th>
+                      <th class="py-3.5 px-3">Range & LC</th>
+                      <th class="py-3.5 px-3">Location</th>
+                      <th class="py-3.5 px-3">CALIBRATION ON DATE</th>
+                      <th class="py-3.5 px-3">FREQUENCY</th>
+                      <th class="py-3.5 px-3">DUE DATE</th>
+                      <th class="py-3.5 px-3">Agency</th>
+                      <th class="py-3.5 px-3">Status</th>
+                      <th class="py-3.5 px-3 text-center">PDF REPORT</th>
+                      <th class="py-3.5 px-3 text-right">Actions (Admin Only)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="masterTableBody" class="divide-y divide-slate-200">
+                    ${this.renderMasterTableRows(filteredList)}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const tbody = c.querySelector('#masterTableBody');
+        const counterBadge = c.querySelector('#masterListCounterBadge');
+
+        const updateTableRows = () => {
+          const newFiltered = this.getFilteredInstruments();
+          if (counterBadge) counterBadge.innerText = `Showing ${newFiltered.length} of ${this.state.instruments.length} Registered Instruments`;
+          if (tbody) {
+            tbody.innerHTML = this.renderMasterTableRows(newFiltered);
+            this.bindRowActions(tbody, isAdmin);
+          }
+        };
+
+        const searchInput = c.querySelector('#masterSearchInput');
+        searchInput?.addEventListener('input', (e) => {
+          this.state.searchQuery = e.target.value;
+          updateTableRows();
+        });
+
+        c.querySelector('#btnClearSearch')?.addEventListener('click', () => {
+          this.state.searchQuery = '';
+          if (searchInput) searchInput.value = '';
+          updateTableRows();
+        });
+
+        c.querySelector('#filterCategorySelect')?.addEventListener('change', (e) => {
+          this.state.filterCategory = e.target.value;
+          updateTableRows();
+        });
+
+        c.querySelector('#filterStatusSelect')?.addEventListener('change', (e) => {
+          this.state.filterStatus = e.target.value;
+          updateTableRows();
+        });
+
+        const resetFn = () => {
+          this.state.searchQuery = '';
+          this.state.filterCategory = 'All';
+          this.state.filterStatus = 'All';
+          this.renderCurrentTab();
+        };
+
+        c.querySelector('#btnResetAllFilters')?.addEventListener('click', resetFn);
+        c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
+
+        const excelInput = document.getElementById('excelFileInput');
+        c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput?.click());
+
+        c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
+        c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
+
+        this.bindRowActions(c, isAdmin);
+      }
+
       openAddInstrumentModal() {
         if (!this.hasPermission('add_instrument')) {
           alert('Access Denied: Your account role does not have permission to add instruments.');
@@ -1526,15 +1575,10 @@
                 <div>
                   <label class="block text-slate-700 font-bold mb-1">Category *</label>
                   <select id="mCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                    <option value="Dimensional">Dimensional</option>
-                    <option value="Pressure">Pressure</option>
-                    <option value="Thermal">Thermal</option>
+                    <option value="MPI">🔍 MPI</option>
                     <option value="Heat Treatment">🔥 Heat Treatment</option>
-                    <option value="Forging Process">⚙️ Forging Process</option>
-                    <option value="Torque & Force">Torque & Force</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Mass & Weight">Mass & Weight</option>
-                    <option value="Other">Other</option>
+                    <option value="Quality" selected>🎯 Quality</option>
+                    <option value="Production">⚙️ Production</option>
                   </select>
                 </div>
                 <div>
@@ -1628,7 +1672,7 @@
               serialNo: serialNo || 'SN-000',
               range: range || '0-100',
               leastCount: leastCount || '0.01',
-              category: category || 'Dimensional',
+              category: category || 'Quality',
               location: location || 'Quality Lab',
               frequencyMonths: freq,
               lastCalibratedDate: lastCal,
@@ -1652,7 +1696,6 @@
 
       renderAgencies(c) {
         const threshold = this.state.alertThresholdDays;
-        const user = this.getActiveUser();
 
         c.innerHTML = `
           <div class="space-y-6">
@@ -2054,20 +2097,20 @@
                   <div class="font-bold text-slate-800 uppercase text-[11px]">Accredited Calibration Disciplines & Scope:</div>
                   <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
-                      <strong class="text-sky-700 block font-bold">1. Dimensional Metrology</strong>
+                      <strong class="text-sky-700 block font-bold">1. Quality & Dimensional</strong>
                       <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: ±0.002mm)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
-                      <strong class="text-sky-700 block font-bold">2. Pressure & Vacuum</strong>
-                      <span class="text-slate-600 text-[11px]">Master Pressure Gauges, Transducers (0 to 700 bar)</span>
+                      <strong class="text-sky-700 block font-bold">2. MPI Testing</strong>
+                      <span class="text-slate-600 text-[11px]">MPI Magnetic Yoke, Flaw Detectors, UV Lamps</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
-                      <strong class="text-sky-700 block font-bold">3. Thermal & Heat Treatment</strong>
-                      <span class="text-slate-600 text-[11px]">Thermocouples, Furnaces, RTDs (-80°C to 1200°C)</span>
+                      <strong class="text-sky-700 block font-bold">3. Heat Treatment</strong>
+                      <span class="text-slate-600 text-[11px]">Quenching Furnaces, Thermocouples (-80°C to 1200°C)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
-                      <strong class="text-sky-700 block font-bold">4. Forging & Force Metrology</strong>
-                      <span class="text-slate-600 text-[11px]">Load Cells, Forging Press Transducers (0 to 1000T)</span>
+                      <strong class="text-sky-700 block font-bold">4. Production Gauges</strong>
+                      <span class="text-slate-600 text-[11px]">Production Line Pressure Transducers & Load Cells</span>
                     </div>
                   </div>
                 </div>
@@ -2137,7 +2180,7 @@
                   <div><span class="text-slate-500">Instrument Name:</span> <strong class="text-slate-900 block font-bold">${ins.name}</strong></div>
                   <div><span class="text-slate-500">Tag / Asset ID:</span> <strong class="text-sky-700 block font-mono font-bold">${ins.tagId}</strong></div>
                   <div><span class="text-slate-500">History Card No:</span> <strong class="text-indigo-700 block font-mono font-bold">${ins.historyCardNo || 'HC-2026-001'}</strong></div>
-                  <div><span class="text-slate-500">Category:</span> <strong class="text-sky-800 block font-bold">${ins.category || 'Dimensional'}</strong></div>
+                  <div><span class="text-slate-500">Category:</span> <strong class="text-sky-800 block font-bold">${ins.category || 'Quality'}</strong></div>
                   <div><span class="text-slate-500">Make / Serial:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'} (${ins.serialNo || 'SN-000'})</strong></div>
                   <div><span class="text-slate-500">Range & LC:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
                 </div>
@@ -2220,15 +2263,10 @@
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1">Category *</label>
                   <select id="eCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                    <option value="Dimensional" ${ins.category === 'Dimensional' ? 'selected' : ''}>Dimensional</option>
-                    <option value="Pressure" ${ins.category === 'Pressure' ? 'selected' : ''}>Pressure</option>
-                    <option value="Thermal" ${ins.category === 'Thermal' ? 'selected' : ''}>Thermal</option>
+                    <option value="MPI" ${ins.category === 'MPI' ? 'selected' : ''}>🔍 MPI</option>
                     <option value="Heat Treatment" ${ins.category === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
-                    <option value="Forging Process" ${ins.category === 'Forging Process' ? 'selected' : ''}>⚙️ Forging Process</option>
-                    <option value="Torque & Force" ${ins.category === 'Torque & Force' ? 'selected' : ''}>Torque & Force</option>
-                    <option value="Electrical" ${ins.category === 'Electrical' ? 'selected' : ''}>Electrical</option>
-                    <option value="Mass & Weight" ${ins.category === 'Mass & Weight' ? 'selected' : ''}>Mass & Weight</option>
-                    <option value="Other" ${ins.category === 'Other' ? 'selected' : ''}>Other</option>
+                    <option value="Quality" ${ins.category === 'Quality' ? 'selected' : ''}>🎯 Quality</option>
+                    <option value="Production" ${ins.category === 'Production' ? 'selected' : ''}>⚙️ Production</option>
                   </select>
                 </div>
                 <div>
