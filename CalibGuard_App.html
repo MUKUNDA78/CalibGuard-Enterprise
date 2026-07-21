@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
@@ -90,11 +90,11 @@
 
   <!-- Global Toast Notification Banner -->
   <div id="toastNotification" class="fixed top-4 right-4 z-50 hidden modal-enter flex items-center space-x-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xl border border-emerald-500">
-    <span id="toastMessage">✅ Changes Saved Successfully!</span>
+    <span id="toastMessage">âœ… Changes Saved Successfully!</span>
   </div>
 
   <script>
-    const DATA_VERSION = "2026.07.21.v9_ddmmyyyy_minus1day";
+    const DATA_VERSION = "2026.07.21.v10_real_user_seed_saved";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -264,121 +264,585 @@
     const ALLOWED_CATEGORIES = ["MPI", "Heat Treatment", "Quality", "Production"];
 
     const INITIAL_INSTRUMENTS = [
-      { 
-        id: "INS-001", 
-        tagId: "EQ-CAL-001", 
-        historyCardNo: "HC-2026-001",
-        name: "Digital Vernier Caliper", 
-        make: "Mitutoyo", 
-        serialNo: "MT-8849201", 
-        range: "0-150 mm", 
-        leastCount: "0.01 mm", 
-        category: "Quality", 
-        model: "500-196-30", 
-        location: "Machining Shop - Bay 2", 
-        frequencyMonths: 6, 
-        lastCalibratedDate: "2026-01-22", 
-        nextDueDate: "2026-07-21", // 6 Months minus 1 Day (21/07/2026)
-        agencyId: "AGN-001", 
-        status: "Active",
-        pdfReportName: "Calib_Report_EQ-CAL-001.pdf"
-      },
-      { 
-        id: "INS-002", 
-        tagId: "EQ-MIC-002", 
-        historyCardNo: "HC-2026-002",
-        name: "MPI Yoke Magnetic Flaw Detector", 
-        make: "Magnaflux", 
-        serialNo: "ST-7739102", 
-        range: "0-10 kg Lift", 
-        leastCount: "0.1 kg", 
-        category: "MPI", 
-        model: "Y-7 Yoke", 
-        location: "MPI Inspection Line", 
-        frequencyMonths: 6, 
-        lastCalibratedDate: "2026-01-20", 
-        nextDueDate: "2026-07-19", // 6 Months minus 1 Day (19/07/2026)
-        agencyId: "AGN-002", 
-        status: "Active",
-        pdfReportName: "Calib_Report_EQ-MIC-002.pdf"
-      },
-      { 
-        id: "INS-003", 
-        tagId: "EQ-PRS-003", 
-        historyCardNo: "HC-2026-003",
-        name: "Production Master Pressure Gauge", 
-        make: "Fluke Calibration", 
-        serialNo: "FK-992314", 
-        range: "0-100 PSI", 
-        leastCount: "0.01 PSI", 
-        category: "Production", 
-        model: "700G08", 
-        location: "Production Line Test Bench", 
-        frequencyMonths: 12, 
-        lastCalibratedDate: "2025-07-10", 
-        nextDueDate: "2026-07-09", // 12 Months minus 1 Day (09/07/2026)
-        agencyId: "AGN-003", 
-        status: "Out of Calibration",
-        pdfReportName: null
-      },
-      { 
-        id: "INS-004", 
-        tagId: "EQ-TRQ-004", 
-        historyCardNo: "HC-2026-004",
-        name: "Adjustable Torque Wrench", 
-        make: "Snap-on", 
-        serialNo: "SO-441029", 
-        range: "10-100 Nm", 
-        leastCount: "0.5 Nm", 
-        category: "Quality", 
-        model: "ATECH2FR100B", 
-        location: "Final Assembly Station 4", 
-        frequencyMonths: 6, 
-        lastCalibratedDate: "2026-01-24", 
-        nextDueDate: "2026-07-23", // 6 Months minus 1 Day (23/07/2026)
-        agencyId: "AGN-001", 
-        status: "Active",
-        pdfReportName: "Calib_Report_EQ-TRQ-004.pdf"
-      },
-      { 
-        id: "INS-005", 
-        tagId: "EQ-HT-005", 
-        historyCardNo: "HC-2026-005",
-        name: "Quenching Furnace Temperature Indicator", 
-        make: "Honeywell", 
-        serialNo: "HW-994012", 
-        range: "0 to 1200 °C", 
-        leastCount: "1 °C", 
-        category: "Heat Treatment", 
-        model: "UDC2500", 
-        location: "Heat Treatment Shop", 
-        frequencyMonths: 6, 
-        lastCalibratedDate: "2026-01-15", 
-        nextDueDate: "2026-07-14", // 6 Months minus 1 Day (14/07/2026)
-        agencyId: "AGN-004", 
-        status: "Active",
-        pdfReportName: null
-      },
-      { 
-        id: "INS-006", 
-        tagId: "EQ-FRG-006", 
-        historyCardNo: "HC-2026-006",
-        name: "Production Load Cell Sensor", 
-        make: "HBM Sensors", 
-        serialNo: "HBM-44102", 
-        range: "0 to 500 Tons", 
-        leastCount: "0.1 Ton", 
-        category: "Production", 
-        model: "C16i-50T", 
-        location: "Heavy Production Press Line", 
-        frequencyMonths: 6, 
-        lastCalibratedDate: "2026-02-01", 
-        nextDueDate: "2026-07-31", // 6 Months minus 1 Day (31/07/2026)
-        agencyId: "AGN-001", 
-        status: "Active",
-        pdfReportName: null
-      }
-    ];
+    {
+        "id":  "INS-1784560578720-34",
+        "tagId":  "GRS/QA/SP/02/25",
+        "name":  "SURFACE TABLE",
+        "make":  "JAFUJI",
+        "serialNo":  "18/6214",
+        "range":  "1000 X1000",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-29",
+        "nextDueDate":  "2027-05-29",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-33",
+        "tagId":  "GRS/DS/VC/109-24",
+        "name":  "Analog Vernier Caliper",
+        "make":  "INSIZE",
+        "serialNo":  "2007240843",
+        "range":  "0-300 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-01",
+        "nextDueDate":  "2027-05-01",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-32",
+        "tagId":  "GRS/DS/VC/108-24",
+        "name":  "Analog Vernier Caliper",
+        "make":  "INSIZE",
+        "serialNo":  "206210839",
+        "range":  "0-300 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-01",
+        "nextDueDate":  "2027-05-01",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-31",
+        "tagId":  "GRS/QA/108-24",
+        "name":  "VERNIER HEIGHT GAUGE",
+        "make":  "INSIZE",
+        "serialNo":  "1111178362",
+        "range":  "0-600 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-11-11",
+        "nextDueDate":  "2026-11-11",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-30",
+        "tagId":  "GRS/QA/107-24",
+        "name":  "Analog Vernier Caliper",
+        "make":  "MITUTOYO",
+        "serialNo":  "23323413",
+        "range":  "0-300 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-29",
+        "tagId":  "GRS/QA/106-24",
+        "name":  "Analog Vernier Caliper",
+        "make":  "MITUTOYO",
+        "serialNo":  "23213230",
+        "range":  "0-300 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-03-01",
+        "nextDueDate":  "2027-03-01",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-28",
+        "tagId":  "GRS/DS/DG/105",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "INSIZE",
+        "serialNo":  "1924182",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-31",
+        "nextDueDate":  "2027-05-31",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-27",
+        "tagId":  "GRS/DS/DG/104",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "INSIZE",
+        "serialNo":  "1910257",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-31",
+        "nextDueDate":  "2027-05-31",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-26",
+        "tagId":  "GRS/QA/DV/101-23",
+        "name":  "VERNIER DEPTH GAUGE",
+        "make":  "MITUTOYO",
+        "serialNo":  "221201-0",
+        "range":  "0-300mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-25",
+        "tagId":  "GRS/QA/LD/103-23",
+        "name":  "LEVER DIAL GAUGE",
+        "make":  "INSIZE",
+        "serialNo":  "513-401-10",
+        "range":  "0-0.8 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-24",
+        "tagId":  "GRS/QA/102-23",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "BAKER",
+        "serialNo":  "ADB098",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-10-12",
+        "nextDueDate":  "2026-10-12",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-23",
+        "tagId":  "GRS/QA/PP/01",
+        "name":  "Portable Hand Pyrometer",
+        "make":  "HTC/IRX-66",
+        "serialNo":  "VVV/GPY-01",
+        "range":  "(-50) to 1550Â°C",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-22",
+        "tagId":  "RG-03",
+        "name":  "Radius Gauge",
+        "make":  "KRISTEEL",
+        "serialNo":  "-",
+        "range":  "15.5-25 mm",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-21",
+        "tagId":  "RG-01",
+        "name":  "Radius Gauge",
+        "make":  "KRISTEEL",
+        "serialNo":  "-",
+        "range":  "1.0-7.0 mm",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-20",
+        "tagId":  "RG-02",
+        "name":  "Radius Gauge",
+        "make":  "KRISTEEL",
+        "serialNo":  "-",
+        "range":  "7.5-15 mm",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-19",
+        "tagId":  "GRS/QA/99",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "BAKER",
+        "serialNo":  "ECC632",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-18",
+        "tagId":  "GRS/QA/98",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "BAKER",
+        "serialNo":  "ECC557",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-18",
+        "nextDueDate":  "2026-08-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-17",
+        "tagId":  "GRS/QA/97",
+        "name":  "VERNIER DEPTH GAUGE",
+        "make":  "MITUTOYO",
+        "serialNo":  "20711055",
+        "range":  "0-300mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-10-12",
+        "nextDueDate":  "2026-10-12",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-16",
+        "tagId":  "GRS/QA/96",
+        "name":  "COATING THICKNESS GAUGE",
+        "make":  "AQMEZZURE",
+        "serialNo":  "-",
+        "range":  "0-1000 mm",
+        "leastCount":  "0.1",
+        "category":  "Dimensional",
+        "location":  "MPI",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-06-04",
+        "nextDueDate":  "2027-06-04",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-15",
+        "tagId":  "GRS/QA/ST/01",
+        "name":  "SURFACE TABLE",
+        "make":  "JAFUJI",
+        "serialNo":  "20/210\n20A/WL/1146",
+        "range":  "1000 X1000",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-06-09",
+        "nextDueDate":  "2026-06-09",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-14",
+        "tagId":  "GRS/QA/82",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "YASAKI",
+        "serialNo":  "JTR 417",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-03-01",
+        "nextDueDate":  "2027-03-01",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-13",
+        "tagId":  "GRS/QA/VC/02",
+        "name":  "VERNIER CALIPER",
+        "make":  "MITUTOYO",
+        "serialNo":  "19001533",
+        "range":  "0-600 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-10-12",
+        "nextDueDate":  "2026-10-12",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-12",
+        "tagId":  "GRS/QA/LDG/01",
+        "name":  "LEVER DIAL GAUGE",
+        "make":  "MITUTOYO",
+        "serialNo":  "363016",
+        "range":  "0-0.8 MM",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2020-03-18",
+        "nextDueDate":  "2021-03-18",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-11",
+        "tagId":  "GRS/QA/VB/02",
+        "name":  "MAGNETIC V- BLOCK",
+        "make":  "JAFUJI",
+        "serialNo":  "1348-2",
+        "range":  "100x95x70",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-04-06",
+        "nextDueDate":  "2027-04-06",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578720-10",
+        "tagId":  "GRS/QA/VB/01",
+        "name":  "MAGNETIC V- BLOCK",
+        "make":  "JAFUJI",
+        "serialNo":  "1348-1",
+        "range":  "100x95x70",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-04-06",
+        "nextDueDate":  "2027-04-06",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-8",
+        "tagId":  "-",
+        "name":  "WEIGHING SCALE",
+        "make":  "ESSAE",
+        "serialNo":  "DS21516189552",
+        "range":  "0-150 KGS",
+        "leastCount":  "-",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2020-06-25",
+        "nextDueDate":  "2021-06-25",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-7",
+        "tagId":  "GRS/QA/91",
+        "name":  "LEVER DIAL GAUGE",
+        "make":  "INSIZE",
+        "serialNo":  "8B00715",
+        "range":  "0-0.8 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "STORAGE",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-07-15",
+        "nextDueDate":  "2026-07-15",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-6",
+        "tagId":  "GRS/QA/88",
+        "name":  "DIGITAL HEIGHT GAUGE",
+        "make":  "MITUTOYO",
+        "serialNo":  "17106198",
+        "range":  "0-600 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-02-08",
+        "nextDueDate":  "2026-02-08",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-5",
+        "tagId":  "GRS/QA/57",
+        "name":  "VERNIER CALIPER",
+        "make":  "YURI",
+        "serialNo":  "J13053178",
+        "range":  "0-300 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-29",
+        "nextDueDate":  "2027-05-29",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-4",
+        "tagId":  "GRS/QA/87",
+        "name":  "DIGITAL VERNIER CALIPER",
+        "make":  "INSIZE",
+        "serialNo":  "2106181711",
+        "range":  "0-300 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-31",
+        "nextDueDate":  "2027-05-31",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-3",
+        "tagId":  "GRS/QA/84",
+        "name":  "DIAL VERNIER CALIPER",
+        "make":  "INSIZE",
+        "serialNo":  "SC50207170328",
+        "range":  "0-300 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "DIE SHOP",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-03-01",
+        "nextDueDate":  "2027-03-01",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-2",
+        "tagId":  "GRS/QA/92",
+        "name":  "VERNIER HEIGHT GAUGE,",
+        "make":  "INSIZE",
+        "serialNo":  "1406198610",
+        "range":  "0-600 mm",
+        "leastCount":  "0.02",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-03-01",
+        "nextDueDate":  "2027-03-01",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-1",
+        "tagId":  "GRS/QA/80",
+        "name":  "BEVEL PROTRACTOR",
+        "make":  "MITUTOYO",
+        "serialNo":  "164278",
+        "range":  "0-360Â°",
+        "leastCount":  "5\u0027",
+        "category":  "Dimensional",
+        "location":  "IN-PROCESS",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2026-05-29",
+        "nextDueDate":  "2027-05-29",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    },
+    {
+        "id":  "INS-1784560578719-0",
+        "tagId":  "GRS/QA/56",
+        "name":  "PLUNGER DIAL GAUGE",
+        "make":  "YURI",
+        "serialNo":  "122551",
+        "range":  "0-10 mm",
+        "leastCount":  "0.01",
+        "category":  "Dimensional",
+        "location":  "STORAGE",
+        "frequencyMonths":  12,
+        "lastCalibratedDate":  "2025-08-13",
+        "nextDueDate":  "2026-08-13",
+        "agencyId":  "AGN-001",
+        "status":  "Active",
+        "pdfReportName":  null
+    }
+];
 
     // --- Utilities ---
     const TODAY_DATE = new Date('2026-07-18T11:47:24');
@@ -527,8 +991,8 @@
           "Instrument Name": "Quenching Furnace Temp Sensor",
           "Make": "Honeywell",
           "Serial Number": "HW-88201",
-          "Range": "0-1200 °C",
-          "Least Count": "1 °C",
+          "Range": "0-1200 Â°C",
+          "Least Count": "1 Â°C",
           "Category": "Heat Treatment",
           "Location": "Heat Treatment Bay 1",
           "Calibration On Date": "15/01/2026",
@@ -561,7 +1025,7 @@
       const toast = document.getElementById('toastNotification');
       const text = document.getElementById('toastMessage');
       if (toast && text) {
-        text.innerText = msg || '✅ Changes Saved Successfully!';
+        text.innerText = msg || 'âœ… Changes Saved Successfully!';
         toast.classList.remove('hidden');
         setTimeout(() => { toast.classList.add('hidden'); }, 3000);
       }
@@ -712,7 +1176,7 @@
 
       saveState(k, showToastMsg = true) {
         StorageManager.set(k, this.state[k]);
-        if (showToastMsg) showToast(`✅ Data Saved to Browser Storage!`);
+        if (showToastMsg) showToast(`âœ… Data Saved to Browser Storage!`);
       }
 
       saveAllData() {
@@ -720,7 +1184,7 @@
         StorageManager.set('agencies', this.state.agencies);
         StorageManager.set('users', this.state.users);
         StorageManager.set('alertThresholdDays', this.state.alertThresholdDays);
-        showToast('💾 All Master Data & Calibration Agencies Saved Successfully!');
+        showToast('ðŸ’¾ All Master Data & Calibration Agencies Saved Successfully!');
       }
 
       exportBackupJSON() {
@@ -740,7 +1204,7 @@
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
-        showToast('💾 Database Backup (.json) Exported Successfully!');
+        showToast('ðŸ’¾ Database Backup (.json) Exported Successfully!');
       }
 
       importBackupJSON(file) {
@@ -764,7 +1228,7 @@
               this.state.users = data.users;
               StorageManager.set('users', this.state.users);
             }
-            showToast('📥 Database Backup (.json) Successfully Imported & Restored!');
+            showToast('ðŸ“¥ Database Backup (.json) Successfully Imported & Restored!');
             this.renderCurrentTab();
           } catch (err) {
             alert('Error parsing database backup JSON file: ' + err.message);
@@ -779,7 +1243,7 @@
           this.state.agencies = INITIAL_AGENCIES;
           this.state.users = INITIAL_USERS;
           this.saveAllData();
-          showToast('🔄 Reset to Master Seed Data!');
+          showToast('ðŸ”„ Reset to Master Seed Data!');
           this.renderCurrentTab();
         }
       }
@@ -936,7 +1400,7 @@
                   agencyId: agency.id
                 };
                 updatedCount++;
-                importedTags.push(`${tagId} (${name}) - Calib: ${formatDate(lastCal)} ➔ Due: ${formatDate(nextDue)}`);
+                importedTags.push(`${tagId} (${name}) - Calib: ${formatDate(lastCal)} âž” Due: ${formatDate(nextDue)}`);
               } else {
                 this.state.instruments.unshift({
                   id: `INS-${Date.now()}-${idx}`,
@@ -957,7 +1421,7 @@
                   pdfReportName: null
                 });
                 addedCount++;
-                importedTags.push(`${tagId} (${name}) - Calib: ${formatDate(lastCal)} ➔ Due: ${formatDate(nextDue)}`);
+                importedTags.push(`${tagId} (${name}) - Calib: ${formatDate(lastCal)} âž” Due: ${formatDate(nextDue)}`);
               }
             });
 
@@ -979,13 +1443,13 @@
           <div class="white-card modal-enter w-full max-w-lg rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
-                <span class="p-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-lg">📊</span>
+                <span class="p-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-lg">ðŸ“Š</span>
                 <div>
                   <h3 class="font-bold text-lg text-slate-900">Excel Import Results Summary</h3>
                   <p class="text-xs text-slate-500">Dates parsed in DD/MM/YYYY format & Due Dates set to 1 Day Before!</p>
                 </div>
               </div>
-              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
             </div>
 
             <div class="grid grid-cols-2 gap-3 text-center">
@@ -1002,13 +1466,13 @@
             <div class="space-y-1 text-xs">
               <div class="font-bold text-slate-700">Imported Equipment Log (${tagList.length} items):</div>
               <div class="max-h-40 overflow-y-auto p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] space-y-1">
-                ${tagList.map(t => `<div class="text-slate-800">• ${t}</div>`).join('')}
+                ${tagList.map(t => `<div class="text-slate-800">â€¢ ${t}</div>`).join('')}
               </div>
             </div>
 
             <div class="flex justify-end pt-2 border-t border-slate-200">
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md">
-                ✅ View Master Inventory
+                âœ… View Master Inventory
               </button>
             </div>
           </div>
@@ -1084,17 +1548,17 @@
             <div class="flex items-center space-x-2">
               ${this.hasPermission('upload_excel') ? `
                 <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
-                  <span>📊 Upload Excel Sheet</span>
+                  <span>ðŸ“Š Upload Excel Sheet</span>
                 </button>
               ` : ''}
 
               <button id="btnHeaderExportJSON" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
-                <span>💾 Backup (.json)</span>
+                <span>ðŸ’¾ Backup (.json)</span>
               </button>
 
               ${isAdmin ? `
                 <button id="btnHeaderImportJSON" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
-                  <span>📥 Restore (.json)</span>
+                  <span>ðŸ“¥ Restore (.json)</span>
                 </button>
               ` : ''}
 
@@ -1142,30 +1606,30 @@
               ${this.hasPermission('upload_excel') ? `
                 <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 space-y-2.5">
                   <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
-                    <span>📊 Master Excel / CSV Import</span>
+                    <span>ðŸ“Š Master Excel / CSV Import</span>
                   </div>
                   <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files (DD/MM/YYYY format supported)</p>
                   <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
-                    <span>📊 Upload Excel Sheet</span>
+                    <span>ðŸ“Š Upload Excel Sheet</span>
                   </button>
                   <button id="btnDownloadTemplate" class="w-full py-1.5 text-[11px] text-sky-800 hover:underline text-center block font-bold">
-                    📥 Download Excel Template (.xlsx)
+                    ðŸ“¥ Download Excel Template (.xlsx)
                   </button>
                 </div>
               ` : `
                 <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 font-semibold">
-                  🔒 Logged in as: <strong>${user.role}</strong> (${user.name})
+                  ðŸ”’ Logged in as: <strong>${user.role}</strong> (${user.name})
                 </div>
               `}
 
               <div class="pt-4 border-t border-slate-200 space-y-2">
                 <button id="btnSidebarExportJSON" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
-                  <span>💾 Backup Database (.json)</span>
+                  <span>ðŸ’¾ Backup Database (.json)</span>
                 </button>
 
                 ${isAdmin ? `
                   <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
-                    🔄 Reset System Seed Data
+                    ðŸ”„ Reset System Seed Data
                   </button>
                 ` : ''}
               </div>
@@ -1293,7 +1757,7 @@
                 <div class="text-3xl font-extrabold text-red-700 mt-1">${overdue.length}</div>
               </div>
               <div class="white-card p-4 rounded-2xl border border-amber-200 bg-amber-50">
-                <div class="text-xs text-amber-800 uppercase font-semibold">Due in ≤ ${threshold} Days</div>
+                <div class="text-xs text-amber-800 uppercase font-semibold">Due in â‰¤ ${threshold} Days</div>
                 <div class="text-3xl font-extrabold text-amber-800 mt-1">${urgent.length}</div>
               </div>
               <div class="white-card p-4 rounded-2xl border border-purple-200 bg-purple-50">
@@ -1314,7 +1778,7 @@
           return `
             <tr>
               <td colspan="12" class="py-8 text-center text-slate-500 space-y-2">
-                <div class="text-2xl">🔍 No Matching Measuring Instruments Found</div>
+                <div class="text-2xl">ðŸ” No Matching Measuring Instruments Found</div>
                 <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
                 <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
                   Reset Search & Filters
@@ -1370,7 +1834,7 @@
               <td class="py-3 px-3 text-center space-y-1">
                 ${hasPdf ? `
                   <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
-                    📄 View PDF Report
+                    ðŸ“„ View PDF Report
                   </button>
                 ` : `
                   <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
@@ -1378,7 +1842,7 @@
 
                 ${this.hasPermission('upload_pdf') ? `
                   <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
-                    📤 ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
+                    ðŸ“¤ ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
                   </button>
                 ` : ''}
               </td>
@@ -1386,13 +1850,13 @@
               <td class="py-3 px-3 text-right space-y-1">
                 ${isAdmin ? `
                   <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
-                    ✏️ Edit & Save
+                    âœï¸ Edit & Save
                   </button>
                   <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
-                    🗑️ Delete
+                    ðŸ—‘ï¸ Delete
                   </button>
                 ` : `
-                  <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">🔒 Admin Edit Only</span>
+                  <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">ðŸ”’ Admin Edit Only</span>
                 `}
               </td>
             </tr>
@@ -1449,7 +1913,7 @@
               ins.pdfReportName = file.name;
               ins.pdfReportData = evt.target.result;
               this.saveState('instruments');
-              showToast(`📄 PDF Report "${file.name}" uploaded & saved!`);
+              showToast(`ðŸ“„ PDF Report "${file.name}" uploaded & saved!`);
               this.renderCurrentTab();
             }
           };
@@ -1480,13 +1944,13 @@
               <div class="flex items-center space-x-2">
                 ${this.hasPermission('upload_excel') ? `
                   <button id="btnTableUploadExcel" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
-                    <span>📊 Upload Excel Sheet</span>
+                    <span>ðŸ“Š Upload Excel Sheet</span>
                   </button>
                 ` : ''}
 
                 ${isAdmin ? `
                   <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                    💾 Save Data
+                    ðŸ’¾ Save Data
                   </button>
                 ` : ''}
 
@@ -1501,9 +1965,9 @@
             <!-- Single Unified Search Bar & Clean Category Filter Toolbar -->
             <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div class="flex-1 min-w-[280px] relative">
-                <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, History Card No, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
-                <span class="absolute left-3 top-3 text-slate-400 font-bold">🔍</span>
-                ${this.state.searchQuery ? `<button id="btnClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 font-bold text-xs">✕ Clear</button>` : ''}
+                <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="ðŸ” Search Tag ID, History Card No, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
+                <span class="absolute left-3 top-3 text-slate-400 font-bold">ðŸ”</span>
+                ${this.state.searchQuery ? `<button id="btnClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 font-bold text-xs">âœ• Clear</button>` : ''}
               </div>
 
               <div class="flex items-center space-x-3 flex-wrap gap-2">
@@ -1511,10 +1975,10 @@
                   <span class="font-bold text-slate-600">Category:</span>
                   <select id="filterCategorySelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
                     <option value="All" ${this.state.filterCategory === 'All' ? 'selected' : ''}>All Categories</option>
-                    <option value="MPI" ${this.state.filterCategory === 'MPI' ? 'selected' : ''}>🔍 MPI</option>
-                    <option value="Heat Treatment" ${this.state.filterCategory === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
-                    <option value="Quality" ${this.state.filterCategory === 'Quality' ? 'selected' : ''}>🎯 Quality</option>
-                    <option value="Production" ${this.state.filterCategory === 'Production' ? 'selected' : ''}>⚙️ Production</option>
+                    <option value="MPI" ${this.state.filterCategory === 'MPI' ? 'selected' : ''}>ðŸ” MPI</option>
+                    <option value="Heat Treatment" ${this.state.filterCategory === 'Heat Treatment' ? 'selected' : ''}>ðŸ”¥ Heat Treatment</option>
+                    <option value="Quality" ${this.state.filterCategory === 'Quality' ? 'selected' : ''}>ðŸŽ¯ Quality</option>
+                    <option value="Production" ${this.state.filterCategory === 'Production' ? 'selected' : ''}>âš™ï¸ Production</option>
                   </select>
                 </div>
 
@@ -1522,15 +1986,15 @@
                   <span class="font-bold text-slate-600">Status:</span>
                   <select id="filterStatusSelect" class="white-input p-2 rounded-xl font-semibold cursor-pointer">
                     <option value="All" ${this.state.filterStatus === 'All' ? 'selected' : ''}>All Statuses</option>
-                    <option value="Compliant" ${this.state.filterStatus === 'Compliant' ? 'selected' : ''}>🟢 Compliant</option>
-                    <option value="Urgent" ${this.state.filterStatus === 'Urgent' ? 'selected' : ''}>🟡 Due Soon (≤ ${threshold}d)</option>
-                    <option value="Overdue" ${this.state.filterStatus === 'Overdue' ? 'selected' : ''}>🔴 Overdue</option>
+                    <option value="Compliant" ${this.state.filterStatus === 'Compliant' ? 'selected' : ''}>ðŸŸ¢ Compliant</option>
+                    <option value="Urgent" ${this.state.filterStatus === 'Urgent' ? 'selected' : ''}>ðŸŸ¡ Due Soon (â‰¤ ${threshold}d)</option>
+                    <option value="Overdue" ${this.state.filterStatus === 'Overdue' ? 'selected' : ''}>ðŸ”´ Overdue</option>
                   </select>
                 </div>
 
                 ${(this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All') ? `
                   <button id="btnResetAllFilters" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors">
-                    ✕ Reset Filters
+                    âœ• Reset Filters
                   </button>
                 ` : ''}
               </div>
@@ -1636,7 +2100,7 @@
                 <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
                 <p class="text-xs text-slate-500">Enter details (Due Date auto-calculates to 1 Day Before in DD/MM/YYYY)</p>
               </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
             </div>
 
             <form id="newInsForm" class="space-y-3.5 text-xs">
@@ -1655,10 +2119,10 @@
                 <div>
                   <label class="block text-slate-700 font-bold mb-1">Category *</label>
                   <select id="mCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                    <option value="MPI">🔍 MPI</option>
-                    <option value="Heat Treatment">🔥 Heat Treatment</option>
-                    <option value="Quality" selected>🎯 Quality</option>
-                    <option value="Production">⚙️ Production</option>
+                    <option value="MPI">ðŸ” MPI</option>
+                    <option value="Heat Treatment">ðŸ”¥ Heat Treatment</option>
+                    <option value="Quality" selected>ðŸŽ¯ Quality</option>
+                    <option value="Production">âš™ï¸ Production</option>
                   </select>
                 </div>
                 <div>
@@ -1717,7 +2181,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
-                  <span>💾 Save Instrument</span>
+                  <span>ðŸ’¾ Save Instrument</span>
                 </button>
               </div>
             </form>
@@ -1764,7 +2228,7 @@
 
             this.state.instruments.unshift(newInstrument);
             this.saveState('instruments');
-            showToast(`💾 Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added! Due Date: ${formatDate(nextDue)}`);
+            showToast(`ðŸ’¾ Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added! Due Date: ${formatDate(nextDue)}`);
             
             m.classList.add('hidden');
             this.renderCurrentTab();
@@ -1786,7 +2250,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <button id="btnSaveAgencies" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save Agencies Data
+                  ðŸ’¾ Save Agencies Data
                 </button>
                 ${this.hasPermission('edit_agency') ? `
                   <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
@@ -1809,7 +2273,7 @@
 
                       <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
                       <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
-                        <span>📞 Contact Number:</span>
+                        <span>ðŸ“ž Contact Number:</span>
                         <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
                       </div>
                       <div class="text-xs text-slate-600">Email: ${a.email}</div>
@@ -1817,7 +2281,7 @@
                       
                       <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                         <div class="flex justify-between items-center">
-                          <span class="font-bold text-slate-700">📜 NABL Scope Due Date:</span>
+                          <span class="font-bold text-slate-700">ðŸ“œ NABL Scope Due Date:</span>
                           <strong class="font-mono font-bold text-slate-900 text-xs">${formatDate(a.nablDueDate || '2026-08-15')}</strong>
                         </div>
                         
@@ -1833,12 +2297,12 @@
                     <div class="pt-3 border-t border-slate-200 space-y-2">
                       <div class="grid grid-cols-2 gap-2">
                         <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
-                          📜 View NABL Scope
+                          ðŸ“œ View NABL Scope
                         </button>
 
                         ${this.hasPermission('edit_agency') ? `
                           <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
-                            📤 ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
+                            ðŸ“¤ ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
                           </button>
                         ` : '<span class="text-[10px] text-slate-400 italic flex items-center justify-center">View Scope Only</span>'}
                       </div>
@@ -1846,10 +2310,10 @@
                       ${this.hasPermission('edit_agency') ? `
                         <div class="flex justify-between items-center space-x-2">
                           <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
-                            ✏️ Edit & Modify Agency
+                            âœï¸ Edit & Modify Agency
                           </button>
                           <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
-                            🗑️ Delete
+                            ðŸ—‘ï¸ Delete
                           </button>
                         </div>
                       ` : ''}
@@ -1863,7 +2327,7 @@
 
         c.querySelector('#btnSaveAgencies')?.addEventListener('click', () => {
           this.saveState('agencies');
-          showToast('💾 Calibration Agencies Data Saved to Browser Storage!');
+          showToast('ðŸ’¾ Calibration Agencies Data Saved to Browser Storage!');
         });
 
         c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
@@ -1903,7 +2367,7 @@
               agency.nablScopeName = file.name;
               agency.nablScopeData = evt.target.result;
               this.saveState('agencies');
-              showToast(`📜 NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
+              showToast(`ðŸ“œ NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
               this.renderCurrentTab();
             }
           };
@@ -1941,7 +2405,7 @@
                 <h3 class="font-bold text-lg text-slate-900">Edit & Modify Agency Data</h3>
                 <p class="text-xs text-slate-500">Correct any agency details or update NABL Scope Expiry Date</p>
               </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
             </div>
 
             <form id="editAgencyForm" class="space-y-3 text-xs">
@@ -1987,7 +2451,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save Agency Modifications
+                  ðŸ’¾ Save Agency Modifications
                 </button>
               </div>
             </form>
@@ -2006,7 +2470,7 @@
           agency.nablDueDate = document.getElementById('eaNablDueDate').value;
 
           this.saveState('agencies');
-          showToast(`💾 Agency "${agency.name}" modifications saved!`);
+          showToast(`ðŸ’¾ Agency "${agency.name}" modifications saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2028,7 +2492,7 @@
 
             <div class="space-y-3">
               <h3 class="font-bold text-base text-purple-900 flex items-center space-x-2">
-                <span>📜 NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
+                <span>ðŸ“œ NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
               </h3>
 
               ${nablAlertAgencies.length > 0 ? `
@@ -2054,14 +2518,14 @@
                 </div>
               ` : `
                 <div class="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                  ✅ All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
+                  âœ… All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
                 </div>
               `}
             </div>
 
             <div class="space-y-3 pt-4 border-t border-slate-200">
               <h3 class="font-bold text-base text-slate-900 flex items-center space-x-2">
-                <span>⚖️ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
+                <span>âš–ï¸ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
               </h3>
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2109,7 +2573,7 @@
               <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save Agency</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">ðŸ’¾ Save Agency</button>
               </div>
             </form>
           </div>
@@ -2130,7 +2594,7 @@
             status: 'Active'
           });
           this.saveState('agencies');
-          showToast(`💾 Agency ${document.getElementById('agName').value} Saved!`);
+          showToast(`ðŸ’¾ Agency ${document.getElementById('agName').value} Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2147,13 +2611,13 @@
           <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
-                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📜</span>
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">ðŸ“œ</span>
                 <div>
                   <h3 class="font-bold text-lg text-slate-900">NABL Scope of Accreditation Certificate</h3>
                   <p class="text-xs text-slate-500">${agency.name} (${agency.code})</p>
                 </div>
               </div>
-              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
             </div>
 
             ${agency.nablScopeData ? `
@@ -2179,7 +2643,7 @@
                   <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">1. Quality & Dimensional</strong>
-                      <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: ±0.002mm)</span>
+                      <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: Â±0.002mm)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">2. MPI Testing</strong>
@@ -2187,7 +2651,7 @@
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">3. Heat Treatment</strong>
-                      <span class="text-slate-600 text-[11px]">Quenching Furnaces, Thermocouples (-80°C to 1200°C)</span>
+                      <span class="text-slate-600 text-[11px]">Quenching Furnaces, Thermocouples (-80Â°C to 1200Â°C)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">4. Production Gauges</strong>
@@ -2208,7 +2672,7 @@
 
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
               <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
-                🖨️ Print NABL Scope
+                ðŸ–¨ï¸ Print NABL Scope
               </button>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
                 Close
@@ -2231,13 +2695,13 @@
           <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
-                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">📄</span>
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">ðŸ“„</span>
                 <div>
                   <h3 class="font-bold text-lg text-slate-900">Calibration Certificate Report (PDF Format)</h3>
                   <p class="text-xs text-slate-500">${ins.pdfReportName || 'Official Calibration Certificate'}</p>
                 </div>
               </div>
-              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
             </div>
 
             ${ins.pdfReportData ? `
@@ -2296,7 +2760,7 @@
 
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
               <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
-                🖨️ Print Report PDF
+                ðŸ–¨ï¸ Print Report PDF
               </button>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
                 Close
@@ -2345,10 +2809,10 @@
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1">Category *</label>
                   <select id="eCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                    <option value="MPI" ${ins.category === 'MPI' ? 'selected' : ''}>🔍 MPI</option>
-                    <option value="Heat Treatment" ${ins.category === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
-                    <option value="Quality" ${ins.category === 'Quality' ? 'selected' : ''}>🎯 Quality</option>
-                    <option value="Production" ${ins.category === 'Production' ? 'selected' : ''}>⚙️ Production</option>
+                    <option value="MPI" ${ins.category === 'MPI' ? 'selected' : ''}>ðŸ” MPI</option>
+                    <option value="Heat Treatment" ${ins.category === 'Heat Treatment' ? 'selected' : ''}>ðŸ”¥ Heat Treatment</option>
+                    <option value="Quality" ${ins.category === 'Quality' ? 'selected' : ''}>ðŸŽ¯ Quality</option>
+                    <option value="Production" ${ins.category === 'Production' ? 'selected' : ''}>âš™ï¸ Production</option>
                   </select>
                 </div>
                 <div>
@@ -2400,7 +2864,7 @@
               <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
                 <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
-                  💾 Save Changes
+                  ðŸ’¾ Save Changes
                 </button>
               </div>
             </form>
@@ -2427,7 +2891,7 @@
           ins.agencyId = document.getElementById('eAgency').value;
 
           this.saveState('instruments');
-          showToast(`💾 Instrument ${ins.tagId} changes saved! Due Date: ${formatDate(ins.nextDueDate)}`);
+          showToast(`ðŸ’¾ Instrument ${ins.tagId} changes saved! Due Date: ${formatDate(ins.nextDueDate)}`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2440,7 +2904,7 @@
         if (!isAdmin) {
           c.innerHTML = `
             <div class="p-8 text-center space-y-3 bg-red-50 rounded-2xl border border-red-200 max-w-md mx-auto my-12">
-              <div class="text-3xl">🔒</div>
+              <div class="text-3xl">ðŸ”’</div>
               <h3 class="text-xl font-bold text-red-900">Access Restricted to Admin Only</h3>
               <p class="text-xs text-red-700">Only Admin account (Mukunda) has permission to manage and edit User Access Levels.</p>
             </div>
@@ -2461,7 +2925,7 @@
             <!-- Role Permissions Overview Table -->
             <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
               <div class="flex justify-between items-center">
-                <h3 class="font-bold text-sm text-slate-900">🛡️ Active User Permission Levels</h3>
+                <h3 class="font-bold text-sm text-slate-900">ðŸ›¡ï¸ Active User Permission Levels</h3>
                 <span class="text-xs text-emerald-800 font-bold bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300">
                   Active Admin: ${currentUser.name} (Full Control)
                 </span>
@@ -2479,21 +2943,21 @@
                   </thead>
                   <tbody class="divide-y divide-slate-200">
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Full Admin Control</td>
+                      <td class="py-2.5 px-3 font-bold text-emerald-700">ðŸ‘‘ Full Admin Control</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Mukunda (Admin)</td>
                       <td class="py-2.5 px-3 text-slate-700">Unrestricted Access (Edit & Delete Instruments, Add Equipment, Upload Excel, Edit Agencies, Manage Users)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-emerald-700">Master Admin</td>
                     </tr>
                     <tr class="bg-slate-50">
-                      <td class="py-2.5 px-3 font-bold text-amber-700">✏️ Modification Access</td>
+                      <td class="py-2.5 px-3 font-bold text-amber-700">âœï¸ Modification Access</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Elena (Technician) / David</td>
                       <td class="py-2.5 px-3 text-slate-700">Can add new instruments & upload PDF reports (Edit & Delete Master Instruments is Restricted to Admin Only)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-sky-700">👁️ View Only Access</td>
+                      <td class="py-2.5 px-3 font-bold text-sky-700">ðŸ‘ï¸ View Only Access</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Priya (Auditor)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Read-Only View (Can view instruments, dashboard, alerts & print PDF certificates — No edits)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Read-Only View (Can view instruments, dashboard, alerts & print PDF certificates â€” No edits)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                   </tbody>
@@ -2517,7 +2981,7 @@
                           <div class="text-[11px] text-sky-700 font-semibold">${u.department || 'Metrology Dept'}</div>
                         </div>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isMukunda ? 'bg-emerald-100 text-emerald-800' : (level === 'view' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800')}">
-                          ${isMukunda ? '👑 Full Admin' : (level === 'view' ? '👁️ View Only' : '✏️ Modification')}
+                          ${isMukunda ? 'ðŸ‘‘ Full Admin' : (level === 'view' ? 'ðŸ‘ï¸ View Only' : 'âœï¸ Modification')}
                         </span>
                       </div>
 
@@ -2530,13 +2994,13 @@
                         <div class="font-bold text-slate-700">Active Permissions:</div>
                         <div class="space-y-0.5 text-[10px]">
                           <div class="${isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${isMukunda ? '✓ Edit & Delete Instruments (Admin Only)' : '✕ Edit & Delete Instruments (Admin Only)'}
+                            ${isMukunda ? 'âœ“ Edit & Delete Instruments (Admin Only)' : 'âœ• Edit & Delete Instruments (Admin Only)'}
                           </div>
                           <div class="${p.canAddInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canAddInstruments || isMukunda ? '✓ Add New Instruments' : '✕ Add Instruments'}
+                            ${p.canAddInstruments || isMukunda ? 'âœ“ Add New Instruments' : 'âœ• Add Instruments'}
                           </div>
                           <div class="${p.canUploadPDF || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canUploadPDF || isMukunda ? '✓ Upload Calibration PDF' : '✕ Upload PDF Reports'}
+                            ${p.canUploadPDF || isMukunda ? 'âœ“ Upload Calibration PDF' : 'âœ• Upload PDF Reports'}
                           </div>
                         </div>
                       </div>
@@ -2544,12 +3008,12 @@
 
                     <div class="pt-2 border-t border-slate-200 space-y-1.5">
                       <button class="btnEditUserAccess w-full py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all text-center block shadow-sm" data-user-id="${u.id}">
-                        ✏️ Modify User Access Level
+                        âœï¸ Modify User Access Level
                       </button>
 
                       ${!isMukunda ? `
                         <button class="btnDeleteUser w-full py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-[11px] font-semibold hover:bg-red-100 text-center block" data-user-id="${u.id}">
-                          🗑️ Delete Account
+                          ðŸ—‘ï¸ Delete Account
                         </button>
                       ` : ''}
                     </div>
@@ -2599,7 +3063,7 @@
                 <h3 class="font-bold text-lg text-slate-900">Modify User Access Level (Admin Control)</h3>
                 <p class="text-xs text-slate-500">Configure access level for ${user.name} (${user.username})</p>
               </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
             </div>
 
             <form id="editUserAccessForm" class="space-y-4 text-xs">
@@ -2622,7 +3086,7 @@
               <!-- Select Access Level Radio / Option Cards -->
               <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                 <div class="font-bold text-slate-900 text-xs flex justify-between items-center">
-                  <span>🔑 Select User Access Permission Level</span>
+                  <span>ðŸ”‘ Select User Access Permission Level</span>
                   <span class="text-[10px] text-emerald-700 font-bold">Admin Preset</span>
                 </div>
 
@@ -2630,7 +3094,7 @@
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'view' ? 'bg-sky-50 border-sky-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="view" ${currentLevel === 'view' ? 'checked' : ''} class="w-4 h-4 text-sky-600">
                     <div>
-                      <strong class="text-sky-900 block font-bold">👁️ View Only Access</strong>
+                      <strong class="text-sky-900 block font-bold">ðŸ‘ï¸ View Only Access</strong>
                       <span class="text-slate-600 text-[11px]">Can view master instruments, dashboard, alerts & print reports. CANNOT edit, add, or delete.</span>
                     </div>
                   </label>
@@ -2638,7 +3102,7 @@
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'modification' ? 'bg-amber-50 border-amber-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="modification" ${currentLevel === 'modification' ? 'checked' : ''} class="w-4 h-4 text-amber-600">
                     <div>
-                      <strong class="text-amber-900 block font-bold">✏️ Limited Access (Add & Upload)</strong>
+                      <strong class="text-amber-900 block font-bold">âœï¸ Limited Access (Add & Upload)</strong>
                       <span class="text-slate-600 text-[11px]">Can add new instruments & upload PDF reports. (Edit & Delete Master Instruments is Restricted to Admin Only).</span>
                     </div>
                   </label>
@@ -2646,7 +3110,7 @@
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'admin' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="admin" ${currentLevel === 'admin' ? 'checked' : ''} class="w-4 h-4 text-emerald-600">
                     <div>
-                      <strong class="text-emerald-900 block font-bold">👑 Full Admin Control (Mukunda)</strong>
+                      <strong class="text-emerald-900 block font-bold">ðŸ‘‘ Full Admin Control (Mukunda)</strong>
                       <span class="text-slate-600 text-[11px]">Unrestricted access: Edit & Delete master instruments, batch upload Excel, edit agencies & manage user access.</span>
                     </div>
                   </label>
@@ -2658,7 +3122,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save User Access Level
+                  ðŸ’¾ Save User Access Level
                 </button>
               </div>
             </form>
@@ -2716,7 +3180,7 @@
           }
 
           this.saveState('users');
-          showToast(`💾 Access Level set to "${selectedLevel.toUpperCase()}" for user "${user.name}"!`);
+          showToast(`ðŸ’¾ Access Level set to "${selectedLevel.toUpperCase()}" for user "${user.name}"!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2744,15 +3208,15 @@
               <div>
                 <label class="block text-slate-700 font-bold mb-1">Select Access Permission Level *</label>
                 <select id="uAccessLevel" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-800">
-                  <option value="modification">✏️ Limited Access (Add New Instruments & Upload PDF - Edit/Delete Restricted to Admin)</option>
-                  <option value="view">👁️ View Only Access (Read-Only Compliance View)</option>
-                  <option value="admin">👑 Full Admin Control (Unrestricted Access)</option>
+                  <option value="modification">âœï¸ Limited Access (Add New Instruments & Upload PDF - Edit/Delete Restricted to Admin)</option>
+                  <option value="view">ðŸ‘ï¸ View Only Access (Read-Only Compliance View)</option>
+                  <option value="admin">ðŸ‘‘ Full Admin Control (Unrestricted Access)</option>
                 </select>
               </div>
 
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User Account</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">ðŸ’¾ Save User Account</button>
               </div>
             </form>
           </div>
@@ -2788,7 +3252,7 @@
           });
 
           this.saveState('users');
-          showToast(`💾 User Account ${document.getElementById('uUsername').value} Created & Saved!`);
+          showToast(`ðŸ’¾ User Account ${document.getElementById('uUsername').value} Created & Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2799,3 +3263,4 @@
   </script>
 </body>
 </html>
+
