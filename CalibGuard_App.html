@@ -161,7 +161,7 @@
         department: "Quality Assurance & Metrology Head", 
         avatar: "MK",
         permissions: {
-          accessLevel: "admin", // admin, modification, view
+          accessLevel: "admin",
           canAddInstruments: true,
           canEditInstruments: true,
           canDeleteInstruments: true,
@@ -511,6 +511,7 @@
       }
     }
 
+    // --- SAFE NON-DESTRUCTIVE STORAGE CONTROLLER ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
@@ -518,6 +519,22 @@
           if (item) {
             const parsed = JSON.parse(item);
             if (Array.isArray(parsed) && parsed.length > 0) {
+              if (key === 'agencies') {
+                return parsed.map(a => ({
+                  id: a.id || `AGN-${Math.random()}`,
+                  name: a.name || 'Calibration Laboratory',
+                  code: a.code || 'LAB-001',
+                  contactPerson: a.contactPerson || 'Laboratory Incharge',
+                  phone: a.phone || '+1 (555) 000-0000',
+                  email: a.email || 'info@caliblab.com',
+                  accreditation: a.accreditation || 'ISO/IEC 17025 Accredited (NABL)',
+                  nablCertNo: a.nablCertNo || 'NABL-CC-2894',
+                  nablDueDate: a.nablDueDate || '2026-08-15',
+                  nablScopeName: a.nablScopeName || null,
+                  nablScopeData: a.nablScopeData || null,
+                  status: a.status || 'Active'
+                }));
+              }
               if (key === 'instruments') {
                 return parsed.map(ins => ({
                   id: ins.id || `INS-${Math.random()}`,
@@ -569,11 +586,12 @@
           StorageManager.set('users', users);
         }
 
+        let agencies = StorageManager.get('agencies', INITIAL_AGENCIES);
         let instruments = StorageManager.get('instruments', INITIAL_INSTRUMENTS);
 
         this.state = {
           instruments: instruments,
-          agencies: StorageManager.get('agencies', INITIAL_AGENCIES),
+          agencies: agencies,
           users: users,
           isLoggedIn: StorageManager.get('isLoggedIn', false),
           activeUserId: StorageManager.get('activeUserId', 'USR-000'),
@@ -617,9 +635,8 @@
           readOnlyMode: false
         };
 
-        // Strict Admin-Only User Access Editing Protection!
         if (action === 'manage_users' || action === 'edit_user_access') {
-          return false; // Only Admin can manage/edit user access!
+          return false;
         }
 
         if (p.accessLevel === 'view' || p.readOnlyMode) {
@@ -648,12 +665,12 @@
         StorageManager.set('agencies', this.state.agencies);
         StorageManager.set('users', this.state.users);
         StorageManager.set('alertThresholdDays', this.state.alertThresholdDays);
-        showToast('💾 All Master Data Successfully Saved & Persisted!');
+        showToast('💾 All Master Data & Calibration Agencies Saved Successfully!');
       }
 
       exportBackupJSON() {
         const backupData = {
-          version: "2026.07.21",
+          version: "2026.07.21.v2",
           exportDate: new Date().toISOString(),
           instruments: this.state.instruments,
           agencies: this.state.agencies,
@@ -967,7 +984,6 @@
               </div>
             </div>
 
-            <!-- Single Unified Search Option Header Area Simplified -->
             <div class="flex items-center space-x-2">
               ${this.hasPermission('upload_excel') ? `
                 <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
@@ -1617,6 +1633,8 @@
 
       renderAgencies(c) {
         const threshold = this.state.alertThresholdDays;
+        const user = this.getActiveUser();
+
         c.innerHTML = `
           <div class="space-y-6">
             <div class="flex items-center justify-between flex-wrap gap-4">
@@ -1624,9 +1642,14 @@
                 <h2 class="text-2xl font-bold text-slate-900">Calibration Agencies & NABL Scope Expiry</h2>
                 <p class="text-sm text-slate-500">Accredited Laboratories with NABL Scope Due Dates & Modification Options</p>
               </div>
-              ${this.hasPermission('edit_agency') ? `
-                <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
-              ` : ''}
+              <div class="flex items-center space-x-2">
+                <button id="btnSaveAgencies" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+                  💾 Save Agencies Data
+                </button>
+                ${this.hasPermission('edit_agency') ? `
+                  <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
+                ` : ''}
+              </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1695,6 +1718,11 @@
             </div>
           </div>
         `;
+
+        c.querySelector('#btnSaveAgencies')?.addEventListener('click', () => {
+          this.saveState('agencies');
+          showToast('💾 Calibration Agencies Data Saved to Browser Storage!');
+        });
 
         c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
 
