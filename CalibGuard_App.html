@@ -94,7 +94,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.07.21.v8_minus1day_fixed";
+    const DATA_VERSION = "2026.07.21.v9_ddmmyyyy_minus1day";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -278,7 +278,7 @@
         location: "Machining Shop - Bay 2", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-22", 
-        nextDueDate: "2026-07-21", 
+        nextDueDate: "2026-07-21", // 6 Months minus 1 Day (21/07/2026)
         agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: "Calib_Report_EQ-CAL-001.pdf"
@@ -297,7 +297,7 @@
         location: "MPI Inspection Line", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-20", 
-        nextDueDate: "2026-07-19", 
+        nextDueDate: "2026-07-19", // 6 Months minus 1 Day (19/07/2026)
         agencyId: "AGN-002", 
         status: "Active",
         pdfReportName: "Calib_Report_EQ-MIC-002.pdf"
@@ -316,7 +316,7 @@
         location: "Production Line Test Bench", 
         frequencyMonths: 12, 
         lastCalibratedDate: "2025-07-10", 
-        nextDueDate: "2026-07-09", 
+        nextDueDate: "2026-07-09", // 12 Months minus 1 Day (09/07/2026)
         agencyId: "AGN-003", 
         status: "Out of Calibration",
         pdfReportName: null
@@ -335,7 +335,7 @@
         location: "Final Assembly Station 4", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-24", 
-        nextDueDate: "2026-07-23", 
+        nextDueDate: "2026-07-23", // 6 Months minus 1 Day (23/07/2026)
         agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: "Calib_Report_EQ-TRQ-004.pdf"
@@ -354,7 +354,7 @@
         location: "Heat Treatment Shop", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-15", 
-        nextDueDate: "2026-07-14", 
+        nextDueDate: "2026-07-14", // 6 Months minus 1 Day (14/07/2026)
         agencyId: "AGN-004", 
         status: "Active",
         pdfReportName: null
@@ -373,7 +373,7 @@
         location: "Heavy Production Press Line", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-02-01", 
-        nextDueDate: "2026-07-31", 
+        nextDueDate: "2026-07-31", // 6 Months minus 1 Day (31/07/2026)
         agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: null
@@ -385,9 +385,12 @@
 
     function getDaysUntilDue(dateStr) {
       if (!dateStr) return 0;
-      const dueDate = new Date(dateStr);
-      if (isNaN(dueDate.getTime())) return 0;
-      return Math.ceil((dueDate.getTime() - TODAY_DATE.getTime()) / (1000 * 60 * 60 * 24));
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const dueDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return Math.ceil((dueDate.getTime() - TODAY_DATE.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      return 0;
     }
 
     function getCalibrationAlertInfo(nextDueDate, thresholdDays = 7) {
@@ -404,7 +407,7 @@
       return { key: 'valid', label: `NABL Accredited (${days} days valid)`, shortLabel: 'Valid', days, badgeClass: 'badge-green' };
     }
 
-    // --- 100% TIMEZONE-SAFE BULLETPROOF -1 DAY DUE DATE CALCULATOR ---
+    // --- TIMEZONE-SAFE -1 DAY DUE DATE CALCULATOR ---
     function calculateNextDueDate(lastDateStr, months) {
       try {
         if (!lastDateStr) lastDateStr = '2026-01-22';
@@ -412,16 +415,13 @@
         if (parts.length !== 3) return lastDateStr;
 
         let year = parseInt(parts[0], 10);
-        let month = parseInt(parts[1], 10) - 1; // 0-indexed month (0 = Jan)
+        let month = parseInt(parts[1], 10) - 1;
         let day = parseInt(parts[2], 10);
 
         const m = parseInt(months || 6, 10);
 
-        // Construct date object using local constructor (year, month + m, day)
         const d = new Date(year, month + m, day);
-        
-        // SUBTRACT 1 DAY (Due date is 1 day before exact anniversary)
-        d.setDate(d.getDate() - 1);
+        d.setDate(d.getDate() - 1); // MINUS 1 DAY RULE!
 
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -433,14 +433,17 @@
       }
     }
 
+    // --- ROBUST PARSER FOR DD/MM/YYYY, DD-MM-YYYY & EXCEL DATES ---
     function parseExcelDate(val) {
       if (!val) return '2026-01-22';
+
       if (val instanceof Date && !isNaN(val.getTime())) {
         const yyyy = val.getFullYear();
         const mm = String(val.getMonth() + 1).padStart(2, '0');
         const dd = String(val.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
       }
+
       if (typeof val === 'number') {
         const dateObj = new Date((val - (25567 + 2)) * 86400 * 1000);
         if (!isNaN(dateObj.getTime())) {
@@ -450,7 +453,32 @@
           return `${yyyy}-${mm}-${dd}`;
         }
       }
+
       const str = val.toString().trim();
+      const parts = str.split(/[\/\-\.]/);
+
+      // Explicit DD/MM/YYYY or DD-MM-YYYY (Day/Month/Year standard)
+      if (parts.length === 3 && parts[2].length === 4) {
+        let p1 = parseInt(parts[0], 10);
+        let p2 = parseInt(parts[1], 10);
+        let y = parseInt(parts[2], 10);
+
+        if (p1 > 12 && p2 <= 12) {
+          return `${y}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+        }
+        if (p1 <= 31 && p2 <= 12) {
+          return `${y}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+        }
+      }
+
+      // Explicit YYYY-MM-DD
+      if (parts.length === 3 && parts[0].length === 4) {
+        let y = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        let d = parseInt(parts[2], 10);
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+
       const parsed = new Date(str);
       if (!isNaN(parsed.getTime())) {
         const yyyy = parsed.getFullYear();
@@ -459,33 +487,20 @@
         return `${yyyy}-${mm}-${dd}`;
       }
 
-      const parts = str.split(/[\/\-\.]/);
-      if (parts.length === 3) {
-        if (parts[2].length === 4) {
-          const d1 = parseInt(parts[0], 10);
-          const d2 = parseInt(parts[1], 10);
-          const y = parseInt(parts[2], 10);
-          if (d1 > 12) {
-            return `${y}-${String(d2).padStart(2, '0')}-${String(d1).padStart(2, '0')}`;
-          } else {
-            return `${y}-${String(d1).padStart(2, '0')}-${String(d2).padStart(2, '0')}`;
-          }
-        }
-      }
       return '2026-01-22';
     }
 
+    // --- STANDARD DD/MM/YYYY DISPLAY FORMATTER ---
     function formatDate(dateStr) {
       if (!dateStr) return 'N/A';
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        const dateObj = new Date(y, m, d);
-        if (!isNaN(dateObj.getTime())) {
-          return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-        }
+        const yyyy = parts[0];
+        const mm = parts[1];
+        const dd = parts[2];
+        
+        // Render as DD/MM/YYYY
+        return `${dd}/${mm}/${yyyy}`;
       }
       return dateStr;
     }
@@ -502,7 +517,7 @@
           "Least Count": "0.01 mm",
           "Category": "Quality",
           "Location": "QA Inspection Shop",
-          "Calibration On Date": "2026-02-15",
+          "Calibration On Date": "22/01/2026",
           "Frequency (Months)": 6,
           "Agency Code": "PMS-LAB"
         },
@@ -516,7 +531,7 @@
           "Least Count": "1 °C",
           "Category": "Heat Treatment",
           "Location": "Heat Treatment Bay 1",
-          "Calibration On Date": "2026-03-01",
+          "Calibration On Date": "15/01/2026",
           "Frequency (Months)": 6,
           "Agency Code": "APEX-CAL"
         },
@@ -530,7 +545,7 @@
           "Least Count": "0.1 kg",
           "Category": "MPI",
           "Location": "MPI Inspection Shop",
-          "Calibration On Date": "2026-02-20",
+          "Calibration On Date": "20/01/2026",
           "Frequency (Months)": 6,
           "Agency Code": "PMS-LAB"
         }
@@ -552,10 +567,19 @@
       }
     }
 
-    // --- SAFE STORAGE CONTROLLER WITH AUTOMATIC RE-HYDRATION OF -1 DAY DUE DATE ---
+    // --- SAFE STORAGE CONTROLLER ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
+          const currentVersion = localStorage.getItem('calibguard_data_ver');
+          if (currentVersion !== DATA_VERSION) {
+            localStorage.setItem('calibguard_data_ver', DATA_VERSION);
+            if (key === 'instruments') {
+              StorageManager.set('instruments', INITIAL_INSTRUMENTS);
+              return INITIAL_INSTRUMENTS;
+            }
+          }
+
           const item = localStorage.getItem(`calibguard_${key}`); 
           if (item) {
             const parsed = JSON.parse(item);
@@ -588,8 +612,6 @@
 
                   const calDate = ins.lastCalibratedDate || '2026-01-22';
                   const freq = parseInt(ins.frequencyMonths || 6, 10);
-                  
-                  // MANDATORY RE-CALCULATION OF -1 DAY DUE DATE FOR ALL INSTRUMENTS
                   const computedDue = calculateNextDueDate(calDate, freq);
 
                   return {
@@ -778,6 +800,9 @@
           const agencyName = agency ? agency.name.toLowerCase() : '';
           const agencyCode = agency ? agency.code.toLowerCase() : '';
 
+          const calDateFormatted = formatDate(ins.lastCalibratedDate).toLowerCase();
+          const dueDateFormatted = formatDate(ins.nextDueDate).toLowerCase();
+
           const matchesQuery = !query || 
             (ins.tagId && ins.tagId.toLowerCase().includes(query)) ||
             (ins.historyCardNo && ins.historyCardNo.toLowerCase().includes(query)) ||
@@ -788,8 +813,8 @@
             (ins.leastCount && ins.leastCount.toLowerCase().includes(query)) ||
             (ins.category && ins.category.toLowerCase().includes(query)) ||
             (ins.location && ins.location.toLowerCase().includes(query)) ||
-            (ins.lastCalibratedDate && ins.lastCalibratedDate.toLowerCase().includes(query)) ||
-            (ins.nextDueDate && ins.nextDueDate.toLowerCase().includes(query)) ||
+            calDateFormatted.includes(query) ||
+            dueDateFormatted.includes(query) ||
             agencyName.includes(query) ||
             agencyCode.includes(query);
 
@@ -805,7 +830,7 @@
         });
       }
 
-      // --- EXCEL UPLOAD PARSER WITH CALIBRATION ON DATE & DUE DATE MINUS 1 DAY ---
+      // --- EXCEL UPLOAD PARSER (SUPPORTING DD/MM/YYYY FORMAT) ---
       handleExcelUpload(file) {
         if (!this.hasPermission('upload_excel')) {
           alert('Access Denied: Your account role does not have permission to upload Excel sheets.');
@@ -871,11 +896,11 @@
 
               const location = (findValue(row, ['location', 'locationshop', 'shop', 'area', 'department', 'plant', 'locationdept', 'place', 'workstation', 'line']) || 'Quality Inspection Shop').toString().trim();
               
-              // CALIBRATION ON DATE: Extracted directly from Excel sheet
+              // CALIBRATION ON DATE: Parsed cleanly from DD/MM/YYYY or DD-MM-YYYY Excel strings
               const rawCalDate = findValue(row, ['calibrationondate', 'calibrationdate', 'lastcalibrateddate', 'caldate', 'calibratedon', 'dateofcalibration', 'lastcalibrationdate', 'lastcaldate', 'calondate', 'date']);
               const lastCal = parseExcelDate(rawCalDate);
 
-              // CALIBRATION FREQUENCY
+              // FREQUENCY
               const freqRaw = findValue(row, ['frequencymonths', 'frequency', 'freq', 'frequencyinmonths', 'periodicity', 'interval', 'months', 'calfrequency', 'calibfrequency']);
               const freq = parseInt(freqRaw || '6', 10);
 
@@ -888,7 +913,7 @@
               );
               if (!agency) agency = this.state.agencies[0];
 
-              // DUE DATE: ALWAYS COMPUTED AS (CALIBRATION DATE + FREQUENCY MONTHS - 1 DAY)
+              // DUE DATE: CALIBRATION DATE + FREQUENCY MONTHS - 1 DAY
               const nextDue = calculateNextDueDate(lastCal, freq);
 
               const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
@@ -911,7 +936,7 @@
                   agencyId: agency.id
                 };
                 updatedCount++;
-                importedTags.push(`${tagId} (${name}) - Updated [Due: ${nextDue}]`);
+                importedTags.push(`${tagId} (${name}) - Calib: ${formatDate(lastCal)} ➔ Due: ${formatDate(nextDue)}`);
               } else {
                 this.state.instruments.unshift({
                   id: `INS-${Date.now()}-${idx}`,
@@ -932,7 +957,7 @@
                   pdfReportName: null
                 });
                 addedCount++;
-                importedTags.push(`${tagId} (${name}) - Added [Due: ${nextDue}]`);
+                importedTags.push(`${tagId} (${name}) - Calib: ${formatDate(lastCal)} ➔ Due: ${formatDate(nextDue)}`);
               }
             });
 
@@ -957,7 +982,7 @@
                 <span class="p-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-lg">📊</span>
                 <div>
                   <h3 class="font-bold text-lg text-slate-900">Excel Import Results Summary</h3>
-                  <p class="text-xs text-slate-500">Calibration On Dates loaded & Due Dates set to 1 Day Before!</p>
+                  <p class="text-xs text-slate-500">Dates parsed in DD/MM/YYYY format & Due Dates set to 1 Day Before!</p>
                 </div>
               </div>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
@@ -1119,7 +1144,7 @@
                   <div class="text-xs font-bold text-sky-900 flex items-center space-x-1">
                     <span>📊 Master Excel / CSV Import</span>
                   </div>
-                  <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files to batch update inventory</p>
+                  <p class="text-[10px] text-sky-700">Upload .xlsx, .xls, or .csv files (DD/MM/YYYY format supported)</p>
                   <button id="btnTriggerExcelUpload" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center space-x-1">
                     <span>📊 Upload Excel Sheet</span>
                   </button>
@@ -1214,8 +1239,8 @@
 
       updateGlobalBadges() {
         const threshold = this.state.alertThresholdDays;
-        const dueUrgentCount = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; }).length;
-        const overdueCount = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0).length;
+        const dueUrgentCount = this.state.instruments.filter(i => { const d = getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)); return d >= 0 && d <= threshold; }).length;
+        const overdueCount = this.state.instruments.filter(i => getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)) < 0).length;
         const nablAlertCount = this.state.agencies.filter(a => { const d = getDaysUntilDue(a.nablDueDate); return d <= threshold; }).length;
 
         const total = dueUrgentCount + overdueCount + nablAlertCount;
@@ -1242,8 +1267,8 @@
 
       renderDashboard(c) {
         const threshold = this.state.alertThresholdDays;
-        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
-        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)); return d >= 0 && d <= threshold; });
         const nablAlerts = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
 
         c.innerHTML = `
@@ -1326,9 +1351,19 @@
                 <div class="text-sky-700 font-mono text-[10px]">LC: ${ins.leastCount || '0.01 mm'}</div>
               </td>
               <td class="py-3 px-3 text-slate-600">${ins.location}</td>
-              <td class="py-3 px-3 font-semibold text-slate-800">${formatDate(ins.lastCalibratedDate)}</td>
+              
+              <!-- CALIBRATION ON DATE DISPLAYED IN DD/MM/YYYY FORMAT -->
+              <td class="py-3 px-3 font-semibold font-mono text-slate-900 text-xs">
+                ${formatDate(ins.lastCalibratedDate)}
+              </td>
+              
               <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
-              <td class="py-3 px-3 font-bold text-slate-900">${formatDate(computedDueDate)}</td>
+              
+              <!-- DUE DATE DISPLAYED IN DD/MM/YYYY FORMAT (-1 DAY RULE APPLIED) -->
+              <td class="py-3 px-3 font-bold font-mono text-slate-900 text-xs">
+                ${formatDate(computedDueDate)}
+              </td>
+
               <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
               <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
               
@@ -1348,7 +1383,6 @@
                 ` : ''}
               </td>
 
-              <!-- EDIT & DELETE BUTTONS RESTRICTED EXCLUSIVELY TO ADMIN ONLY -->
               <td class="py-3 px-3 text-right space-y-1">
                 ${isAdmin ? `
                   <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
@@ -1440,7 +1474,7 @@
                     Showing ${filteredList.length} of ${totalCount} Registered Instruments
                   </span>
                 </div>
-                <p class="text-sm text-slate-500">Live search & filter across Tag ID, History Card No, Name, Make, Serial, Range, Location, & Agency</p>
+                <p class="text-sm text-slate-500">Dates displayed in DD/MM/YYYY format with automatic -1 Day Due Date rule</p>
               </div>
 
               <div class="flex items-center space-x-2">
@@ -1512,9 +1546,9 @@
                       <th class="py-3.5 px-3">Make / Serial</th>
                       <th class="py-3.5 px-3">Range & LC</th>
                       <th class="py-3.5 px-3">Location</th>
-                      <th class="py-3.5 px-3">CALIBRATION ON DATE</th>
+                      <th class="py-3.5 px-3">CALIBRATION ON DATE (DD/MM/YYYY)</th>
                       <th class="py-3.5 px-3">FREQUENCY</th>
-                      <th class="py-3.5 px-3">DUE DATE (-1 DAY)</th>
+                      <th class="py-3.5 px-3">DUE DATE (-1 DAY) (DD/MM/YYYY)</th>
                       <th class="py-3.5 px-3">Agency</th>
                       <th class="py-3.5 px-3">Status</th>
                       <th class="py-3.5 px-3 text-center">PDF REPORT</th>
@@ -1600,7 +1634,7 @@
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
                 <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
-                <p class="text-xs text-slate-500">Enter details (Due Date auto-calculates to 1 Day Before)</p>
+                <p class="text-xs text-slate-500">Enter details (Due Date auto-calculates to 1 Day Before in DD/MM/YYYY)</p>
               </div>
               <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
             </div>
@@ -1730,7 +1764,7 @@
 
             this.state.instruments.unshift(newInstrument);
             this.saveState('instruments');
-            showToast(`💾 Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added! Due Date: ${nextDue}`);
+            showToast(`💾 Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added! Due Date: ${formatDate(nextDue)}`);
             
             m.classList.add('hidden');
             this.renderCurrentTab();
@@ -2233,7 +2267,7 @@
                   <div><span class="text-slate-500">Range & LC:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200 text-center">
+                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-sky-50 border border-sky-200 text-center font-mono">
                   <div>
                     <span class="text-slate-500 text-[10px] block uppercase font-bold">Calibration On Date</span>
                     <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.lastCalibratedDate)}</strong>
@@ -2348,7 +2382,7 @@
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1">Calibration On Date</label>
-                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl" required>
+                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl font-mono" required>
                 </div>
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1">Frequency (Months)</label>
@@ -2393,7 +2427,7 @@
           ins.agencyId = document.getElementById('eAgency').value;
 
           this.saveState('instruments');
-          showToast(`💾 Instrument ${ins.tagId} changes saved! Due Date: ${ins.nextDueDate}`);
+          showToast(`💾 Instrument ${ins.tagId} changes saved! Due Date: ${formatDate(ins.nextDueDate)}`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
