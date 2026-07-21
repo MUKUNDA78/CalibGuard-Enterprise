@@ -259,7 +259,6 @@
       }
     ];
 
-    // CLEAN CATEGORY LIST REQUIRED BY USER: MPI, Heat Treatment, Quality, Production
     const ALLOWED_CATEGORIES = ["MPI", "Heat Treatment", "Quality", "Production"];
 
     const INITIAL_INSTRUMENTS = [
@@ -644,12 +643,10 @@
         const user = this.getActiveUser();
         const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
         
-        // Admin user Mukunda has FULL UNRESTRICTED ACCESS to everything!
         if (isAdmin) return true;
 
-        // Edit and Delete Instrument operations are ONLY FOR ADMIN!
         if (action === 'edit_instrument' || action === 'delete_instrument' || action === 'manage_users' || action === 'edit_user_access' || action === 'edit_agency' || action === 'reset_seed') {
-          return false; // Non-Admin CANNOT edit or delete instruments!
+          return false;
         }
 
         const p = user.permissions || {};
@@ -681,7 +678,7 @@
 
       exportBackupJSON() {
         const backupData = {
-          version: "2026.07.21.v5",
+          version: "2026.07.21.v6",
           exportDate: new Date().toISOString(),
           instruments: this.state.instruments,
           agencies: this.state.agencies,
@@ -737,7 +734,6 @@
         }
       }
 
-      // --- FULL ROBUST SEARCH ENGINE ---
       getFilteredInstruments() {
         const user = this.getActiveUser();
         const query = (this.state.searchQuery || '').toLowerCase().trim();
@@ -781,6 +777,7 @@
         });
       }
 
+      // --- BULLETPROOF EXCEL UPLOAD PARSER & FUZZY COLUMN MATCHER ---
       handleExcelUpload(file) {
         if (!this.hasPermission('upload_excel')) {
           alert('Access Denied: Your account role does not have permission to upload Excel sheets.');
@@ -802,6 +799,7 @@
               return;
             }
 
+            // ROBUST FUZZY PATTERN MATCHER
             const findValue = (row, patterns) => {
               const keys = Object.keys(row);
               for (let pattern of patterns) {
@@ -818,43 +816,58 @@
             const importedTags = [];
 
             rawRows.forEach((row, idx) => {
-              const tagIdVal = findValue(row, ['tagid', 'tag', 'assetid', 'asset', 'tagassetid', 'tagno', 'equipmentid', 'gaugeid', 'id', 'slno', 'srno', 'sno', 'code', 'serial']);
-              const nameVal = findValue(row, ['instrumentname', 'name', 'instrument', 'description', 'gaugename', 'equipmentname', 'title', 'particulars', 'item']);
+              // Extract Tag ID
+              const tagIdVal = findValue(row, ['tagid', 'tag', 'assetid', 'asset', 'tagassetid', 'tagno', 'equipmentid', 'equipmentno', 'eqid', 'eqno', 'gaugeid', 'gaugeno', 'id', 'code', 'assetno', 'tagasset']);
+              
+              // Extract Instrument Name
+              const nameVal = findValue(row, ['instrumentname', 'name', 'instrument', 'description', 'gaugename', 'equipmentname', 'title', 'particulars', 'item', 'itemname', 'equipment']);
               
               if (!tagIdVal && !nameVal) return;
 
               const tagId = (tagIdVal || `EQ-IMP-${Date.now()}-${idx}`).toString().trim();
-              const historyCardNo = (findValue(row, ['historycardno', 'historycard', 'hcno', 'cardno', 'historycardnumber', 'history']) || `HC-2026-${(idx + 101)}`).toString().trim();
+              const historyCardNo = (findValue(row, ['historycardno', 'historycard', 'historycardnum', 'historycardnumber', 'hcno', 'hcnumber', 'cardno', 'cardnumber', 'historyno', 'history', 'hcardno', 'hcard']) || `HC-2026-${(idx + 101)}`).toString().trim();
               const name = (nameVal || 'Measuring Instrument').toString().trim();
-              const make = (findValue(row, ['make', 'brand', 'manufacturer', 'company', 'mfr']) || 'Mitutoyo').toString().trim();
-              const serialNo = (findValue(row, ['serialnumber', 'serialno', 'serial', 'slno', 'srno', 'sn', 'machineno']) || 'SN-000').toString().trim();
-              const range = (findValue(row, ['range', 'capacity', 'specification', 'size']) || '0-150 mm').toString().trim();
-              const leastCount = (findValue(row, ['leastcount', 'lc', 'resolution', 'accuracy']) || '0.01 mm').toString().trim();
+              const make = (findValue(row, ['make', 'makebrand', 'brand', 'manufacturer', 'company', 'mfr', 'makeofinstrument']) || 'Mitutoyo').toString().trim();
+              const serialNo = (findValue(row, ['serialnumber', 'serialno', 'serial', 'slno', 'srno', 'sn', 'machineno', 'srnumber', 'slnumber', 'sno', 'serialnum']) || 'SN-000').toString().trim();
+              const range = (findValue(row, ['range', 'capacity', 'specification', 'size', 'rangespecification', 'measuringrange']) || '0-150 mm').toString().trim();
+              const leastCount = (findValue(row, ['leastcount', 'lc', 'resolution', 'accuracy', 'leastcountlc', 'lcount']) || '0.01 mm').toString().trim();
               
-              let categoryVal = (findValue(row, ['category', 'type', 'discipline', 'dept']) || 'Quality').toString().trim();
-              if (!ALLOWED_CATEGORIES.includes(categoryVal)) {
-                if (categoryVal.toLowerCase().includes('heat')) categoryVal = 'Heat Treatment';
-                else if (categoryVal.toLowerCase().includes('mpi')) categoryVal = 'MPI';
-                else if (categoryVal.toLowerCase().includes('prod')) categoryVal = 'Production';
-                else categoryVal = 'Quality';
+              // Category Smart Matching (Map cleanly to MPI, Heat Treatment, Quality, Production)
+              let rawCategory = (findValue(row, ['category', 'type', 'discipline', 'dept', 'department', 'cat', 'process']) || 'Quality').toString().trim();
+              let categoryVal = 'Quality';
+              const catLower = rawCategory.toLowerCase();
+              if (catLower.includes('mpi') || catLower.includes('magnetic') || catLower.includes('flaw') || catLower.includes('yoke') || catLower.includes('ultrasonic')) {
+                categoryVal = 'MPI';
+              } else if (catLower.includes('heat') || catLower.includes('furnace') || catLower.includes('temp') || catLower.includes('therm') || catLower.includes('oven') || catLower.includes('quench') || catLower.includes('anneal')) {
+                categoryVal = 'Heat Treatment';
+              } else if (catLower.includes('prod') || catLower.includes('press') || catLower.includes('line') || catLower.includes('forge') || catLower.includes('hydraul')) {
+                categoryVal = 'Production';
+              } else {
+                categoryVal = 'Quality';
               }
 
-              const location = (findValue(row, ['location', 'shop', 'area', 'department', 'plant', 'locationdept']) || 'Quality Inspection Shop').toString().trim();
+              const location = (findValue(row, ['location', 'locationshop', 'shop', 'area', 'department', 'plant', 'locationdept', 'place', 'workstation', 'line']) || 'Quality Inspection Shop').toString().trim();
               
-              const rawCalDate = findValue(row, ['calibrationondate', 'calibrationdate', 'lastcalibrateddate', 'caldate', 'calibratedon', 'dateofcalibration', 'caldate']);
+              // Calibration On Date
+              const rawCalDate = findValue(row, ['calibrationondate', 'calibrationdate', 'lastcalibrateddate', 'caldate', 'calibratedon', 'dateofcalibration', 'lastcalibrationdate', 'lastcaldate', 'calondate', 'date']);
               const lastCal = parseExcelDate(rawCalDate);
 
-              const freqRaw = findValue(row, ['frequencymonths', 'frequency', 'freq', 'frequencyinmonths', 'periodicity', 'interval', 'months']);
+              // Calibration Frequency
+              const freqRaw = findValue(row, ['frequencymonths', 'frequency', 'freq', 'frequencyinmonths', 'periodicity', 'interval', 'months', 'calfrequency', 'calibfrequency']);
               const freq = parseInt(freqRaw || '6', 10);
 
-              const agencyCodeVal = findValue(row, ['agencycode', 'agency', 'calibrationagency', 'lab', 'calibratedby']);
+              // Calibration Agency
+              const agencyCodeVal = findValue(row, ['agencycode', 'agency', 'calibrationagency', 'lab', 'calibratedby', 'agencyname', 'supplier', 'vendor', 'callab', 'externalagency']);
               let agency = this.state.agencies.find(a => 
                 a.code.toLowerCase() === agencyCodeVal.toString().toLowerCase() || 
-                a.name.toLowerCase() === agencyCodeVal.toString().toLowerCase()
+                a.name.toLowerCase() === agencyCodeVal.toString().toLowerCase() ||
+                a.name.toLowerCase().includes(agencyCodeVal.toString().toLowerCase())
               );
               if (!agency) agency = this.state.agencies[0];
 
-              const nextDue = calculateNextDueDate(lastCal, freq);
+              // Next Due Date (explicit Excel column or calculated)
+              const rawDueDate = findValue(row, ['nextduedate', 'duedate', 'due', 'nextcalibdate', 'nextcalibrationdate', 'calibduedate', 'calduedate']);
+              const nextDue = rawDueDate ? parseExcelDate(rawDueDate) : calculateNextDueDate(lastCal, freq);
 
               const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase() === tagId.toLowerCase());
 
@@ -864,7 +877,12 @@
                   tagId: tagId,
                   historyCardNo: historyCardNo,
                   name: name,
-                  make, serialNo, range, leastCount, category: categoryVal, location,
+                  make: make,
+                  serialNo: serialNo,
+                  range: range,
+                  leastCount: leastCount,
+                  category: categoryVal,
+                  location: location,
                   frequencyMonths: freq,
                   lastCalibratedDate: lastCal,
                   nextDueDate: nextDue,
@@ -878,7 +896,12 @@
                   tagId: tagId,
                   historyCardNo: historyCardNo,
                   name: name,
-                  make, serialNo, range, leastCount, category: categoryVal, location,
+                  make: make,
+                  serialNo: serialNo,
+                  range: range,
+                  leastCount: leastCount,
+                  category: categoryVal,
+                  location: location,
                   frequencyMonths: freq,
                   lastCalibratedDate: lastCal,
                   nextDueDate: nextDue,
