@@ -161,6 +161,7 @@
         department: "Quality Assurance & Metrology Head", 
         avatar: "MK",
         permissions: {
+          accessLevel: "admin", // admin, modification, view
           canAddInstruments: true,
           canEditInstruments: true,
           canDeleteInstruments: true,
@@ -181,6 +182,7 @@
         department: "Quality Assurance Management", 
         avatar: "MV",
         permissions: {
+          accessLevel: "admin",
           canAddInstruments: true,
           canEditInstruments: true,
           canDeleteInstruments: true,
@@ -201,6 +203,7 @@
         department: "Metrology & Quality Control", 
         avatar: "ER",
         permissions: {
+          accessLevel: "modification",
           canAddInstruments: true,
           canEditInstruments: true,
           canDeleteInstruments: false,
@@ -222,6 +225,7 @@
         avatar: "DM", 
         assignedAgencyId: "AGN-001",
         permissions: {
+          accessLevel: "modification",
           canAddInstruments: false,
           canEditInstruments: true,
           canDeleteInstruments: false,
@@ -242,6 +246,7 @@
         department: "Compliance & Safety Audit", 
         avatar: "PS",
         permissions: {
+          accessLevel: "view",
           canAddInstruments: false,
           canEditInstruments: false,
           canDeleteInstruments: false,
@@ -329,87 +334,37 @@
       },
       { 
         id: "INS-005", 
-        tagId: "EQ-TMP-005", 
-        name: "Dual Input Thermocouple Calibrator", 
-        make: "Omega Engineering", 
-        serialNo: "OE-112049", 
-        range: "-200 to 1370 °C", 
-        leastCount: "0.1 °C", 
-        category: "Thermal", 
-        model: "CL3512A", 
-        location: "Heat Treatment Dept", 
-        frequencyMonths: 12, 
-        lastCalibratedDate: "2025-08-15", 
-        nextDueDate: "2026-08-15", 
+        tagId: "EQ-HT-005", 
+        name: "Quenching Furnace Temperature Indicator", 
+        make: "Honeywell", 
+        serialNo: "HW-994012", 
+        range: "0 to 1200 °C", 
+        leastCount: "1 °C", 
+        category: "Heat Treatment", 
+        model: "UDC2500", 
+        location: "Heat Treatment Shop", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-01-15", 
+        nextDueDate: "2026-07-15", 
         agencyId: "AGN-004", 
         status: "Active",
         pdfReportName: null
       },
-      {
-        id: "INS-006",
-        tagId: "EQ-CAL-101",
-        name: "Digital Vernier Caliper 150mm",
-        make: "Mitutoyo",
-        serialNo: "MT-99201",
-        range: "0-150 mm",
-        leastCount: "0.01 mm",
-        category: "Dimensional",
-        location: "Machining Shop Bay 1",
-        frequencyMonths: 6,
-        lastCalibratedDate: "2026-01-20",
-        nextDueDate: "2026-07-20",
-        agencyId: "AGN-001",
-        status: "Active",
-        pdfReportName: null
-      },
-      {
-        id: "INS-007",
-        tagId: "EQ-MIC-102",
-        name: "Outside Digital Micrometer 25mm",
-        make: "Starrett",
-        serialNo: "ST-88102",
-        range: "0-25 mm",
-        leastCount: "0.001 mm",
-        category: "Dimensional",
-        location: "Grinding Section",
-        frequencyMonths: 6,
-        lastCalibratedDate: "2026-02-15",
-        nextDueDate: "2026-08-15",
-        agencyId: "AGN-002",
-        status: "Active",
-        pdfReportName: null
-      },
-      {
-        id: "INS-008",
-        tagId: "EQ-PRS-103",
-        name: "Master Digital Pressure Gauge",
-        make: "Fluke",
-        serialNo: "FK-77301",
-        range: "0-100 PSI",
-        leastCount: "0.01 PSI",
-        category: "Pressure",
-        location: "Hydraulics Lab",
-        frequencyMonths: 12,
-        lastCalibratedDate: "2025-11-10",
-        nextDueDate: "2026-11-10",
-        agencyId: "AGN-003",
-        status: "Active",
-        pdfReportName: null
-      },
-      {
-        id: "INS-009",
-        tagId: "EQ-TMP-104",
-        name: "Dual Thermocouple Calibrator",
-        make: "Omega",
-        serialNo: "OE-44102",
-        range: "-200 to 1370 C",
-        leastCount: "0.1 C",
-        category: "Thermal",
-        location: "Heat Treatment Dept",
-        frequencyMonths: 12,
-        lastCalibratedDate: "2026-03-01",
-        nextDueDate: "2027-03-01",
-        agencyId: "AGN-004",
+      { 
+        id: "INS-006", 
+        tagId: "EQ-FRG-006", 
+        name: "Forging Press Load Cell Sensor", 
+        make: "HBM Sensors", 
+        serialNo: "HBM-44102", 
+        range: "0 to 500 Tons", 
+        leastCount: "0.1 Ton", 
+        category: "Forging Process", 
+        model: "C16i-50T", 
+        location: "Heavy Forging Press Line", 
+        frequencyMonths: 6, 
+        lastCalibratedDate: "2026-02-01", 
+        nextDueDate: "2026-08-01", 
+        agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: null
       }
@@ -514,16 +469,29 @@
         },
         {
           "Tag ID": "EQ-EXP-102",
-          "Instrument Name": "Digital Pressure Calibrator",
-          "Make": "Fluke",
-          "Serial Number": "FK-88201",
-          "Range": "0-500 PSI",
-          "Least Count": "0.01 PSI",
-          "Category": "Pressure",
-          "Location": "Hydraulics Test Lab",
+          "Instrument Name": "Quenching Furnace Temp Sensor",
+          "Make": "Honeywell",
+          "Serial Number": "HW-88201",
+          "Range": "0-1200 °C",
+          "Least Count": "1 °C",
+          "Category": "Heat Treatment",
+          "Location": "Heat Treatment Bay 1",
           "Calibration On Date": "2026-03-01",
-          "Frequency (Months)": 12,
+          "Frequency (Months)": 6,
           "Agency Code": "APEX-CAL"
+        },
+        {
+          "Tag ID": "EQ-EXP-103",
+          "Instrument Name": "Forging Press Load Cell 500T",
+          "Make": "HBM",
+          "Serial Number": "HBM-77102",
+          "Range": "0-500 Tons",
+          "Least Count": "0.1 Ton",
+          "Category": "Forging Process",
+          "Location": "Heavy Forging Press Shop",
+          "Calibration On Date": "2026-02-20",
+          "Frequency (Months)": 6,
+          "Agency Code": "PMS-LAB"
         }
       ];
 
@@ -633,10 +601,13 @@
       // --- PERMISSION CHECK ENGINE ---
       hasPermission(action) {
         const user = this.getActiveUser();
-        if (user.role === 'Admin') return true;
+        
+        // Admin user Mukunda has FULL ACCESS to everything!
+        if (user.role === 'Admin' || user.username === 'Mukunda') return true;
 
         const p = user.permissions || {
-          canAddInstruments: false,
+          accessLevel: "modification",
+          canAddInstruments: true,
           canEditInstruments: true,
           canDeleteInstruments: false,
           canUploadExcel: false,
@@ -646,7 +617,13 @@
           readOnlyMode: false
         };
 
-        if (p.readOnlyMode && action !== 'view_dashboard' && action !== 'view_master' && action !== 'view_alerts' && action !== 'view_agencies' && action !== 'view_pdf' && action !== 'export_backup') {
+        // Strict Admin-Only User Access Editing Protection!
+        if (action === 'manage_users' || action === 'edit_user_access') {
+          return false; // Only Admin can manage/edit user access!
+        }
+
+        if (p.accessLevel === 'view' || p.readOnlyMode) {
+          if (action === 'view_dashboard' || action === 'view_master' || action === 'view_alerts' || action === 'view_agencies' || action === 'view_pdf' || action === 'export_backup') return true;
           return false;
         }
 
@@ -656,7 +633,6 @@
         if (action === 'upload_excel') return !!p.canUploadExcel;
         if (action === 'upload_pdf') return !!p.canUploadPDF;
         if (action === 'edit_agency') return !!p.canEditAgencies;
-        if (action === 'manage_users') return !!p.canManageUsers;
         if (action === 'reset_seed') return false;
 
         return true;
@@ -677,7 +653,7 @@
 
       exportBackupJSON() {
         const backupData = {
-          version: "2026.07.20",
+          version: "2026.07.21",
           exportDate: new Date().toISOString(),
           instruments: this.state.instruments,
           agencies: this.state.agencies,
@@ -979,6 +955,8 @@
 
       renderMainApp() {
         const user = this.getActiveUser();
+        const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
+
         document.getElementById('app').innerHTML = `
           <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div class="flex items-center space-x-3">
@@ -989,14 +967,7 @@
               </div>
             </div>
 
-            <div class="flex-1 max-w-md mx-4 hidden md:block">
-              <div class="relative">
-                <input type="text" id="globalSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Quick Search Instruments (Tag ID, Name, Make, Serial, Location, Agency)..." class="white-input w-full pl-9 pr-8 py-2 rounded-xl text-xs font-semibold">
-                <span class="absolute left-3 top-2.5 text-slate-400 font-bold">🔍</span>
-                ${this.state.searchQuery ? `<button id="btnHeaderClearSearch" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-700 font-bold text-xs">✕</button>` : ''}
-              </div>
-            </div>
-
+            <!-- Single Unified Search Option Header Area Simplified -->
             <div class="flex items-center space-x-2">
               ${this.hasPermission('upload_excel') ? `
                 <button id="btnHeaderUploadExcel" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
@@ -1049,7 +1020,10 @@
                 <button data-tab="dashboard" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Dashboard</button>
                 <button data-tab="alerts" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-amber-700">Alert Center</button>
                 <button data-tab="agencies" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">Calibration Agencies</button>
-                <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles & Access</button>
+                
+                ${isAdmin ? `
+                  <button data-tab="users" class="nav-btn w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-slate-100 text-slate-700">User Roles & Access (Admin Only)</button>
+                ` : ''}
               </div>
 
               ${this.hasPermission('upload_excel') ? `
@@ -1076,7 +1050,7 @@
                   <span>💾 Backup Database (.json)</span>
                 </button>
 
-                ${this.hasPermission('reset_seed') ? `
+                ${isAdmin ? `
                   <button id="btnResetSeedData" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs">
                     🔄 Reset System Seed Data
                   </button>
@@ -1120,21 +1094,6 @@
             this.importBackupJSON(file);
             e.target.value = '';
           }
-        });
-
-        const globalSearch = document.getElementById('globalSearchInput');
-        globalSearch?.addEventListener('input', (e) => {
-          this.state.searchQuery = e.target.value;
-          if (this.state.activeTab !== 'master') {
-            this.switchTab('master');
-          } else {
-            this.renderCurrentTab();
-          }
-        });
-
-        document.getElementById('btnHeaderClearSearch')?.addEventListener('click', () => {
-          this.state.searchQuery = '';
-          this.renderCurrentTab();
         });
 
         document.getElementById('globalThresholdSelect')?.addEventListener('change', (e) => {
@@ -1273,6 +1232,7 @@
               </div>
             </div>
 
+            <!-- Single Unified Search Bar & Category Filter Toolbar -->
             <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div class="flex-1 min-w-[280px] relative">
                 <input type="text" id="masterSearchInput" value="${this.state.searchQuery}" placeholder="🔍 Search Tag ID, Name, Make, Serial No, Range, Location, or Agency..." class="white-input w-full pl-9 pr-8 py-2.5 rounded-xl font-semibold text-xs shadow-sm">
@@ -1288,6 +1248,8 @@
                     <option value="Dimensional" ${this.state.filterCategory === 'Dimensional' ? 'selected' : ''}>Dimensional</option>
                     <option value="Pressure" ${this.state.filterCategory === 'Pressure' ? 'selected' : ''}>Pressure</option>
                     <option value="Thermal" ${this.state.filterCategory === 'Thermal' ? 'selected' : ''}>Thermal</option>
+                    <option value="Heat Treatment" ${this.state.filterCategory === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
+                    <option value="Forging Process" ${this.state.filterCategory === 'Forging Process' ? 'selected' : ''}>⚙️ Forging Process</option>
                     <option value="Torque & Force" ${this.state.filterCategory === 'Torque & Force' ? 'selected' : ''}>Torque & Force</option>
                     <option value="Electrical" ${this.state.filterCategory === 'Electrical' ? 'selected' : ''}>Electrical</option>
                     <option value="Mass & Weight" ${this.state.filterCategory === 'Mass & Weight' ? 'selected' : ''}>Mass & Weight</option>
@@ -1342,6 +1304,7 @@
                           <td class="py-3 px-3">
                             <div class="font-bold text-slate-900">${ins.name}</div>
                             <div class="font-mono text-sky-700 text-[10px] font-semibold">${ins.tagId}</div>
+                            <div class="text-[9px] text-slate-400 font-bold">${ins.category || 'Dimensional'}</div>
                           </td>
                           <td class="py-3 px-3">
                             <div class="font-semibold text-slate-800">${ins.make || 'Mitutoyo'}</div>
@@ -1410,15 +1373,11 @@
         const searchInput = c.querySelector('#masterSearchInput');
         searchInput?.addEventListener('input', (e) => {
           this.state.searchQuery = e.target.value;
-          const globalInput = document.getElementById('globalSearchInput');
-          if (globalInput) globalInput.value = e.target.value;
           this.renderCurrentTab();
         });
 
         c.querySelector('#btnClearSearch')?.addEventListener('click', () => {
           this.state.searchQuery = '';
-          const globalInput = document.getElementById('globalSearchInput');
-          if (globalInput) globalInput.value = '';
           this.renderCurrentTab();
         });
 
@@ -1436,8 +1395,6 @@
           this.state.searchQuery = '';
           this.state.filterCategory = 'All';
           this.state.filterStatus = 'All';
-          const globalInput = document.getElementById('globalSearchInput');
-          if (globalInput) globalInput.value = '';
           this.renderCurrentTab();
         };
 
@@ -1537,6 +1494,8 @@
                     <option value="Dimensional">Dimensional</option>
                     <option value="Pressure">Pressure</option>
                     <option value="Thermal">Thermal</option>
+                    <option value="Heat Treatment">🔥 Heat Treatment</option>
+                    <option value="Forging Process">⚙️ Forging Process</option>
                     <option value="Torque & Force">Torque & Force</option>
                     <option value="Electrical">Electrical</option>
                     <option value="Mass & Weight">Mass & Weight</option>
@@ -2056,12 +2015,12 @@
                       <span class="text-slate-600 text-[11px]">Master Pressure Gauges, Transducers (0 to 700 bar)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
-                      <strong class="text-sky-700 block font-bold">3. Thermal & Temperature</strong>
-                      <span class="text-slate-600 text-[11px]">Thermocouples, RTDs, Pyrometers (-80°C to 1200°C)</span>
+                      <strong class="text-sky-700 block font-bold">3. Thermal & Heat Treatment</strong>
+                      <span class="text-slate-600 text-[11px]">Thermocouples, Furnaces, RTDs (-80°C to 1200°C)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
-                      <strong class="text-sky-700 block font-bold">4. Torque & Mechanical Force</strong>
-                      <span class="text-slate-600 text-[11px]">Torque Wrenches, Load Cells (1 Nm to 1000 Nm)</span>
+                      <strong class="text-sky-700 block font-bold">4. Forging & Force Metrology</strong>
+                      <span class="text-slate-600 text-[11px]">Load Cells, Forging Press Transducers (0 to 1000T)</span>
                     </div>
                   </div>
                 </div>
@@ -2130,9 +2089,9 @@
                 <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-white border border-slate-200">
                   <div><span class="text-slate-500">Instrument Name:</span> <strong class="text-slate-900 block font-bold">${ins.name}</strong></div>
                   <div><span class="text-slate-500">Tag / Asset ID:</span> <strong class="text-sky-700 block font-mono font-bold">${ins.tagId}</strong></div>
-                  <div><span class="text-slate-500">Make / Manufacturer:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'}</strong></div>
-                  <div><span class="text-slate-500">Serial Number:</span> <strong class="text-slate-900 block font-mono font-semibold">${ins.serialNo || 'SN-000'}</strong></div>
-                  <div><span class="text-slate-500">Range & Least Count:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
+                  <div><span class="text-slate-500">Category:</span> <strong class="text-sky-800 block font-bold">${ins.category || 'Dimensional'}</strong></div>
+                  <div><span class="text-slate-500">Make / Serial:</span> <strong class="text-slate-900 block font-semibold">${ins.make || 'Mitutoyo'} (${ins.serialNo || 'SN-000'})</strong></div>
+                  <div><span class="text-slate-500">Range & LC:</span> <strong class="text-slate-900 block font-semibold">${ins.range || '0-150 mm'} (LC: ${ins.leastCount || '0.01 mm'})</strong></div>
                   <div><span class="text-slate-500">Shop Location:</span> <strong class="text-slate-900 block font-semibold">${ins.location}</strong></div>
                 </div>
 
@@ -2196,23 +2155,44 @@
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Make</label>
-                  <input type="text" id="eMake" value="${ins.make || 'Mitutoyo'}" class="white-input w-full p-2.5 rounded-xl" required>
+                  <label class="block text-slate-600 font-semibold mb-1">Category *</label>
+                  <select id="eCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
+                    <option value="Dimensional" ${ins.category === 'Dimensional' ? 'selected' : ''}>Dimensional</option>
+                    <option value="Pressure" ${ins.category === 'Pressure' ? 'selected' : ''}>Pressure</option>
+                    <option value="Thermal" ${ins.category === 'Thermal' ? 'selected' : ''}>Thermal</option>
+                    <option value="Heat Treatment" ${ins.category === 'Heat Treatment' ? 'selected' : ''}>🔥 Heat Treatment</option>
+                    <option value="Forging Process" ${ins.category === 'Forging Process' ? 'selected' : ''}>⚙️ Forging Process</option>
+                    <option value="Torque & Force" ${ins.category === 'Torque & Force' ? 'selected' : ''}>Torque & Force</option>
+                    <option value="Electrical" ${ins.category === 'Electrical' ? 'selected' : ''}>Electrical</option>
+                    <option value="Mass & Weight" ${ins.category === 'Mass & Weight' ? 'selected' : ''}>Mass & Weight</option>
+                    <option value="Other" ${ins.category === 'Other' ? 'selected' : ''}>Other</option>
+                  </select>
                 </div>
                 <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Serial Number</label>
-                  <input type="text" id="eSerial" value="${ins.serialNo || 'SN-000'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                  <label class="block text-slate-600 font-semibold mb-1">Make</label>
+                  <input type="text" id="eMake" value="${ins.make || 'Mitutoyo'}" class="white-input w-full p-2.5 rounded-xl" required>
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Serial Number</label>
+                  <input type="text" id="eSerial" value="${ins.serialNo || 'SN-000'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+                <div>
                   <label class="block text-slate-600 font-semibold mb-1">Range</label>
                   <input type="text" id="eRange" value="${ins.range || '0-150 mm'}" class="white-input w-full p-2.5 rounded-xl" required>
                 </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1">Least Count</label>
                   <input type="text" id="eLeastCount" value="${ins.leastCount || '0.01 mm'}" class="white-input w-full p-2.5 rounded-xl font-mono" required>
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1">Location</label>
+                  <input type="text" id="eLocation" value="${ins.location}" class="white-input w-full p-2.5 rounded-xl" required>
                 </div>
               </div>
 
@@ -2227,17 +2207,11 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Location</label>
-                  <input type="text" id="eLocation" value="${ins.location}" class="white-input w-full p-2.5 rounded-xl" required>
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1">Assigned Agency</label>
-                  <select id="eAgency" class="white-input w-full p-2.5 rounded-xl">
-                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
-                  </select>
-                </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1">Assigned Agency</label>
+                <select id="eAgency" class="white-input w-full p-2.5 rounded-xl">
+                  ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
+                </select>
               </div>
 
               <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
@@ -2256,6 +2230,7 @@
           const freq = parseInt(document.getElementById('eFreq').value, 10);
 
           ins.name = document.getElementById('eName').value.trim();
+          ins.category = document.getElementById('eCategory').value;
           ins.make = document.getElementById('eMake').value.trim();
           ins.serialNo = document.getElementById('eSerial').value.trim();
           ins.range = document.getElementById('eRange').value.trim();
@@ -2275,24 +2250,35 @@
 
       renderUsers(c) {
         const currentUser = this.getActiveUser();
+        const isAdmin = (currentUser.role === 'Admin' || currentUser.username === 'Mukunda');
+
+        if (!isAdmin) {
+          c.innerHTML = `
+            <div class="p-8 text-center space-y-3 bg-red-50 rounded-2xl border border-red-200 max-w-md mx-auto my-12">
+              <div class="text-3xl">🔒</div>
+              <h3 class="text-xl font-bold text-red-900">Access Restricted to Admin Only</h3>
+              <p class="text-xs text-red-700">Only Admin account (Mukunda) has permission to manage and edit User Access Levels.</p>
+            </div>
+          `;
+          return;
+        }
+
         c.innerHTML = `
           <div class="space-y-6">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 class="text-2xl font-bold text-slate-900">User Roles & Access Control Engine</h2>
-                <p class="text-sm text-slate-500">Admin has Full Access. Manage & customize limited access permissions for all users.</p>
+                <h2 class="text-2xl font-bold text-slate-900">User Access Level Control Portal (Admin Only)</h2>
+                <p class="text-sm text-slate-500">Mukunda (Admin) has Full Control. Configure View or Modification access for all non-admin users.</p>
               </div>
-              ${this.hasPermission('manage_users') ? `
-                <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add New User Account</button>
-              ` : ''}
+              <button id="btnAddUser" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Add User Account</button>
             </div>
 
-            <!-- Role Permissions Overview -->
+            <!-- Role Permissions Overview Table -->
             <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
               <div class="flex justify-between items-center">
-                <h3 class="font-bold text-sm text-slate-900">🛡️ System Permission Rules & Role Hierarchy</h3>
-                <span class="text-xs text-sky-700 font-bold bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200">
-                  Current User: ${currentUser.name} (${currentUser.role})
+                <h3 class="font-bold text-sm text-slate-900">🛡️ Active User Permission Levels</h3>
+                <span class="text-xs text-emerald-800 font-bold bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300">
+                  Active Admin: ${currentUser.name} (Full Control)
                 </span>
               </div>
 
@@ -2300,42 +2286,30 @@
                 <table class="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
                   <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px]">
                     <tr>
-                      <th class="py-2.5 px-3">Role</th>
-                      <th class="py-2.5 px-3">Full Access</th>
-                      <th class="py-2.5 px-3">Limited Access Scope & Controls</th>
-                      <th class="py-2.5 px-3 text-right">Admin Controls</th>
+                      <th class="py-2.5 px-3">Access Level</th>
+                      <th class="py-2.5 px-3">Default Role</th>
+                      <th class="py-2.5 px-3">Allowed User Actions</th>
+                      <th class="py-2.5 px-3 text-right">Admin Edit Option</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200">
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Admin (Mukunda)</td>
-                      <td class="py-2.5 px-3 font-bold text-emerald-600">✅ YES (Unrestricted)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Can view, add, edit, delete, upload Excel, edit agencies, & configure user access</td>
-                      <td class="py-2.5 px-3 text-right font-semibold text-slate-400">Master Admin</td>
+                      <td class="py-2.5 px-3 font-bold text-emerald-700">👑 Full Admin Control</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">Mukunda (Admin)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Full Access (Add/Edit/Delete Instruments, Upload Excel, Edit Agencies, Manage Users)</td>
+                      <td class="py-2.5 px-3 text-right font-bold text-emerald-700">Master Admin</td>
                     </tr>
                     <tr class="bg-slate-50">
-                      <td class="py-2.5 px-3 font-bold text-amber-700">🔧 Technician (Elena)</td>
-                      <td class="py-2.5 px-3 font-bold text-amber-600">❌ NO (Customizable)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Can add/edit instrument specs & upload PDF reports (Deletion blocked)</td>
-                      <td class="py-2.5 px-3 text-right">
-                        <span class="text-sky-700 font-bold text-[11px]">Configurable</span>
-                      </td>
+                      <td class="py-2.5 px-3 font-bold text-amber-700">✏️ Modification Access</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">Elena (Technician) / David</td>
+                      <td class="py-2.5 px-3 text-slate-700">Can add instruments, edit specs, update calibrations & upload PDF reports (Deletion blocked)</td>
+                      <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-purple-700">🏢 Agency Rep (David)</td>
-                      <td class="py-2.5 px-3 font-bold text-purple-600">❌ NO (Agency Scope)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Can only view & upload PDF reports for assigned agency (Precision Metrology)</td>
-                      <td class="py-2.5 px-3 text-right">
-                        <span class="text-sky-700 font-bold text-[11px]">Configurable</span>
-                      </td>
-                    </tr>
-                    <tr class="bg-slate-50">
-                      <td class="py-2.5 px-3 font-bold text-sky-700">🔍 Auditor (Priya)</td>
-                      <td class="py-2.5 px-3 font-bold text-sky-600">❌ NO (Read-Only)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Read-Only compliance audit view (All edit/upload actions hidden)</td>
-                      <td class="py-2.5 px-3 text-right">
-                        <span class="text-sky-700 font-bold text-[11px]">Configurable</span>
-                      </td>
+                      <td class="py-2.5 px-3 font-bold text-sky-700">👁️ View Only Access</td>
+                      <td class="py-2.5 px-3 font-mono font-bold">Priya (Auditor)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Read-Only View (Can view instruments, dashboard, alerts & print PDF certificates — No edits)</td>
+                      <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                   </tbody>
                 </table>
@@ -2347,6 +2321,7 @@
               ${this.state.users.map(u => {
                 const isMukunda = (u.username === 'Mukunda' || u.role === 'Admin');
                 const p = u.permissions || {};
+                const level = p.accessLevel || (p.readOnlyMode ? 'view' : (isMukunda ? 'admin' : 'modification'));
 
                 return `
                   <div class="white-card p-4 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
@@ -2356,44 +2331,41 @@
                           <div class="font-bold text-slate-900 text-base">${u.name}</div>
                           <div class="text-[11px] text-sky-700 font-semibold">${u.department || 'Metrology Dept'}</div>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isMukunda ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                          ${u.role}
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isMukunda ? 'bg-emerald-100 text-emerald-800' : (level === 'view' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800')}">
+                          ${isMukunda ? '👑 Full Admin' : (level === 'view' ? '👁️ View Only' : '✏️ Modification')}
                         </span>
                       </div>
 
                       <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1 font-mono">
                         <div>Username: <strong class="text-slate-900">${u.username}</strong></div>
                         <div>Password: <strong class="text-slate-900">${u.password}</strong></div>
-                        ${u.assignedAgencyId ? `<div class="text-[10px] text-purple-700 font-bold">Agency: ${u.assignedAgencyId}</div>` : ''}
                       </div>
 
                       <div class="text-[11px] space-y-1 pt-1">
                         <div class="font-bold text-slate-700">Active Permissions:</div>
-                        <div class="grid grid-cols-2 gap-1 text-[10px]">
-                          <span class="${p.canAddInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canAddInstruments || isMukunda ? '✓ Add Ins' : '✕ Add Ins'}
-                          </span>
-                          <span class="${p.canEditInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canEditInstruments || isMukunda ? '✓ Edit Ins' : '✕ Edit Ins'}
-                          </span>
-                          <span class="${p.canDeleteInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canDeleteInstruments || isMukunda ? '✓ Delete Ins' : '✕ Delete Ins'}
-                          </span>
-                          <span class="${p.canUploadExcel || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canUploadExcel || isMukunda ? '✓ Excel Upload' : '✕ Excel Upload'}
-                          </span>
+                        <div class="space-y-0.5 text-[10px]">
+                          <div class="${p.canAddInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canAddInstruments || isMukunda ? '✓ Add New Instruments' : '✕ Add Instruments'}
+                          </div>
+                          <div class="${p.canEditInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canEditInstruments || isMukunda ? '✓ Edit Specs & Calib Dates' : '✕ Edit Specifications'}
+                          </div>
+                          <div class="${p.canUploadPDF || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canUploadPDF || isMukunda ? '✓ Upload Calibration PDF' : '✕ Upload PDF Reports'}
+                          </div>
+                          <div class="${p.canDeleteInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
+                            ${p.canDeleteInstruments || isMukunda ? '✓ Delete Instruments' : '✕ Delete Instruments'}
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <div class="pt-2 border-t border-slate-200 space-y-1.5">
-                      ${currentUser.role === 'Admin' ? `
-                        <button class="btnEditUserAccess w-full py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-xs font-bold transition-all text-center block" data-user-id="${u.id}">
-                          ✏️ Edit Access & Permissions
-                        </button>
-                      ` : ''}
+                      <button class="btnEditUserAccess w-full py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all text-center block shadow-sm" data-user-id="${u.id}">
+                        ✏️ Modify User Access Level
+                      </button>
 
-                      ${this.hasPermission('manage_users') && !isMukunda ? `
+                      ${!isMukunda ? `
                         <button class="btnDeleteUser w-full py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-[11px] font-semibold hover:bg-red-100 text-center block" data-user-id="${u.id}">
                           🗑️ Delete Account
                         </button>
@@ -2435,7 +2407,8 @@
         m.classList.remove('hidden');
 
         const p = user.permissions || {
-          canAddInstruments: false,
+          accessLevel: "modification",
+          canAddInstruments: true,
           canEditInstruments: true,
           canDeleteInstruments: false,
           canUploadExcel: false,
@@ -2445,14 +2418,15 @@
           readOnlyMode: false
         };
 
+        const currentLevel = p.accessLevel || (p.readOnlyMode ? 'view' : (user.role === 'Admin' ? 'admin' : 'modification'));
         const isMukunda = (user.username === 'Mukunda');
 
         m.innerHTML = `
           <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 class="font-bold text-lg text-slate-900">Configure Limited Access Permissions</h3>
-                <p class="text-xs text-slate-500">Edit access levels for ${user.name} (${user.username})</p>
+                <h3 class="font-bold text-lg text-slate-900">Modify User Access Level (Admin Control)</h3>
+                <p class="text-xs text-slate-500">Configure access level for ${user.name} (${user.username})</p>
               </div>
               <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">✕</button>
             </div>
@@ -2464,68 +2438,46 @@
                   <input type="text" id="euName" value="${user.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
                 </div>
                 <div>
-                  <label class="block text-slate-700 font-bold mb-1">Role *</label>
-                  <select id="euRole" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-800">
-                    <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>👑 Admin (Full Access)</option>
-                    <option value="Technician" ${user.role === 'Technician' ? 'selected' : ''}>🔧 Technician (Limited)</option>
-                    <option value="AgencyRep" ${user.role === 'AgencyRep' ? 'selected' : ''}>🏢 Agency Rep (Assigned Scope)</option>
-                    <option value="Auditor" ${user.role === 'Auditor' ? 'selected' : ''}>🔍 Auditor (Read-Only)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
                   <label class="block text-slate-700 font-bold mb-1">Username</label>
                   <input type="text" id="euUsername" value="${user.username}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required ${isMukunda ? 'readonly' : ''}>
                 </div>
-                <div>
-                  <label class="block text-slate-700 font-bold mb-1">Password</label>
-                  <input type="text" id="euPassword" value="${user.password}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
-                </div>
               </div>
 
-              <!-- Granular Checkbox Permission Controls -->
-              <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div>
+                <label class="block text-slate-700 font-bold mb-1">Password</label>
+                <input type="text" id="euPassword" value="${user.password}" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
+              </div>
+
+              <!-- Select Access Level Radio / Option Cards -->
+              <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                 <div class="font-bold text-slate-900 text-xs flex justify-between items-center">
-                  <span>🛠️ Granular Permission Toggles</span>
-                  <span class="text-[10px] text-sky-700 font-bold">Admin Managed</span>
+                  <span>🔑 Select User Access Permission Level</span>
+                  <span class="text-[10px] text-emerald-700 font-bold">Admin Preset</span>
                 </div>
 
-                <div class="space-y-1.5 text-slate-800 font-medium">
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkAddIns" ${p.canAddInstruments ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>➕ Allow Adding New Instruments</span>
+                <div class="space-y-2">
+                  <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'view' ? 'bg-sky-50 border-sky-400' : 'bg-white border-slate-200'}">
+                    <input type="radio" name="radAccessLevel" value="view" ${currentLevel === 'view' ? 'checked' : ''} class="w-4 h-4 text-sky-600">
+                    <div>
+                      <strong class="text-sky-900 block font-bold">👁️ View Only Access</strong>
+                      <span class="text-slate-600 text-[11px]">Can view master instruments, dashboard, alerts & print reports. CANNOT add, edit, or upload anything.</span>
+                    </div>
                   </label>
 
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkEditIns" ${p.canEditInstruments ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>✏️ Allow Editing Instruments & Calibration Specs</span>
+                  <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'modification' ? 'bg-amber-50 border-amber-400' : 'bg-white border-slate-200'}">
+                    <input type="radio" name="radAccessLevel" value="modification" ${currentLevel === 'modification' ? 'checked' : ''} class="w-4 h-4 text-amber-600">
+                    <div>
+                      <strong class="text-amber-900 block font-bold">✏️ Modification Access</strong>
+                      <span class="text-slate-600 text-[11px]">Can add new instruments, edit specs, update calibration dates & upload PDF reports (Deletion blocked).</span>
+                    </div>
                   </label>
 
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkDeleteIns" ${p.canDeleteInstruments ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>🗑️ Allow Deleting Instruments</span>
-                  </label>
-
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkUploadExcel" ${p.canUploadExcel ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>📊 Allow Master Excel / CSV Upload</span>
-                  </label>
-
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkUploadPDF" ${p.canUploadPDF ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>📄 Allow Uploading PDF Reports</span>
-                  </label>
-
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkEditAgencies" ${p.canEditAgencies ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>🏢 Allow Editing Agencies & NABL Scope Dates</span>
-                  </label>
-
-                  <label class="flex items-center space-x-2 cursor-pointer hover:text-sky-700">
-                    <input type="checkbox" id="chkReadOnly" ${p.readOnlyMode ? 'checked' : ''} class="w-4 h-4 text-sky-600 rounded">
-                    <span>🔒 Restrict Account to Read-Only Mode</span>
+                  <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'admin' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'}">
+                    <input type="radio" name="radAccessLevel" value="admin" ${currentLevel === 'admin' ? 'checked' : ''} class="w-4 h-4 text-emerald-600">
+                    <div>
+                      <strong class="text-emerald-900 block font-bold">👑 Full Admin Control</strong>
+                      <span class="text-slate-600 text-[11px]">Unrestricted access: delete instruments, batch upload Excel, edit agency NABL scope & manage user access.</span>
+                    </div>
                   </label>
                 </div>
               </div>
@@ -2535,7 +2487,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  💾 Save Limited Access Permissions
+                  💾 Save User Access Level
                 </button>
               </div>
             </form>
@@ -2545,24 +2497,55 @@
         document.getElementById('editUserAccessForm').addEventListener('submit', (e) => {
           e.preventDefault();
 
+          const selectedLevel = document.querySelector('input[name="radAccessLevel"]:checked')?.value || 'modification';
+
           user.name = document.getElementById('euName').value.trim();
-          user.role = document.getElementById('euRole').value;
           user.username = document.getElementById('euUsername').value.trim();
           user.password = document.getElementById('euPassword').value.trim();
 
-          user.permissions = {
-            canAddInstruments: document.getElementById('chkAddIns').checked,
-            canEditInstruments: document.getElementById('chkEditIns').checked,
-            canDeleteInstruments: document.getElementById('chkDeleteIns').checked,
-            canUploadExcel: document.getElementById('chkUploadExcel').checked,
-            canUploadPDF: document.getElementById('chkUploadPDF').checked,
-            canEditAgencies: document.getElementById('chkEditAgencies').checked,
-            canManageUsers: (user.role === 'Admin'),
-            readOnlyMode: document.getElementById('chkReadOnly').checked
-          };
+          if (selectedLevel === 'admin') {
+            user.role = 'Admin';
+            user.permissions = {
+              accessLevel: 'admin',
+              canAddInstruments: true,
+              canEditInstruments: true,
+              canDeleteInstruments: true,
+              canUploadExcel: true,
+              canUploadPDF: true,
+              canEditAgencies: true,
+              canManageUsers: true,
+              readOnlyMode: false
+            };
+          } else if (selectedLevel === 'modification') {
+            user.role = 'Technician';
+            user.permissions = {
+              accessLevel: 'modification',
+              canAddInstruments: true,
+              canEditInstruments: true,
+              canDeleteInstruments: false,
+              canUploadExcel: true,
+              canUploadPDF: true,
+              canEditAgencies: false,
+              canManageUsers: false,
+              readOnlyMode: false
+            };
+          } else {
+            user.role = 'Auditor';
+            user.permissions = {
+              accessLevel: 'view',
+              canAddInstruments: false,
+              canEditInstruments: false,
+              canDeleteInstruments: false,
+              canUploadExcel: false,
+              canUploadPDF: false,
+              canEditAgencies: false,
+              canManageUsers: false,
+              readOnlyMode: true
+            };
+          }
 
           this.saveState('users');
-          showToast(`💾 Access Permissions Updated for User "${user.name}"!`);
+          showToast(`💾 Access Level set to "${selectedLevel.toUpperCase()}" for user "${user.name}"!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2570,7 +2553,7 @@
 
       openAddUserModal() {
         if (!this.hasPermission('manage_users')) {
-          alert('Access Denied: Your account role does not have permission to manage users.');
+          alert('Access Denied: Only Admin account can create new users.');
           return;
         }
 
@@ -2578,59 +2561,61 @@
         m.classList.remove('hidden');
         m.innerHTML = `
           <div class="white-card modal-enter w-full max-w-md rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
-            <h3 class="font-bold text-lg text-slate-900">Add System User & Assign Role</h3>
+            <h3 class="font-bold text-lg text-slate-900">Add System User & Assign Access Level</h3>
             <form id="newUserForm" class="space-y-3 text-xs">
               <input type="text" id="uName" placeholder="Full Name" class="white-input w-full p-2.5 rounded-xl" required>
               <div class="grid grid-cols-2 gap-2">
                 <input type="text" id="uUsername" placeholder="Username" class="white-input w-full p-2.5 rounded-xl font-mono" required>
                 <input type="password" id="uPassword" placeholder="Password" class="white-input w-full p-2.5 rounded-xl font-mono" required>
               </div>
-              <input type="email" id="uEmail" placeholder="Email" class="white-input w-full p-2.5 rounded-xl" required>
+              <input type="email" id="uEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
               
               <div>
-                <label class="block text-slate-700 font-bold mb-1">Assign User Role *</label>
-                <select id="uRole" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                  <option value="Admin">Admin (Full System Control)</option>
-                  <option value="Technician">Technician (Add/Edit Instruments, No Delete)</option>
-                  <option value="AgencyRep">Agency Representative (Assigned Scope Only)</option>
-                  <option value="Auditor">Auditor (Read-Only Compliance View)</option>
+                <label class="block text-slate-700 font-bold mb-1">Select Access Permission Level *</label>
+                <select id="uAccessLevel" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-800">
+                  <option value="modification">✏️ Modification Access (Add & Edit Instruments, Upload PDF)</option>
+                  <option value="view">👁️ View Only Access (Read-Only Compliance View)</option>
+                  <option value="admin">👑 Full Admin Control (Unrestricted Access)</option>
                 </select>
               </div>
 
               <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
                 <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">💾 Save User Account</button>
               </div>
             </form>
           </div>
         `;
+
         document.getElementById('newUserForm').addEventListener('submit', (e) => {
           e.preventDefault();
 
-          const role = document.getElementById('uRole').value;
-          const isTechnician = (role === 'Technician');
-          const isAuditor = (role === 'Auditor');
+          const accessLevel = document.getElementById('uAccessLevel').value;
+          const isView = (accessLevel === 'view');
+          const isAdmin = (accessLevel === 'admin');
 
           this.state.users.push({
             id: `USR-${Date.now()}`, 
-            name: document.getElementById('uName').value,
-            username: document.getElementById('uUsername').value, 
-            password: document.getElementById('uPassword').value,
-            email: document.getElementById('uEmail').value, 
-            role: role,
+            name: document.getElementById('uName').value.trim(),
+            username: document.getElementById('uUsername').value.trim(), 
+            password: document.getElementById('uPassword').value.trim(),
+            email: document.getElementById('uEmail').value.trim(), 
+            role: isAdmin ? 'Admin' : (isView ? 'Auditor' : 'Technician'),
             department: 'Metrology Dept', 
             avatar: 'MK',
             permissions: {
-              canAddInstruments: !isAuditor,
-              canEditInstruments: !isAuditor,
-              canDeleteInstruments: (role === 'Admin'),
-              canUploadExcel: (role === 'Admin' || isTechnician),
-              canUploadPDF: !isAuditor,
-              canEditAgencies: (role === 'Admin'),
-              canManageUsers: (role === 'Admin'),
-              readOnlyMode: isAuditor
+              accessLevel: accessLevel,
+              canAddInstruments: !isView,
+              canEditInstruments: !isView,
+              canDeleteInstruments: isAdmin,
+              canUploadExcel: !isView,
+              canUploadPDF: !isView,
+              canEditAgencies: isAdmin,
+              canManageUsers: isAdmin,
+              readOnlyMode: isView
             }
           });
+
           this.saveState('users');
           showToast(`💾 User Account ${document.getElementById('uUsername').value} Created & Saved!`);
           m.classList.add('hidden');
