@@ -94,7 +94,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.07.21.v7_minus1day";
+    const DATA_VERSION = "2026.07.21.v8_minus1day_fixed";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -278,7 +278,7 @@
         location: "Machining Shop - Bay 2", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-22", 
-        nextDueDate: "2026-07-21", // 6 Months minus 1 Day
+        nextDueDate: "2026-07-21", 
         agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: "Calib_Report_EQ-CAL-001.pdf"
@@ -297,7 +297,7 @@
         location: "MPI Inspection Line", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-20", 
-        nextDueDate: "2026-07-19", // 6 Months minus 1 Day
+        nextDueDate: "2026-07-19", 
         agencyId: "AGN-002", 
         status: "Active",
         pdfReportName: "Calib_Report_EQ-MIC-002.pdf"
@@ -316,7 +316,7 @@
         location: "Production Line Test Bench", 
         frequencyMonths: 12, 
         lastCalibratedDate: "2025-07-10", 
-        nextDueDate: "2026-07-09", // 12 Months minus 1 Day
+        nextDueDate: "2026-07-09", 
         agencyId: "AGN-003", 
         status: "Out of Calibration",
         pdfReportName: null
@@ -335,7 +335,7 @@
         location: "Final Assembly Station 4", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-24", 
-        nextDueDate: "2026-07-23", // 6 Months minus 1 Day
+        nextDueDate: "2026-07-23", 
         agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: "Calib_Report_EQ-TRQ-004.pdf"
@@ -354,7 +354,7 @@
         location: "Heat Treatment Shop", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-01-15", 
-        nextDueDate: "2026-07-14", // 6 Months minus 1 Day
+        nextDueDate: "2026-07-14", 
         agencyId: "AGN-004", 
         status: "Active",
         pdfReportName: null
@@ -373,7 +373,7 @@
         location: "Heavy Production Press Line", 
         frequencyMonths: 6, 
         lastCalibratedDate: "2026-02-01", 
-        nextDueDate: "2026-07-31", // 6 Months minus 1 Day
+        nextDueDate: "2026-07-31", 
         agencyId: "AGN-001", 
         status: "Active",
         pdfReportName: null
@@ -404,43 +404,60 @@
       return { key: 'valid', label: `NABL Accredited (${days} days valid)`, shortLabel: 'Valid', days, badgeClass: 'badge-green' };
     }
 
-    // --- DUE DATE CALCULATION: EXACT MONTHS MINUS 1 DAY RULE ---
+    // --- 100% TIMEZONE-SAFE BULLETPROOF -1 DAY DUE DATE CALCULATOR ---
     function calculateNextDueDate(lastDateStr, months) {
       try {
-        let baseDate;
-        if (!lastDateStr) {
-          baseDate = new Date(TODAY_DATE);
-        } else {
-          baseDate = new Date(lastDateStr);
-          if (isNaN(baseDate.getTime())) {
-            baseDate = new Date(TODAY_DATE);
-          }
-        }
+        if (!lastDateStr) lastDateStr = '2026-01-22';
+        const parts = lastDateStr.split('-');
+        if (parts.length !== 3) return lastDateStr;
 
-        // Add calibration frequency months
-        baseDate.setMonth(baseDate.getMonth() + parseInt(months || 6, 10));
+        let year = parseInt(parts[0], 10);
+        let month = parseInt(parts[1], 10) - 1; // 0-indexed month (0 = Jan)
+        let day = parseInt(parts[2], 10);
+
+        const m = parseInt(months || 6, 10);
+
+        // Construct date object using local constructor (year, month + m, day)
+        const d = new Date(year, month + m, day);
         
-        // SUBTRACT 1 DAY RULE (Due date is 1 day before exact anniversary)
-        baseDate.setDate(baseDate.getDate() - 1);
+        // SUBTRACT 1 DAY (Due date is 1 day before exact anniversary)
+        d.setDate(d.getDate() - 1);
 
-        return baseDate.toISOString().split('T')[0];
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+
+        return `${yyyy}-${mm}-${dd}`;
       } catch (e) {
-        return '2026-07-21';
+        return lastDateStr;
       }
     }
 
     function parseExcelDate(val) {
-      if (!val) return '2026-01-18';
+      if (!val) return '2026-01-22';
       if (val instanceof Date && !isNaN(val.getTime())) {
-        return val.toISOString().split('T')[0];
+        const yyyy = val.getFullYear();
+        const mm = String(val.getMonth() + 1).padStart(2, '0');
+        const dd = String(val.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
       }
       if (typeof val === 'number') {
         const dateObj = new Date((val - (25567 + 2)) * 86400 * 1000);
-        if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+        if (!isNaN(dateObj.getTime())) {
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        }
       }
       const str = val.toString().trim();
       const parsed = new Date(str);
-      if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+      if (!isNaN(parsed.getTime())) {
+        const yyyy = parsed.getFullYear();
+        const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+        const dd = String(parsed.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
 
       const parts = str.split(/[\/\-\.]/);
       if (parts.length === 3) {
@@ -449,22 +466,28 @@
           const d2 = parseInt(parts[1], 10);
           const y = parseInt(parts[2], 10);
           if (d1 > 12) {
-            const dateObj = new Date(y, d2 - 1, d1);
-            if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+            return `${y}-${String(d2).padStart(2, '0')}-${String(d1).padStart(2, '0')}`;
           } else {
-            const dateObj = new Date(y, d1 - 1, d2);
-            if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split('T')[0];
+            return `${y}-${String(d1).padStart(2, '0')}-${String(d2).padStart(2, '0')}`;
           }
         }
       }
-      return '2026-01-18';
+      return '2026-01-22';
     }
 
     function formatDate(dateStr) {
       if (!dateStr) return 'N/A';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return 'N/A';
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const dateObj = new Date(y, m, d);
+        if (!isNaN(dateObj.getTime())) {
+          return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+      }
+      return dateStr;
     }
 
     function downloadExcelTemplate() {
@@ -529,19 +552,10 @@
       }
     }
 
-    // --- SAFE STORAGE CONTROLLER ---
+    // --- SAFE STORAGE CONTROLLER WITH AUTOMATIC RE-HYDRATION OF -1 DAY DUE DATE ---
     const StorageManager = {
       get: (key, def) => { 
         try { 
-          const currentVersion = localStorage.getItem('calibguard_data_ver');
-          if (currentVersion !== DATA_VERSION) {
-            localStorage.setItem('calibguard_data_ver', DATA_VERSION);
-            if (key === 'instruments') {
-              StorageManager.set('instruments', INITIAL_INSTRUMENTS);
-              return INITIAL_INSTRUMENTS;
-            }
-          }
-
           const item = localStorage.getItem(`calibguard_${key}`); 
           if (item) {
             const parsed = JSON.parse(item);
@@ -572,27 +586,18 @@
                     else mappedCat = 'Quality';
                   }
 
-                  const calDate = ins.lastCalibratedDate || '2026-01-18';
+                  const calDate = ins.lastCalibratedDate || '2026-01-22';
                   const freq = parseInt(ins.frequencyMonths || 6, 10);
+                  
+                  // MANDATORY RE-CALCULATION OF -1 DAY DUE DATE FOR ALL INSTRUMENTS
                   const computedDue = calculateNextDueDate(calDate, freq);
 
                   return {
-                    id: ins.id || `INS-${Math.random()}`,
-                    tagId: ins.tagId || 'EQ-CAL-000',
-                    historyCardNo: ins.historyCardNo || `HC-2026-${(index + 1).toString().padStart(3, '0')}`,
-                    name: ins.name || 'Measuring Instrument',
-                    make: ins.make || 'Mitutoyo',
-                    serialNo: ins.serialNo || 'SN-000',
-                    range: ins.range || '0-150 mm',
-                    leastCount: ins.leastCount || '0.01 mm',
+                    ...ins,
                     category: mappedCat,
-                    location: ins.location || 'Quality Inspection Shop',
-                    frequencyMonths: freq,
                     lastCalibratedDate: calDate,
-                    nextDueDate: computedDue, // Ensures Due Date is ALWAYS 1 Day Before!
-                    agencyId: ins.agencyId || 'AGN-001',
-                    status: ins.status || 'Active',
-                    pdfReportName: ins.pdfReportName || null
+                    frequencyMonths: freq,
+                    nextDueDate: computedDue
                   };
                 });
               }
@@ -1295,7 +1300,8 @@
         }
 
         return filteredList.map(ins => {
-          const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+          const computedDueDate = calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths);
+          const info = getCalibrationAlertInfo(computedDueDate, threshold);
           const agency = this.state.agencies.find(a => a.id === ins.agencyId);
           const hasPdf = ins.pdfReportName || ins.pdfReportData;
 
@@ -1322,7 +1328,7 @@
               <td class="py-3 px-3 text-slate-600">${ins.location}</td>
               <td class="py-3 px-3 font-semibold text-slate-800">${formatDate(ins.lastCalibratedDate)}</td>
               <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
-              <td class="py-3 px-3 font-bold text-slate-900">${formatDate(ins.nextDueDate)}</td>
+              <td class="py-3 px-3 font-bold text-slate-900">${formatDate(computedDueDate)}</td>
               <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
               <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
               
@@ -1701,7 +1707,6 @@
             const freq = parseInt(document.getElementById('mFreq').value || '6', 10);
             const agencyId = document.getElementById('mAgency').value;
 
-            // CALCULATE DUE DATE: ADD MONTHS MINUS 1 DAY
             const nextDue = calculateNextDueDate(lastCal, freq);
 
             const newInstrument = {
@@ -1976,8 +1981,8 @@
       renderAlerts(c) {
         const threshold = this.state.alertThresholdDays;
         
-        const overdue = this.state.instruments.filter(i => getDaysUntilDue(i.nextDueDate) < 0);
-        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(i.nextDueDate); return d >= 0 && d <= threshold; });
+        const overdue = this.state.instruments.filter(i => getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)) < 0);
+        const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)); return d >= 0 && d <= threshold; });
         const nablAlertAgencies = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
 
         c.innerHTML = `
@@ -2027,7 +2032,8 @@
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 ${[...overdue, ...urgent].map(ins => {
-                  const info = getCalibrationAlertInfo(ins.nextDueDate, threshold);
+                  const computedDueDate = calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths);
+                  const info = getCalibrationAlertInfo(computedDueDate, threshold);
                   const agency = this.state.agencies.find(a => a.id === ins.agencyId);
                   return `
                     <div class="white-card p-5 rounded-2xl border ${info.badgeClass} space-y-3">
@@ -2035,7 +2041,7 @@
                       <h3 class="font-bold text-base text-slate-900">${ins.name}</h3>
                       <div class="text-xs text-slate-600">Calibration On: <strong>${formatDate(ins.lastCalibratedDate)}</strong></div>
                       <div class="text-xs text-slate-600">Frequency: <strong>${ins.frequencyMonths || 6} Months</strong></div>
-                      <div class="text-xs font-bold text-amber-800">Next Due Date: ${formatDate(ins.nextDueDate)}</div>
+                      <div class="text-xs font-bold text-amber-800">Next Due Date: ${formatDate(computedDueDate)}</div>
                       <div class="text-xs text-slate-500">Agency: ${agency ? agency.name : 'Unassigned'}</div>
                     </div>
                   `;
@@ -2182,6 +2188,7 @@
         const ins = this.state.instruments.find(i => i.id === insId);
         if (!ins) return;
 
+        const computedDueDate = calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths);
         const agency = this.state.agencies.find(a => a.id === ins.agencyId);
         const modal = document.getElementById('modalContainer');
         modal.classList.remove('hidden');
@@ -2237,7 +2244,7 @@
                   </div>
                   <div>
                     <span class="text-slate-500 text-[10px] block uppercase font-bold">Next Due Date (-1 Day)</span>
-                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(ins.nextDueDate)}</strong>
+                    <strong class="text-slate-900 font-extrabold text-sm">${formatDate(computedDueDate)}</strong>
                   </div>
                 </div>
 
@@ -2381,8 +2388,6 @@
           ins.leastCount = document.getElementById('eLeastCount').value.trim();
           ins.lastCalibratedDate = lastCal;
           ins.frequencyMonths = freq;
-          
-          // CALCULATE DUE DATE: ADD MONTHS MINUS 1 DAY
           ins.nextDueDate = calculateNextDueDate(lastCal, freq);
           ins.location = document.getElementById('eLocation').value.trim();
           ins.agencyId = document.getElementById('eAgency').value;
