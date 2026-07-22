@@ -457,7 +457,7 @@
         "name":  "Portable Hand Pyrometer",
         "make":  "HTC/IRX-66",
         "serialNo":  "VVV/GPY-01",
-        "range":  "(-50) to 1550Â°C",
+        "range":  "(-50) to 1550&#176;C",
         "leastCount":  "-",
         "category":  "Dimensional",
         "location":  "IN-PROCESS",
@@ -814,7 +814,7 @@
         "name":  "BEVEL PROTRACTOR",
         "make":  "MITUTOYO",
         "serialNo":  "164278",
-        "range":  "0-360Â°",
+        "range":  "0-360&#176;",
         "leastCount":  "5\u0027",
         "category":  "Dimensional",
         "location":  "IN-PROCESS",
@@ -991,8 +991,8 @@
           "Instrument Name": "Quenching Furnace Temp Sensor",
           "Make": "Honeywell",
           "Serial Number": "HW-88201",
-          "Range": "0-1200 Â°C",
-          "Least Count": "1 Â°C",
+          "Range": "0-1200 &#176;C",
+          "Least Count": "1 &#176;C",
           "Category": "Heat Treatment",
           "Location": "Heat Treatment Bay 1",
           "Calibration On Date": "15/01/2026",
@@ -1757,7 +1757,7 @@
                 <div class="text-3xl font-extrabold text-red-700 mt-1">${overdue.length}</div>
               </div>
               <div class="white-card p-4 rounded-2xl border border-amber-200 bg-amber-50">
-                <div class="text-xs text-amber-800 uppercase font-semibold">Due in â‰¤ ${threshold} Days</div>
+                <div class="text-xs text-amber-800 uppercase font-semibold">Due in &le; ${threshold} Days</div>
                 <div class="text-3xl font-extrabold text-amber-800 mt-1">${urgent.length}</div>
               </div>
               <div class="white-card p-4 rounded-2xl border border-purple-200 bg-purple-50">
@@ -1778,7 +1778,7 @@
           return `
             <tr>
               <td colspan="12" class="py-8 text-center text-slate-500 space-y-2">
-                <div class="text-2xl">ðŸ” No Matching Measuring Instruments Found</div>
+                <div class="text-2xl">&#128269; No Matching Measuring Instruments Found</div>
                 <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
                 <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
                   Reset Search & Filters
@@ -1834,7 +1834,7 @@
               <td class="py-3 px-3 text-center space-y-1">
                 ${hasPdf ? `
                   <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
-                    ðŸ“„ View PDF Report
+                    &#128196; View PDF Report
                   </button>
                 ` : `
                   <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
@@ -1842,7 +1842,7 @@
 
                 ${this.hasPermission('upload_pdf') ? `
                   <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
-                    ðŸ“¤ ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
+                    &#128228; ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
                   </button>
                 ` : ''}
               </td>
@@ -1850,13 +1850,13 @@
               <td class="py-3 px-3 text-right space-y-1">
                 ${isAdmin ? `
                   <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
-                    âœï¸ Edit & Save
+                    &#9999;&#65039; Edit & Save
                   </button>
                   <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
-                    ðŸ—‘ï¸ Delete
+                    &#128465;&#65039; Delete
                   </button>
                 ` : `
-                  <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">ðŸ”’ Admin Edit Only</span>
+                  <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">&#128274; Admin Edit Only</span>
                 `}
               </td>
             </tr>
@@ -1913,7 +1913,7 @@
               ins.pdfReportName = file.name;
               ins.pdfReportData = evt.target.result;
               this.saveState('instruments');
-              showToast(`ðŸ“„ PDF Report "${file.name}" uploaded & saved!`);
+              showToast(`&#128196; PDF Report "${file.name}" uploaded & saved!`);
               this.renderCurrentTab();
             }
           };
@@ -1992,10 +1992,6 @@
                 ${(this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All') ? `
                   <button id="btnResetAllFilters" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors">
                     &#10005; Reset Filters
-                  </button>
-                ` : ''}
-              </div>ext-xs transition-colors">
-                    âœ• Reset Filters
                   </button>
                 ` : ''}
               </div>
@@ -2101,7 +2097,7 @@
                 <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
                 <p class="text-xs text-slate-500">Enter details (Due Date auto-calculates to 1 Day Before in DD/MM/YYYY)</p>
               </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
             <form id="newInsForm" class="space-y-3.5 text-xs">
@@ -2120,10 +2116,10 @@
                 <div>
                   <label class="block text-slate-700 font-bold mb-1">Category *</label>
                   <select id="mCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                    <option value="MPI">ðŸ” MPI</option>
-                    <option value="Heat Treatment">ðŸ”¥ Heat Treatment</option>
-                    <option value="Quality" selected>ðŸŽ¯ Quality</option>
-                    <option value="Production">âš™ï¸ Production</option>
+                    <option value="MPI">&#128269; MPI</option>
+                    <option value="Heat Treatment">&#128293; Heat Treatment</option>
+                    <option value="Quality" selected>&#127919; Quality</option>
+                    <option value="Production">&#9881; Production</option>
                   </select>
                 </div>
                 <div>
@@ -2182,7 +2178,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
-                  <span>ðŸ’¾ Save Instrument</span>
+                  <span>&#128190; Save Instrument</span>
                 </button>
               </div>
             </form>
@@ -2229,7 +2225,7 @@
 
             this.state.instruments.unshift(newInstrument);
             this.saveState('instruments');
-            showToast(`ðŸ’¾ Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added! Due Date: ${formatDate(nextDue)}`);
+            showToast(`&#128190; Instrument "${newInstrument.name}" (${newInstrument.tagId}) Added! Due Date: ${formatDate(nextDue)}`);
             
             m.classList.add('hidden');
             this.renderCurrentTab();
@@ -2251,7 +2247,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <button id="btnSaveAgencies" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  ðŸ’¾ Save Agencies Data
+                  &#128190; Save Agencies Data
                 </button>
                 ${this.hasPermission('edit_agency') ? `
                   <button id="btnAddAgency" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">+ Register Agency</button>
@@ -2274,7 +2270,7 @@
 
                       <div class="text-xs text-slate-600">Contact Person: <strong class="text-slate-900">${a.contactPerson}</strong></div>
                       <div class="text-xs text-amber-700 font-bold flex items-center space-x-1">
-                        <span>ðŸ“ž Contact Number:</span>
+                        <span>&#128222; Contact Number:</span>
                         <span class="font-mono text-slate-900">${a.phone || '+1 (555) 000-0000'}</span>
                       </div>
                       <div class="text-xs text-slate-600">Email: ${a.email}</div>
@@ -2282,7 +2278,7 @@
                       
                       <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                         <div class="flex justify-between items-center">
-                          <span class="font-bold text-slate-700">ðŸ“œ NABL Scope Due Date:</span>
+                          <span class="font-bold text-slate-700">&#128220; NABL Scope Due Date:</span>
                           <strong class="font-mono font-bold text-slate-900 text-xs">${formatDate(a.nablDueDate || '2026-08-15')}</strong>
                         </div>
                         
@@ -2298,12 +2294,12 @@
                     <div class="pt-3 border-t border-slate-200 space-y-2">
                       <div class="grid grid-cols-2 gap-2">
                         <button class="btnViewNABLScope px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm" data-agency-id="${a.id}">
-                          ðŸ“œ View NABL Scope
+                          &#128220; View NABL Scope
                         </button>
 
                         ${this.hasPermission('edit_agency') ? `
                           <button class="btnUploadNABLScope px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold" data-agency-id="${a.id}">
-                            ðŸ“¤ ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
+                            &#128228; ${hasNablScope ? 'Re-upload Scope' : 'Upload NABL Scope'}
                           </button>
                         ` : '<span class="text-[10px] text-slate-400 italic flex items-center justify-center">View Scope Only</span>'}
                       </div>
@@ -2311,10 +2307,10 @@
                       ${this.hasPermission('edit_agency') ? `
                         <div class="flex justify-between items-center space-x-2">
                           <button class="btnEditAgency px-3 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 flex-1 text-center" data-agency-id="${a.id}">
-                            âœï¸ Edit & Modify Agency
+                            &#9999;&#65039; Edit & Modify Agency
                           </button>
                           <button class="btnDeleteAgency px-3 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100" data-agency-id="${a.id}">
-                            ðŸ—‘ï¸ Delete
+                            &#128465;&#65039; Delete
                           </button>
                         </div>
                       ` : ''}
@@ -2328,7 +2324,7 @@
 
         c.querySelector('#btnSaveAgencies')?.addEventListener('click', () => {
           this.saveState('agencies');
-          showToast('ðŸ’¾ Calibration Agencies Data Saved to Browser Storage!');
+          showToast('&#128190; Calibration Agencies Data Saved to Browser Storage!');
         });
 
         c.querySelector('#btnAddAgency')?.addEventListener('click', () => this.openAddAgencyModal());
@@ -2368,7 +2364,7 @@
               agency.nablScopeName = file.name;
               agency.nablScopeData = evt.target.result;
               this.saveState('agencies');
-              showToast(`ðŸ“œ NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
+              showToast(`&#128220; NABL Scope Report "${file.name}" uploaded for ${agency.name}!`);
               this.renderCurrentTab();
             }
           };
@@ -2406,7 +2402,7 @@
                 <h3 class="font-bold text-lg text-slate-900">Edit & Modify Agency Data</h3>
                 <p class="text-xs text-slate-500">Correct any agency details or update NABL Scope Expiry Date</p>
               </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
             <form id="editAgencyForm" class="space-y-3 text-xs">
@@ -2452,7 +2448,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  ðŸ’¾ Save Agency Modifications
+                  &#128190; Save Agency Modifications
                 </button>
               </div>
             </form>
@@ -2471,7 +2467,7 @@
           agency.nablDueDate = document.getElementById('eaNablDueDate').value;
 
           this.saveState('agencies');
-          showToast(`ðŸ’¾ Agency "${agency.name}" modifications saved!`);
+          showToast(`&#128190; Agency "${agency.name}" modifications saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2493,7 +2489,7 @@
 
             <div class="space-y-3">
               <h3 class="font-bold text-base text-purple-900 flex items-center space-x-2">
-                <span>ðŸ“œ NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
+                <span>&#128220; NABL Scope Accreditation Expiry Alerts (${nablAlertAgencies.length})</span>
               </h3>
 
               ${nablAlertAgencies.length > 0 ? `
@@ -2519,14 +2515,14 @@
                 </div>
               ` : `
                 <div class="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                  âœ… All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
+                  &#9989; All Calibration Agencies have valid NABL Accreditations beyond the ${threshold}-day alert window.
                 </div>
               `}
             </div>
 
             <div class="space-y-3 pt-4 border-t border-slate-200">
               <h3 class="font-bold text-base text-slate-900 flex items-center space-x-2">
-                <span>âš–ï¸ Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
+                <span>&#9878;&#65039; Measuring Instrument Calibration Alerts (${overdue.length + urgent.length})</span>
               </h3>
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2574,7 +2570,7 @@
               <input type="email" id="agEmail" placeholder="Email Address" class="white-input w-full p-2.5 rounded-xl" required>
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">ðŸ’¾ Save Agency</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">&#128190; Save Agency</button>
               </div>
             </form>
           </div>
@@ -2595,7 +2591,7 @@
             status: 'Active'
           });
           this.saveState('agencies');
-          showToast(`ðŸ’¾ Agency ${document.getElementById('agName').value} Saved!`);
+          showToast(`&#128190; Agency ${document.getElementById('agName').value} Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2612,13 +2608,13 @@
           <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
-                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">ðŸ“œ</span>
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">&#128220;</span>
                 <div>
                   <h3 class="font-bold text-lg text-slate-900">NABL Scope of Accreditation Certificate</h3>
                   <p class="text-xs text-slate-500">${agency.name} (${agency.code})</p>
                 </div>
               </div>
-              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
             ${agency.nablScopeData ? `
@@ -2644,7 +2640,7 @@
                   <div class="grid grid-cols-2 gap-2">
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">1. Quality & Dimensional</strong>
-                      <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: Â±0.002mm)</span>
+                      <span class="text-slate-600 text-[11px]">Calipers, Micrometers, Height Gauges (CMC: &plusmn;0.002mm)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">2. MPI Testing</strong>
@@ -2652,7 +2648,7 @@
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">3. Heat Treatment</strong>
-                      <span class="text-slate-600 text-[11px]">Quenching Furnaces, Thermocouples (-80Â°C to 1200Â°C)</span>
+                      <span class="text-slate-600 text-[11px]">Quenching Furnaces, Thermocouples (-80&deg;C to 1200&deg;C)</span>
                     </div>
                     <div class="p-2.5 rounded-xl bg-white border border-slate-200">
                       <strong class="text-sky-700 block font-bold">4. Production Gauges</strong>
@@ -2673,7 +2669,7 @@
 
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
               <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
-                ðŸ–¨ï¸ Print NABL Scope
+                &#128438;&#65039; Print NABL Scope
               </button>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
                 Close
@@ -2696,13 +2692,13 @@
           <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 shadow-2xl bg-white space-y-5">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
-                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">ðŸ“„</span>
+                <span class="p-2 rounded-xl bg-sky-100 text-sky-700 font-bold text-sm">&#128196;</span>
                 <div>
                   <h3 class="font-bold text-lg text-slate-900">Calibration Certificate Report (PDF Format)</h3>
                   <p class="text-xs text-slate-500">${ins.pdfReportName || 'Official Calibration Certificate'}</p>
                 </div>
               </div>
-              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
+              <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
             ${ins.pdfReportData ? `
@@ -2761,7 +2757,7 @@
 
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
               <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md">
-                ðŸ–¨ï¸ Print Report PDF
+                &#128438;&#65039; Print Report PDF
               </button>
               <button onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200">
                 Close
@@ -2810,10 +2806,10 @@
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1">Category *</label>
                   <select id="eCategory" class="white-input w-full p-2.5 rounded-xl font-semibold">
-                    <option value="MPI" ${ins.category === 'MPI' ? 'selected' : ''}>ðŸ” MPI</option>
-                    <option value="Heat Treatment" ${ins.category === 'Heat Treatment' ? 'selected' : ''}>ðŸ”¥ Heat Treatment</option>
-                    <option value="Quality" ${ins.category === 'Quality' ? 'selected' : ''}>ðŸŽ¯ Quality</option>
-                    <option value="Production" ${ins.category === 'Production' ? 'selected' : ''}>âš™ï¸ Production</option>
+                    <option value="MPI" ${ins.category === 'MPI' ? 'selected' : ''}>&#128269; MPI</option>
+                    <option value="Heat Treatment" ${ins.category === 'Heat Treatment' ? 'selected' : ''}>&#128293; Heat Treatment</option>
+                    <option value="Quality" ${ins.category === 'Quality' ? 'selected' : ''}>&#127919; Quality</option>
+                    <option value="Production" ${ins.category === 'Production' ? 'selected' : ''}>&#9881; Production</option>
                   </select>
                 </div>
                 <div>
@@ -2865,7 +2861,7 @@
               <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
                 <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">
-                  ðŸ’¾ Save Changes
+                  &#128190; Save Changes
                 </button>
               </div>
             </form>
@@ -2892,7 +2888,7 @@
           ins.agencyId = document.getElementById('eAgency').value;
 
           this.saveState('instruments');
-          showToast(`ðŸ’¾ Instrument ${ins.tagId} changes saved! Due Date: ${formatDate(ins.nextDueDate)}`);
+          showToast(`&#128190; Instrument ${ins.tagId} changes saved! Due Date: ${formatDate(ins.nextDueDate)}`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -2905,7 +2901,7 @@
         if (!isAdmin) {
           c.innerHTML = `
             <div class="p-8 text-center space-y-3 bg-red-50 rounded-2xl border border-red-200 max-w-md mx-auto my-12">
-              <div class="text-3xl">ðŸ”’</div>
+              <div class="text-3xl">&#128274;</div>
               <h3 class="text-xl font-bold text-red-900">Access Restricted to Admin Only</h3>
               <p class="text-xs text-red-700">Only Admin account (Mukunda) has permission to manage and edit User Access Levels.</p>
             </div>
@@ -2926,7 +2922,7 @@
             <!-- Role Permissions Overview Table -->
             <div class="white-card p-5 rounded-2xl border border-slate-200 space-y-3">
               <div class="flex justify-between items-center">
-                <h3 class="font-bold text-sm text-slate-900">ðŸ›¡ï¸ Active User Permission Levels</h3>
+                <h3 class="font-bold text-sm text-slate-900">&#128737;&#65039; Active User Permission Levels</h3>
                 <span class="text-xs text-emerald-800 font-bold bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300">
                   Active Admin: ${currentUser.name} (Full Control)
                 </span>
@@ -2944,21 +2940,21 @@
                   </thead>
                   <tbody class="divide-y divide-slate-200">
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-emerald-700">ðŸ‘‘ Full Admin Control</td>
+                      <td class="py-2.5 px-3 font-bold text-emerald-700">&#128081; Full Admin Control</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Mukunda (Admin)</td>
                       <td class="py-2.5 px-3 text-slate-700">Unrestricted Access (Edit & Delete Instruments, Add Equipment, Upload Excel, Edit Agencies, Manage Users)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-emerald-700">Master Admin</td>
                     </tr>
                     <tr class="bg-slate-50">
-                      <td class="py-2.5 px-3 font-bold text-amber-700">âœï¸ Modification Access</td>
+                      <td class="py-2.5 px-3 font-bold text-amber-700">&#9999;&#65039; Modification Access</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Elena (Technician) / David</td>
                       <td class="py-2.5 px-3 text-slate-700">Can add new instruments & upload PDF reports (Edit & Delete Master Instruments is Restricted to Admin Only)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                     <tr class="bg-white">
-                      <td class="py-2.5 px-3 font-bold text-sky-700">ðŸ‘ï¸ View Only Access</td>
+                      <td class="py-2.5 px-3 font-bold text-sky-700">&#128065;&#65039; View Only Access</td>
                       <td class="py-2.5 px-3 font-mono font-bold">Priya (Auditor)</td>
-                      <td class="py-2.5 px-3 text-slate-700">Read-Only View (Can view instruments, dashboard, alerts & print PDF certificates â€” No edits)</td>
+                      <td class="py-2.5 px-3 text-slate-700">Read-Only View (Can view instruments, dashboard, alerts & print PDF certificates &mdash; No edits)</td>
                       <td class="py-2.5 px-3 text-right font-bold text-sky-700">Editable by Admin</td>
                     </tr>
                   </tbody>
@@ -2982,7 +2978,7 @@
                           <div class="text-[11px] text-sky-700 font-semibold">${u.department || 'Metrology Dept'}</div>
                         </div>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isMukunda ? 'bg-emerald-100 text-emerald-800' : (level === 'view' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800')}">
-                          ${isMukunda ? 'ðŸ‘‘ Full Admin' : (level === 'view' ? 'ðŸ‘ï¸ View Only' : 'âœï¸ Modification')}
+                          ${isMukunda ? '&#128081; Full Admin' : (level === 'view' ? '&#128065;&#65039; View Only' : '&#9999;&#65039; Modification')}
                         </span>
                       </div>
 
@@ -2995,13 +2991,13 @@
                         <div class="font-bold text-slate-700">Active Permissions:</div>
                         <div class="space-y-0.5 text-[10px]">
                           <div class="${isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${isMukunda ? 'âœ“ Edit & Delete Instruments (Admin Only)' : 'âœ• Edit & Delete Instruments (Admin Only)'}
+                            ${isMukunda ? '&#10003; Edit & Delete Instruments (Admin Only)' : '&#10005; Edit & Delete Instruments (Admin Only)'}
                           </div>
                           <div class="${p.canAddInstruments || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canAddInstruments || isMukunda ? 'âœ“ Add New Instruments' : 'âœ• Add Instruments'}
+                            ${p.canAddInstruments || isMukunda ? '&#10003; Add New Instruments' : '&#10005; Add Instruments'}
                           </div>
                           <div class="${p.canUploadPDF || isMukunda ? 'text-emerald-700 font-bold' : 'text-slate-400 line-through'}">
-                            ${p.canUploadPDF || isMukunda ? 'âœ“ Upload Calibration PDF' : 'âœ• Upload PDF Reports'}
+                            ${p.canUploadPDF || isMukunda ? '&#10003; Upload Calibration PDF' : '&#10005; Upload PDF Reports'}
                           </div>
                         </div>
                       </div>
@@ -3009,12 +3005,12 @@
 
                     <div class="pt-2 border-t border-slate-200 space-y-1.5">
                       <button class="btnEditUserAccess w-full py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all text-center block shadow-sm" data-user-id="${u.id}">
-                        âœï¸ Modify User Access Level
+                        &#9999;&#65039; Modify User Access Level
                       </button>
 
                       ${!isMukunda ? `
                         <button class="btnDeleteUser w-full py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-[11px] font-semibold hover:bg-red-100 text-center block" data-user-id="${u.id}">
-                          ðŸ—‘ï¸ Delete Account
+                          &#128465;&#65039; Delete Account
                         </button>
                       ` : ''}
                     </div>
@@ -3064,7 +3060,7 @@
                 <h3 class="font-bold text-lg text-slate-900">Modify User Access Level (Admin Control)</h3>
                 <p class="text-xs text-slate-500">Configure access level for ${user.name} (${user.username})</p>
               </div>
-              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">âœ•</button>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
             <form id="editUserAccessForm" class="space-y-4 text-xs">
@@ -3087,7 +3083,7 @@
               <!-- Select Access Level Radio / Option Cards -->
               <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                 <div class="font-bold text-slate-900 text-xs flex justify-between items-center">
-                  <span>ðŸ”‘ Select User Access Permission Level</span>
+                  <span>&#128274; Select User Access Permission Level</span>
                   <span class="text-[10px] text-emerald-700 font-bold">Admin Preset</span>
                 </div>
 
@@ -3095,7 +3091,7 @@
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'view' ? 'bg-sky-50 border-sky-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="view" ${currentLevel === 'view' ? 'checked' : ''} class="w-4 h-4 text-sky-600">
                     <div>
-                      <strong class="text-sky-900 block font-bold">ðŸ‘ï¸ View Only Access</strong>
+                      <strong class="text-sky-900 block font-bold">&#128065;&#65039; View Only Access</strong>
                       <span class="text-slate-600 text-[11px]">Can view master instruments, dashboard, alerts & print reports. CANNOT edit, add, or delete.</span>
                     </div>
                   </label>
@@ -3103,7 +3099,7 @@
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'modification' ? 'bg-amber-50 border-amber-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="modification" ${currentLevel === 'modification' ? 'checked' : ''} class="w-4 h-4 text-amber-600">
                     <div>
-                      <strong class="text-amber-900 block font-bold">âœï¸ Limited Access (Add & Upload)</strong>
+                      <strong class="text-amber-900 block font-bold">&#9999;&#65039; Limited Access (Add & Upload)</strong>
                       <span class="text-slate-600 text-[11px]">Can add new instruments & upload PDF reports. (Edit & Delete Master Instruments is Restricted to Admin Only).</span>
                     </div>
                   </label>
@@ -3111,7 +3107,7 @@
                   <label class="p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all ${currentLevel === 'admin' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'}">
                     <input type="radio" name="radAccessLevel" value="admin" ${currentLevel === 'admin' ? 'checked' : ''} class="w-4 h-4 text-emerald-600">
                     <div>
-                      <strong class="text-emerald-900 block font-bold">ðŸ‘‘ Full Admin Control (Mukunda)</strong>
+                      <strong class="text-emerald-900 block font-bold">&#128081; Full Admin Control (Mukunda)</strong>
                       <span class="text-slate-600 text-[11px]">Unrestricted access: Edit & Delete master instruments, batch upload Excel, edit agencies & manage user access.</span>
                     </div>
                   </label>
@@ -3123,7 +3119,7 @@
                   Cancel
                 </button>
                 <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
-                  ðŸ’¾ Save User Access Level
+                  &#128190; Save User Access Level
                 </button>
               </div>
             </form>
@@ -3181,7 +3177,7 @@
           }
 
           this.saveState('users');
-          showToast(`ðŸ’¾ Access Level set to "${selectedLevel.toUpperCase()}" for user "${user.name}"!`);
+          showToast(`&#128190; Access Level set to "${selectedLevel.toUpperCase()}" for user "${user.name}"!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
@@ -3209,15 +3205,15 @@
               <div>
                 <label class="block text-slate-700 font-bold mb-1">Select Access Permission Level *</label>
                 <select id="uAccessLevel" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-800">
-                  <option value="modification">âœï¸ Limited Access (Add New Instruments & Upload PDF - Edit/Delete Restricted to Admin)</option>
-                  <option value="view">ðŸ‘ï¸ View Only Access (Read-Only Compliance View)</option>
-                  <option value="admin">ðŸ‘‘ Full Admin Control (Unrestricted Access)</option>
+                  <option value="modification">&#9999;&#65039; Limited Access (Add New Instruments & Upload PDF - Edit/Delete Restricted to Admin)</option>
+                  <option value="view">&#128065;&#65039; View Only Access (Read-Only Compliance View)</option>
+                  <option value="admin">&#128081; Full Admin Control (Unrestricted Access)</option>
                 </select>
               </div>
 
               <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">ðŸ’¾ Save User Account</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md">&#128190; Save User Account</button>
               </div>
             </form>
           </div>
@@ -3253,7 +3249,7 @@
           });
 
           this.saveState('users');
-          showToast(`ðŸ’¾ User Account ${document.getElementById('uUsername').value} Created & Saved!`);
+          showToast(`&#128190; User Account ${document.getElementById('uUsername').value} Created & Saved!`);
           m.classList.add('hidden');
           this.renderCurrentTab();
         });
