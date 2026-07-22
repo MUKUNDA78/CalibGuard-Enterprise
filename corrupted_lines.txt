@@ -1,0 +1,13 @@
+﻿37: body {
+88: <body class="bg-white text-slate-900 antialiased">
+121: accreditation: "National Standards Body / NABL ISO 17025",
+1204: document.body.appendChild(downloadAnchor);
+2022: <tbody id="masterTableBody" class="divide-y divide-slate-200">
+2024: </tbody>
+2031: const tbody = c.querySelector('#masterTableBody');
+2037: if (tbody) {
+2038: tbody.innerHTML = this.renderMasterTableRows(newFiltered);
+2039: this.bindRowActions(tbody, isAdmin);
+2944: <tbody class="divide-y divide-slate-200">
+2963: </tbody>
+3264: </body>

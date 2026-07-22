@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Die Pull Out Analysis & Life Cycle Management System</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SheetJS for Excel/CSV Import & Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <div class="brand-icon">⚙️</div>
+        <div class="brand-title">
+          <h1>Forging Tooling</h1>
+          <span>Die Pull Out Hub</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-section-label">Main Overview</div>
+        <a class="nav-item active" data-tab="dashboard">
+          <span>📊</span> Dashboard
+        </a>
+
+        <div class="nav-section-label">Master Data (Pre-Meeting)</div>
+        <a class="nav-item" data-tab="master-fleet">
+          <span>🛡️</span> Tooling Master Data
+        </a>
+
+        <div class="nav-section-label">Post-Forging Meeting</div>
+        <a class="nav-item" data-tab="meeting">
+          <span>📋</span> Pull Out Evaluation
+        </a>
+
+        <div class="nav-section-label">Department Workspaces</div>
+        <a class="nav-item" data-tab="design-hub">
+          <span>📐</span> Design Team (ECN)
+        </a>
+        <a class="nav-item" data-tab="dieshop-hub">
+          <span>🛠️</span> Die Shop (Resink)
+        </a>
+        <a class="nav-item" data-tab="trial-hub">
+          <span>🧪</span> Drop Hammer Trial
+        </a>
+
+        <div class="nav-section-label">Analytics & Registry</div>
+        <a class="nav-item" data-tab="history">
+          <span>📜</span> Die Lifecycle Audit
+        </a>
+        <a class="nav-item" data-tab="analytics">
+          <span>📈</span> Management Analytics
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div><strong>Status:</strong> Active Multi-User Hub</div>
+        <div style="font-size: 11px; color: var(--cyan-primary);">Closed-Loop Engineering</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      <header class="top-bar">
+        <div class="top-bar-title">
+          <h2 id="page-title">Drop Hammer Forging Die Pull Out Dashboard</h2>
+          <p id="page-sub">Daily multi-user status, drop hammer die wear analysis & cross-functional action tracking</p>
+        </div>
+
+        <div class="top-bar-actions">
+          <!-- Backup & Excel Action Buttons -->
+          <button class="btn btn-secondary btn-sm" onclick="exportFullDataBackup()">
+            <span>💾 Save & Export Excel Backup</span>
+          </button>
+
+          <button class="btn btn-secondary btn-sm" onclick="openExcelImportModal()">
+            <span>📥 Import 500+ Excel Master</span>
+          </button>
+
+          <!-- Role Switcher Dropdown -->
+          <div style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">User Role:</span>
+            <select class="form-control" id="user-role-select" style="padding: 4px 8px; font-size: 13px; font-weight: 600; background: #ffffff;" onchange="AppState.setRole(this.value)">
+              <option value="admin">👑 System Admin (Full Edit & Delete Access)</option>
+              <option value="quality">📋 Quality Assurance Team</option>
+              <option value="design">📐 Tooling Design Team</option>
+              <option value="dieshop">⚙️ Die Shop Master</option>
+              <option value="production">🚜 Production Lead</option>
+              <option value="executive">💼 Top Management (Executive View)</option>
+            </select>
+            <span id="role-badge-display" class="badge badge-rose">👑 Admin</span>
+          </div>
+
+          <button class="btn btn-secondary btn-sm" onclick="resetSampleData()">🔄 Reset Data</button>
+          <button class="btn btn-primary" onclick="AppState.switchTab('meeting')">
+            <span>➕ Conduct Meeting</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="content-area" id="content-area">
+        <!-- Rendered dynamically -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Global Modal Dialog -->
+  <div class="modal-overlay" id="global-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-title" style="font-size: 18px; font-weight: 700; color: var(--text-main);">Report Details</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div id="modal-body">
+        <!-- Dynamic content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/app.js"></script>
+  <script src="js/meeting.js"></script>
+  <script src="js/workflow.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/history.js"></script>
+
+  <script>
+    function resetSampleData() {
+      if (confirm('Are you sure you want to reset all records back to default forging sample data?')) {
+        localStorage.clear();
+        AppState.loadSeedData();
+        AppState.init();
+        AppState.showToast('Sample data reset successfully!', 'success');
+      }
+    }
+  </script>
+</body>
+</html>

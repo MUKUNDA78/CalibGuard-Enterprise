@@ -15,10 +15,11 @@ Write-Host "Embedding" $instruments.Count "instruments into seed data..."
 # Convert instruments to JS JSON representation
 $jsInstruments = $instruments | ConvertTo-Json -Depth 5
 
-$appContent = Get-Content $appPath -Raw
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$appContent = [System.IO.File]::ReadAllText($appPath, [System.Text.Encoding]::UTF8)
 
 # Replace DATA_VERSION
-$appContent = $appContent -replace 'const DATA_VERSION = "[^"]+";', 'const DATA_VERSION = "2026.07.21.v10_real_user_seed_saved";'
+$appContent = $appContent -replace 'const DATA_VERSION = "[^"]+";', 'const DATA_VERSION = "2026.07.22.v11_clean_utf8_ascii_entities";'
 
 # Replace INITIAL_INSTRUMENTS array content
 $regex = '(?s)const INITIAL_INSTRUMENTS = \[.*?\];'
@@ -26,7 +27,7 @@ $newInitialInstruments = "const INITIAL_INSTRUMENTS = " + $jsInstruments + ";"
 
 $appContent = $appContent -replace $regex, $newInitialInstruments
 
-Set-Content -Path $appPath -Value $appContent -Encoding UTF8
-Set-Content -Path $indexPath -Value $appContent -Encoding UTF8
+[System.IO.File]::WriteAllText($appPath, $appContent, $utf8NoBom)
+[System.IO.File]::WriteAllText($indexPath, $appContent, $utf8NoBom)
 
-Write-Host "Successfully updated CalibGuard_App.html and index.html with all 34 real master instruments!"
+Write-Host "Successfully updated CalibGuard_App.html and index.html with clean UTF-8 encoding!"
