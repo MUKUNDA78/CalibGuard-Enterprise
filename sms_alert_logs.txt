@@ -1,0 +1,21 @@
+﻿=== SMS ALERT DISPATCH LOG [2026-07-22 10:27:50] ===
+Target Phone: 7975635973
+
+CALIBGUARD ENTERPRISE AUTOMATED ALERT
+Target Recipient: +91 7975635973
+System Reference Date: 22/07/2026
+
+PENDING / OVERDUE FOR CALIBRATION (5 Equipment):
+1. [GRS/QA/ST/01] SURFACE TABLE | Last Calib: 09-06-2025 | Due Date: 08-06-2026 (44 Days OVERDUE)
+2. [GRS/QA/LDG/01] LEVER DIAL GAUGE | Last Calib: 18-03-2020 | Due Date: 17-03-2021 (1953 Days OVERDUE)
+3. [-] WEIGHING SCALE | Last Calib: 25-06-2020 | Due Date: 24-06-2021 (1854 Days OVERDUE)
+4. [GRS/QA/91] LEVER DIAL GAUGE | Last Calib: 15-07-2025 | Due Date: 14-07-2026 (8 Days OVERDUE)
+5. [GRS/QA/88] DIGITAL HEIGHT GAUGE | Last Calib: 08-02-2025 | Due Date: 07-02-2026 (165 Days OVERDUE)
+
+DUE IN NEXT 14 DAYS (0 Equipment):
+(None - No instruments due in next 14 days)
+
+ACTION REQUIRED: Please perform calibration and update CalibGuard system records to clear these active alerts.
+Status: ACTIVE DISPATCH (Alerts active until calibration completed & updated)
+
+

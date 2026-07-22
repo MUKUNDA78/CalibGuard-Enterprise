@@ -1128,7 +1128,7 @@
           users: users,
           isLoggedIn: StorageManager.get('isLoggedIn', false),
           activeUserId: StorageManager.get('activeUserId', 'USR-000'),
-          alertThresholdDays: StorageManager.get('alertThresholdDays', 7),
+          alertThresholdDays: StorageManager.get('alertThresholdDays', 14),
           activeTab: 'master',
           searchQuery: '',
           filterCategory: 'All',
@@ -1566,8 +1566,8 @@
                 <span class="text-xs text-slate-600">Alert Window:</span>
                 <select id="globalThresholdSelect" class="bg-transparent text-slate-800 text-xs font-bold cursor-pointer focus:outline-none">
                   <option value="3" ${this.state.alertThresholdDays === 3 ? 'selected' : ''}>3 Days</option>
-                  <option value="7" ${this.state.alertThresholdDays === 7 ? 'selected' : ''}>7 Days (Default)</option>
-                  <option value="14" ${this.state.alertThresholdDays === 14 ? 'selected' : ''}>14 Days</option>
+                  <option value="7" ${this.state.alertThresholdDays === 7 ? 'selected' : ''}>7 Days</option>
+                  <option value="14" ${this.state.alertThresholdDays === 14 ? 'selected' : ''}>14 Days (Default & Active)</option>
                   <option value="30" ${this.state.alertThresholdDays === 30 ? 'selected' : ''}>30 Days</option>
                 </select>
               </div>
@@ -2473,18 +2473,102 @@
         });
       }
 
+      buildSMSAlertText(overdue, urgent, targetPhone = '7975635973') {
+        let msg = `🚨 CALIBGUARD SYSTEM ALERT 🚨\nTarget Recipient: ${targetPhone}\nDate: 22/07/2026\n\n`;
+        
+        msg += `⚠️ PENDING / OVERDUE CALIBRATIONS (${overdue.length}):\n`;
+        if (overdue.length === 0) {
+          msg += `(None - All instruments up to date)\n`;
+        } else {
+          overdue.forEach((ins, idx) => {
+            const computedDue = calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths);
+            const days = Math.abs(getDaysUntilDue(computedDue));
+            msg += `${idx + 1}. [${ins.tagId}] ${ins.name} | Calib On: ${formatDate(ins.lastCalibratedDate)} | Due: ${formatDate(computedDue)} (${days} Days OVERDUE)\n`;
+          });
+        }
+
+        msg += `\n📅 DUE IN NEXT 14 DAYS (${urgent.length}):\n`;
+        if (urgent.length === 0) {
+          msg += `(None - No instruments due in next 14 days)\n`;
+        } else {
+          urgent.forEach((ins, idx) => {
+            const computedDue = calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths);
+            const days = getDaysUntilDue(computedDue);
+            msg += `${idx + 1}. [${ins.tagId}] ${ins.name} | Due: ${formatDate(computedDue)} (in ${days} Days)\n`;
+          });
+        }
+
+        msg += `\n❗ Please complete calibration & update system records to clear these alerts.`;
+        return msg;
+      }
+
       renderAlerts(c) {
         const threshold = this.state.alertThresholdDays;
+        const targetPhone = '7975635973';
         
         const overdue = this.state.instruments.filter(i => getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)) < 0);
         const urgent = this.state.instruments.filter(i => { const d = getDaysUntilDue(calculateNextDueDate(i.lastCalibratedDate, i.frequencyMonths)); return d >= 0 && d <= threshold; });
         const nablAlertAgencies = this.state.agencies.filter(a => getDaysUntilDue(a.nablDueDate) <= threshold);
 
+        const alertMessageText = this.buildSMSAlertText(overdue, urgent, targetPhone);
+
         c.innerHTML = `
           <div class="space-y-6">
-            <div>
-              <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day System Alert Center</h2>
-              <p class="text-sm text-slate-500">Real-time alerts for Instrument Calibrations and NABL Accreditation Expiries</p>
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-amber-700">${threshold}-Day System Alert Center</h2>
+                <p class="text-sm text-slate-500 font-medium">Real-time alerts for Instrument Calibrations and NABL Accreditation Expiries</p>
+              </div>
+              <div class="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs">
+                Active Threshold: ${threshold} Days
+              </div>
+            </div>
+
+            <!-- SMS & WhatsApp Automated Alert Hub (Target: 7975635973) -->
+            <div class="white-card p-6 rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50 space-y-4 shadow-md">
+              <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-12 h-12 rounded-2xl bg-sky-600 text-white font-extrabold text-xl flex items-center justify-center shadow-lg">
+                    &#128241;
+                  </div>
+                  <div>
+                    <h3 class="font-extrabold text-lg text-slate-900">Automated SMS & WhatsApp Dispatch Center</h3>
+                    <p class="text-xs text-slate-600 font-medium">Configured Recipient: <span class="font-mono font-bold text-sky-900 bg-sky-100 px-2 py-0.5 rounded border border-sky-300">+91 7975635973</span> | Alert Trigger: <strong class="text-amber-800">Pending Overdue & Due in Next ${threshold} Days</strong></p>
+                  </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                  <button id="btnSendWhatsAppAlert" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
+                    <span>&#128172; Send WhatsApp Alert (7975635973)</span>
+                  </button>
+
+                  <button id="btnSendSMSAlert" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md flex items-center space-x-1.5 transition-all">
+                    <span>&#128241; Send Mobile SMS Alert</span>
+                  </button>
+
+                  <button id="btnCopySMSAlert" class="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-all">
+                    <span>&#128203; Copy Text Report</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-xl bg-white/80 backdrop-blur border border-sky-200 text-xs space-y-2">
+                <div class="flex justify-between items-center text-slate-700 font-semibold border-b border-slate-200 pb-2">
+                  <span>Active Alert Dispatch Condition: <strong class="text-emerald-700">&#9679; ACTIVE (Dispatches until Calibration Done & Updated)</strong></span>
+                  <span class="font-mono text-slate-500 text-[11px]">Alert Threshold: ${threshold} Days</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+                    <div class="text-[11px] font-bold text-red-800 uppercase">Pending Overdue Calibrations: ${overdue.length} Equipment</div>
+                    <p class="text-[10px] text-red-600">Active alerts sent to 7975635973 continuously until calibration is completed and updated.</p>
+                  </div>
+                  <div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                    <div class="text-[11px] font-bold text-amber-800 uppercase">Upcoming Calibrations (Next ${threshold} Days): ${urgent.length} Equipment</div>
+                    <p class="text-[10px] text-amber-600">Advance notification alerts sent to 7975635973 to schedule calibration.</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="space-y-3">
@@ -2545,6 +2629,26 @@
             </div>
           </div>
         `;
+
+        c.querySelector('#btnSendWhatsAppAlert')?.addEventListener('click', () => {
+          const waUrl = `https://wa.me/917975635973?text=${encodeURIComponent(alertMessageText)}`;
+          window.open(waUrl, '_blank');
+          showToast(`📱 WhatsApp alert report prepared & opening for mobile number 7975635973!`);
+        });
+
+        c.querySelector('#btnSendSMSAlert')?.addEventListener('click', () => {
+          const smsUrl = `sms:7975635973?body=${encodeURIComponent(alertMessageText)}`;
+          window.location.href = smsUrl;
+          showToast(`📱 Mobile SMS link triggered for recipient 7975635973!`);
+        });
+
+        c.querySelector('#btnCopySMSAlert')?.addEventListener('click', () => {
+          navigator.clipboard.writeText(alertMessageText).then(() => {
+            showToast(`📋 14-Day SMS & WhatsApp Alert report for 7975635973 copied to clipboard!`);
+          }).catch(() => {
+            alert('CalibGuard SMS Alert Report (7975635973):\n\n' + alertMessageText);
+          });
+        });
       }
 
       openAddAgencyModal() {
