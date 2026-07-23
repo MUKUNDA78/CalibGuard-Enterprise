@@ -57,55 +57,22 @@ const USER_DATA_KEY = 'quality_monitor_user_uploaded_data';
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
-  checkAuthStatus();
+  state.currentUser = 'Mukund';
   loadData();
   setupEventListeners();
   initDateFilters();
+  showWindow('dashboard');
   renderAll();
 });
 
-// Authentication System
-function checkAuthStatus() {
-  let authUser = localStorage.getItem('quality_app_auth_user');
-  if (!authUser) {
-    authUser = 'Mukund';
-    localStorage.setItem('quality_app_auth_user', 'Mukund');
-  }
-  state.currentUser = authUser;
-  const modalEl = document.getElementById('login-modal-overlay');
-  if (modalEl) modalEl.classList.remove('active');
-  const userDisp = document.getElementById('user-display-name');
-  if (userDisp) userDisp.innerHTML = `<i class="fas fa-user-circle"></i> ${authUser}`;
-}
-
-function handleLoginSubmit(e) {
-  e.preventDefault();
-  const userVal = document.getElementById('login-username').value.trim();
-  const passVal = document.getElementById('login-password').value.trim();
-  const errorMsg = document.getElementById('login-error-msg');
-
-  if (userVal.toLowerCase() === 'mukund' && passVal === 'Tejas') {
-    localStorage.setItem('quality_app_auth_user', 'Mukund');
-    state.currentUser = 'Mukund';
-    if (errorMsg) errorMsg.style.display = 'none';
-    const modalEl = document.getElementById('login-modal-overlay');
-    if (modalEl) modalEl.classList.remove('active');
-    const userDisp = document.getElementById('user-display-name');
-    if (userDisp) userDisp.innerHTML = `<i class="fas fa-user-circle"></i> Mukund`;
-    alert('Welcome Mukund! Authentication successful.');
-  } else {
-    if (errorMsg) {
-      errorMsg.style.display = 'block';
-      errorMsg.innerText = 'Invalid Username or Password! (Hint: Username: Mukund / Password: Tejas)';
-    }
-  }
-}
-
-function handleLogout() {
-  if (confirm('Are you sure you want to log out?')) {
-    localStorage.removeItem('quality_app_auth_user');
-    state.currentUser = null;
-    document.getElementById('login-modal-overlay').classList.add('active');
+function clearAndResetApp() {
+  if (confirm('Clear all stored data and reset application to fresh state?')) {
+    localStorage.clear();
+    generateSeedData();
+    initDateFilters();
+    showWindow('dashboard');
+    renderAll();
+    alert('Application reset successfully! Fresh dataset loaded.');
   }
 }
 
@@ -277,7 +244,7 @@ function generateSeedData() {
   saveData(false);
 }
 
-function switchTab(targetView) {
+function showWindow(targetView) {
   if (!targetView) return;
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.view-section').forEach(v => {
@@ -294,15 +261,22 @@ function switchTab(targetView) {
     targetSection.style.display = 'block';
   }
 
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   setTimeout(() => {
-    Object.values(state.charts).forEach(chart => chart && chart.resize());
+    if (state.charts) {
+      Object.values(state.charts).forEach(chart => chart && chart.resize && chart.resize());
+    }
   }, 50);
 }
 
+function switchTab(targetView) {
+  showWindow(targetView);
+}
+
 function setupEventListeners() {
-  document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-  document.getElementById('btn-logout').addEventListener('click', handleLogout);
-  document.getElementById('btn-save-data').addEventListener('click', () => saveData(true));
+  const saveBtn = document.getElementById('btn-save-data');
+  if (saveBtn) saveBtn.addEventListener('click', () => saveData(true));
 
   document.getElementById('btn-show-all-dates').addEventListener('click', () => {
     state.filters.startDate = '';

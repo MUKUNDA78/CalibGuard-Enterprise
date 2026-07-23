@@ -42,16 +42,12 @@
       <button class="btn btn-purple" id="btn-upload-excel">
         <i class="fas fa-file-excel"></i> Upload Excel Sheet
       </button>
-      <button class="btn btn-danger" id="btn-clear-all" title="Clear all present data for fresh Excel upload">
-        <i class="fas fa-trash-can"></i> Clear All Data
-      </button>
-      <button class="btn btn-sm" id="btn-seed-data" title="Load sample demo dataset">
-        <i class="fas fa-database"></i> Load Demo
+      <button class="btn btn-danger" onclick="clearAndResetApp()" title="Clear all data and reset to fresh state">
+        <i class="fas fa-arrows-rotate"></i> Clear & Reset App
       </button>
 
       <div class="filter-item" style="border-left:2px solid var(--border); padding-left:0.75rem; margin-left:0.25rem;">
         <span id="user-display-name" style="font-weight:800; color:#e11d48;"><i class="fas fa-user-circle"></i> Mukund</span>
-        <button class="btn btn-sm btn-danger" id="btn-logout" title="Logout session"><i class="fas fa-right-from-bracket"></i> Logout</button>
       </div>
     </div>
   </header>
@@ -89,31 +85,31 @@
     
     <!-- Separate View Navigation Tabs for Each Window -->
     <nav class="tabs-nav">
-      <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <button class="tab-btn active" data-tab="dashboard" onclick="showWindow('dashboard')">
         <i class="fas fa-chart-pie"></i> Executive Summary
       </button>
-      <button class="tab-btn" data-tab="inprocess" onclick="switchTab('inprocess')">
+      <button class="tab-btn" data-tab="inprocess" onclick="showWindow('inprocess')">
         <i class="fas fa-gears"></i> In-Process Window
       </button>
-      <button class="tab-btn" data-tab="final" onclick="switchTab('final')">
+      <button class="tab-btn" data-tab="final" onclick="showWindow('final')">
         <i class="fas fa-magnifying-glass"></i> Final QA Window
       </button>
-      <button class="tab-btn" data-tab="mpi" onclick="switchTab('mpi')">
+      <button class="tab-btn" data-tab="mpi" onclick="showWindow('mpi')">
         <i class="fas fa-magnet"></i> MPI NDT Window
       </button>
-      <button class="tab-btn" data-tab="heattreat" onclick="switchTab('heattreat')">
+      <button class="tab-btn" data-tab="heattreat" onclick="showWindow('heattreat')">
         <i class="fas fa-fire-burner"></i> Heat Treat Window
       </button>
-      <button class="tab-btn" data-tab="vendor" onclick="switchTab('vendor')">
+      <button class="tab-btn" data-tab="vendor" onclick="showWindow('vendor')">
         <i class="fas fa-truck-field"></i> Machining Vendor Window
       </button>
-      <button class="tab-btn" data-tab="customer" onclick="switchTab('customer')">
+      <button class="tab-btn" data-tab="customer" onclick="showWindow('customer')">
         <i class="fas fa-truck-ramp-box"></i> Customer Returns Window
       </button>
-      <button class="tab-btn" data-tab="pareto" onclick="switchTab('pareto')">
+      <button class="tab-btn" data-tab="pareto" onclick="showWindow('pareto')">
         <i class="fas fa-chart-bar"></i> Top 5 Pareto & CAPA
       </button>
-      <button class="tab-btn" data-tab="logs" onclick="switchTab('logs')">
+      <button class="tab-btn" data-tab="logs" onclick="showWindow('logs')">
         <i class="fas fa-list-check"></i> Master Data Registry
       </button>
     </nav>
@@ -660,37 +656,6 @@
     </section>
 
   </main>
-
-  <!-- Login Modal Gate -->
-  <div class="modal-overlay" id="login-modal-overlay">
-    <div class="modal" style="max-width:440px;">
-      <div class="modal-header">
-        <h3 class="modal-title"><i class="fas fa-lock" style="color:#e11d48; margin-right:0.5rem;"></i> System Login Gate</h3>
-      </div>
-      <form id="login-form">
-        <div class="modal-body">
-          <div id="login-error-msg" style="display:none; color:#dc2626; font-size:0.82rem; font-weight:700; background:#fee2e2; padding:0.5rem 0.75rem; border-radius:6px; margin-bottom:1rem; border:1px solid #fca5a5;">
-            Invalid Username or Password!
-          </div>
-
-          <div class="form-group" style="margin-bottom:1rem;">
-            <label class="form-label"><i class="fas fa-user"></i> Username</label>
-            <input type="text" id="login-username" class="form-input" placeholder="Enter Username (Mukund)" required>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label"><i class="fas fa-key"></i> Password</label>
-            <input type="password" id="login-password" class="form-input" placeholder="Enter Password (Tejas)" required>
-          </div>
-        </div>
-        <div class="modal-footer" style="justify-content:center;">
-          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem; font-size:0.95rem;">
-            <i class="fas fa-right-to-bracket"></i> Login to Access Dashboard
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Add Quality Entry Modal -->
   <div class="modal-overlay" id="modal-overlay">
