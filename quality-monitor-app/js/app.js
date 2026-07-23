@@ -66,14 +66,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Authentication System
 function checkAuthStatus() {
-  const authUser = localStorage.getItem('quality_app_auth_user');
-  if (authUser) {
-    state.currentUser = authUser;
-    document.getElementById('login-modal-overlay').classList.remove('active');
-    document.getElementById('user-display-name').innerHTML = `<i class="fas fa-user-circle"></i> ${authUser}`;
-  } else {
-    document.getElementById('login-modal-overlay').classList.add('active');
+  let authUser = localStorage.getItem('quality_app_auth_user');
+  if (!authUser) {
+    authUser = 'Mukund';
+    localStorage.setItem('quality_app_auth_user', 'Mukund');
   }
+  state.currentUser = authUser;
+  const modalEl = document.getElementById('login-modal-overlay');
+  if (modalEl) modalEl.classList.remove('active');
+  const userDisp = document.getElementById('user-display-name');
+  if (userDisp) userDisp.innerHTML = `<i class="fas fa-user-circle"></i> ${authUser}`;
 }
 
 function handleLoginSubmit(e) {
@@ -85,13 +87,17 @@ function handleLoginSubmit(e) {
   if (userVal.toLowerCase() === 'mukund' && passVal === 'Tejas') {
     localStorage.setItem('quality_app_auth_user', 'Mukund');
     state.currentUser = 'Mukund';
-    errorMsg.style.display = 'none';
-    document.getElementById('login-modal-overlay').classList.remove('active');
-    document.getElementById('user-display-name').innerHTML = `<i class="fas fa-user-circle"></i> Mukund`;
+    if (errorMsg) errorMsg.style.display = 'none';
+    const modalEl = document.getElementById('login-modal-overlay');
+    if (modalEl) modalEl.classList.remove('active');
+    const userDisp = document.getElementById('user-display-name');
+    if (userDisp) userDisp.innerHTML = `<i class="fas fa-user-circle"></i> Mukund`;
     alert('Welcome Mukund! Authentication successful.');
   } else {
-    errorMsg.style.display = 'block';
-    errorMsg.innerText = 'Invalid Username or Password! (Hint: Username: Mukund / Password: Tejas)';
+    if (errorMsg) {
+      errorMsg.style.display = 'block';
+      errorMsg.innerText = 'Invalid Username or Password! (Hint: Username: Mukund / Password: Tejas)';
+    }
   }
 }
 
