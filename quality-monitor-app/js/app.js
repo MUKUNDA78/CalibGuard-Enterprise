@@ -277,6 +277,28 @@ function generateSeedData() {
   saveData(false);
 }
 
+function switchTab(targetView) {
+  if (!targetView) return;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view-section').forEach(v => {
+    v.classList.remove('active');
+    v.style.display = 'none';
+  });
+  
+  const activeTabBtn = document.querySelector(`.tab-btn[data-tab="${targetView}"]`);
+  if (activeTabBtn) activeTabBtn.classList.add('active');
+
+  const targetSection = document.getElementById(`${targetView}-view`);
+  if (targetSection) {
+    targetSection.classList.add('active');
+    targetSection.style.display = 'block';
+  }
+
+  setTimeout(() => {
+    Object.values(state.charts).forEach(chart => chart && chart.resize());
+  }, 50);
+}
+
 function setupEventListeners() {
   document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
   document.getElementById('btn-logout').addEventListener('click', handleLogout);
@@ -291,17 +313,9 @@ function setupEventListeners() {
   });
 
   document.querySelectorAll('.tab-btn').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      const targetView = e.currentTarget.dataset.tab;
-      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-      
-      e.currentTarget.classList.add('active');
-      document.getElementById(`${targetView}-view`).classList.add('active');
-      
-      setTimeout(() => {
-        Object.values(state.charts).forEach(chart => chart && chart.resize());
-      }, 50);
+    tab.addEventListener('click', function(e) {
+      const targetView = this.getAttribute('data-tab') || this.dataset.tab;
+      switchTab(targetView);
     });
   });
 

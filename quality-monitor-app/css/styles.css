@@ -277,6 +277,10 @@ body {
   transition: var(--transition);
 }
 
+.tab-btn * {
+  pointer-events: none;
+}
+
 .tab-btn:hover {
   background: #ffe4e6;
   color: var(--primary);
