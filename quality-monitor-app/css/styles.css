@@ -511,6 +511,7 @@ body {
 
 /* MODALS & DROPZONE */
 .modal-overlay {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -518,7 +519,6 @@ body {
   bottom: 0;
   background: rgba(76, 5, 25, 0.45);
   backdrop-filter: blur(4px);
-  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -528,8 +528,9 @@ body {
 }
 
 .modal-overlay.active {
-  opacity: 1;
-  pointer-events: auto;
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .modal {
