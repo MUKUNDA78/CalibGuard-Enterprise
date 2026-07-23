@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quality Production, Vendor & Customer Returns Monitor</title>
+  
+  <!-- Google Fonts & FontAwesome CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js & SheetJS (Excel Importer) CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fas fa-shield-halved"></i>
+      </div>
+      <div class="brand-text">
+        <h1>QUALIMONITOR PRO</h1>
+        <p>In-House, Vendor & Customer Rejection Monitor</p>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <button class="btn btn-success" id="btn-save-data" title="Save current dataset to disk memory">
+        <i class="fas fa-floppy-disk"></i> Save Data
+      </button>
+      <button class="btn btn-primary" id="btn-add-log">
+        <i class="fas fa-plus-circle"></i> Add Log Entry
+      </button>
+      <button class="btn btn-purple" id="btn-upload-excel">
+        <i class="fas fa-file-excel"></i> Upload Excel Sheet
+      </button>
+      <button class="btn btn-danger" id="btn-clear-all" title="Clear all present data for fresh Excel upload">
+        <i class="fas fa-trash-can"></i> Clear All Data
+      </button>
+      <button class="btn btn-sm" id="btn-seed-data" title="Load sample demo dataset">
+        <i class="fas fa-database"></i> Load Demo
+      </button>
+
+      <div class="filter-item" style="border-left:2px solid var(--border); padding-left:0.75rem; margin-left:0.25rem;">
+        <span id="user-display-name" style="font-weight:800; color:#e11d48;"><i class="fas fa-user-circle"></i> Mukund</span>
+        <button class="btn btn-sm btn-danger" id="btn-logout" title="Logout session"><i class="fas fa-right-from-bracket"></i> Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Global Filters Bar -->
+  <section class="timeframe-bar">
+    <div class="filter-group" style="width:100%; justify-content:flex-start; gap:1.25rem;">
+      <div class="filter-item">
+        <i class="fas fa-calendar-alt"></i>
+        <span>From Date:</span>
+        <input type="date" id="start-date" class="form-input">
+      </div>
+      <div class="filter-item">
+        <span>To Date:</span>
+        <input type="date" id="end-date" class="form-input">
+      </div>
+      <button class="btn btn-sm" id="btn-show-all-dates" title="Show all dates without filter restriction">
+        <i class="fas fa-arrows-rotate"></i> Show All Dates
+      </button>
+
+      <div class="filter-item">
+        <i class="fas fa-user-clock"></i>
+        <select id="shift-filter" class="form-select">
+          <option value="all">All Shifts</option>
+          <option value="Shift A">Shift A (Morning)</option>
+          <option value="Shift B">Shift B (Evening)</option>
+          <option value="Shift C">Shift C (Night)</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <main class="main-content">
+    
+    <!-- Separate View Navigation Tabs for Each Window -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="dashboard">
+        <i class="fas fa-chart-pie"></i> Executive Summary
+      </button>
+      <button class="tab-btn" data-tab="inprocess">
+        <i class="fas fa-gears"></i> In-Process Window
+      </button>
+      <button class="tab-btn" data-tab="final">
+        <i class="fas fa-magnifying-glass"></i> Final QA Window
+      </button>
+      <button class="tab-btn" data-tab="mpi">
+        <i class="fas fa-magnet"></i> MPI NDT Window
+      </button>
+      <button class="tab-btn" data-tab="heattreat">
+        <i class="fas fa-fire-burner"></i> Heat Treat Window
+      </button>
+      <button class="tab-btn" data-tab="vendor">
+        <i class="fas fa-truck-field"></i> Machining Vendor Window
+      </button>
+      <button class="tab-btn" data-tab="customer">
+        <i class="fas fa-truck-ramp-box"></i> Customer Returns Window
+      </button>
+      <button class="tab-btn" data-tab="pareto">
+        <i class="fas fa-chart-bar"></i> Top 5 Pareto & CAPA
+      </button>
+      <button class="tab-btn" data-tab="logs">
+        <i class="fas fa-list-check"></i> Master Data Registry
+      </button>
+    </nav>
+
+    <!-- 1. EXECUTIVE SUMMARY DASHBOARD -->
+    <section id="dashboard-view" class="view-section active">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #e11d48;">
+          <div class="kpi-header">
+            <span class="kpi-title">Production Qty</span>
+            <div class="kpi-icon"><i class="fas fa-boxes-stacked"></i></div>
+          </div>
+          <div class="kpi-value" id="kpi-production">0</div>
+          <div class="kpi-sub">
+            <span>Total Units Manufactured</span>
+            <span class="badge-trend neutral">Passed Target</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #dc2626;">
+          <div class="kpi-header">
+            <span class="kpi-title">Total Rejection Rate</span>
+            <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+          </div>
+          <div class="kpi-value" id="kpi-scrap-rate">0.00%</div>
+          <div class="kpi-sub">
+            <span id="kpi-ppm">0 PPM</span>
+            <span class="badge-trend up-bad"><i class="fas fa-arrow-up"></i> Target &lt; 2.5%</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #d97706;">
+          <div class="kpi-header">
+            <span class="kpi-title">Rework Quantity</span>
+            <div class="kpi-icon"><i class="fas fa-wrench"></i></div>
+          </div>
+          <div class="kpi-value" id="kpi-rework">0</div>
+          <div class="kpi-sub">
+            <span>Recovery Yield:</span>
+            <strong id="kpi-rework-yield" style="color:#059669;">0.0%</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #0284c7;">
+          <div class="kpi-header">
+            <span class="kpi-title">Machining Vendor Returns</span>
+            <div class="kpi-icon"><i class="fas fa-truck-field"></i></div>
+          </div>
+          <div class="kpi-value" id="kpi-vendor-mat">0</div>
+          <div class="kpi-sub">
+            <span id="kpi-vendor-mat-sub">Vendor Machining Defect</span>
+            <span class="badge-trend up-bad">Outsourced QA</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #db2777;">
+          <div class="kpi-header">
+            <span class="kpi-title">Customer Returns</span>
+            <div class="kpi-icon"><i class="fas fa-truck-ramp-box"></i></div>
+          </div>
+          <div class="kpi-value" id="kpi-cust-ret">0</div>
+          <div class="kpi-sub">
+            <span>Field Return Claims</span>
+            <span class="badge-trend down-good">8D Active</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #7c3aed;">
+          <div class="kpi-header">
+            <span class="kpi-title">First Pass Yield (FPY)</span>
+            <div class="kpi-icon"><i class="fas fa-check-double"></i></div>
+          </div>
+          <div class="kpi-value" id="kpi-fpy">0%</div>
+          <div class="kpi-sub">
+            <span>Right First Time Ratio</span>
+            <span class="badge-trend down-good">Target &gt; 95%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card full-width-chart">
+          <div class="chart-header">
+            <div class="chart-title"><i class="fas fa-chart-line" style="color:#e11d48;"></i> Production Output vs Rejection & Rework Trends</div>
+            <div class="chart-subtitle">Aggregated by Date</div>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-prod-rej"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title"><i class="fas fa-chart-pie" style="color:#d97706;"></i> Rejection Share Across All Dedicated Windows</div>
+            <div class="chart-subtitle">In-Process, Final, MPI, HT, Vendor Returns & Customer Returns</div>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-stage-share"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title"><i class="fas fa-rotate" style="color:#7c3aed;"></i> Top Rework Reasons & Recovery Breakdown</div>
+            <div class="chart-subtitle">Primary causes requiring rework labor</div>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-rework-reasons"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. IN-PROCESS REJECTION DEDICATED WINDOW -->
+    <section id="inprocess-view" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #059669;">
+          <div class="kpi-header"><span class="kpi-title">Total Inspected Qty</span></div>
+          <div class="kpi-value" id="inproc-inspected">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #2563eb;">
+          <div class="kpi-header"><span class="kpi-title">Total In-Process Rejection</span></div>
+          <div class="kpi-value" id="inproc-total">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #dc2626;">
+          <div class="kpi-header"><span class="kpi-title">In-Process Scrap Rate %</span></div>
+          <div class="kpi-value" id="inproc-scrap-rate">0.00%</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+          <span><i class="fas fa-gears" style="color:#2563eb; margin-right: 0.5rem;"></i> In-Process Rejection Audit Log & Search Analysis</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-inprocess" class="form-input search-input" placeholder="Search Part #, Reason, Rework...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('inprocess')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('inprocess')"><i class="fas fa-file-excel"></i> Upload Excel</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('inprocess')"><i class="fas fa-download"></i> Template</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Part Number</th>
+                <th>Inspected Qty</th>
+                <th>Accepted Qty</th>
+                <th>Rejection Qty</th>
+                <th>Rejection %</th>
+                <th>Reason for Rejection</th>
+                <th>Rework Qty</th>
+                <th>Rework %</th>
+                <th>Reason for Rework</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-inprocess">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. FINAL INSPECTION REJECTION DEDICATED WINDOW -->
+    <section id="final-view" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #059669;">
+          <div class="kpi-header"><span class="kpi-title">Total Inspected Qty</span></div>
+          <div class="kpi-value" id="final-inspected">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #d97706;">
+          <div class="kpi-header"><span class="kpi-title">Total Final Inspection Rejection</span></div>
+          <div class="kpi-value" id="final-total">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #dc2626;">
+          <div class="kpi-header"><span class="kpi-title">Final Inspection Scrap Rate %</span></div>
+          <div class="kpi-value" id="final-scrap-rate">0.00%</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+          <span><i class="fas fa-magnifying-glass" style="color:#d97706; margin-right: 0.5rem;"></i> Final Inspection QA Audit Log & Search Analysis</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-final" class="form-input search-input" placeholder="Search Part #, Reason, Rework...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('final')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('final')"><i class="fas fa-file-excel"></i> Upload Excel</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('final')"><i class="fas fa-download"></i> Template</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Part Number</th>
+                <th>Inspected Qty</th>
+                <th>Accepted Qty</th>
+                <th>Rejection Qty</th>
+                <th>Rejection %</th>
+                <th>Reason for Rejection</th>
+                <th>Rework Qty</th>
+                <th>Rework %</th>
+                <th>Reason for Rework</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-final">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. MPI NDT CRACK CHECK DEDICATED WINDOW -->
+    <section id="mpi-view" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #059669;">
+          <div class="kpi-header"><span class="kpi-title">Total Inspected Qty</span></div>
+          <div class="kpi-value" id="mpi-inspected">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #7c3aed;">
+          <div class="kpi-header"><span class="kpi-title">Total MPI (NDT Crack) Rejection</span></div>
+          <div class="kpi-value" id="mpi-total">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #dc2626;">
+          <div class="kpi-header"><span class="kpi-title">MPI Defect Scrap Rate %</span></div>
+          <div class="kpi-value" id="mpi-scrap-rate">0.00%</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+          <span><i class="fas fa-magnet" style="color:#7c3aed; margin-right: 0.5rem;"></i> Magnetic Particle Inspection (MPI) Audit Log & Search Analysis</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-mpi" class="form-input search-input" placeholder="Search Part #, Defect Reason...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('mpi')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('mpi')"><i class="fas fa-file-excel"></i> Upload Excel</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('mpi')"><i class="fas fa-download"></i> Template</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Part Number</th>
+                <th>Inspected Qty</th>
+                <th>Accepted Qty</th>
+                <th>Rejection Qty</th>
+                <th>Rejection %</th>
+                <th>Reason for Rejection</th>
+                <th>Rework Qty</th>
+                <th>Rework %</th>
+                <th>Reason for Rework</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-mpi">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. HEAT TREATMENT REJECTION DEDICATED WINDOW -->
+    <section id="heattreat-view" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #059669;">
+          <div class="kpi-header"><span class="kpi-title">Total Inspected Qty</span></div>
+          <div class="kpi-value" id="ht-inspected">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #dc2626;">
+          <div class="kpi-header"><span class="kpi-title">Total Heat Treatment Rejection</span></div>
+          <div class="kpi-value" id="ht-total">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #e11d48;">
+          <div class="kpi-header"><span class="kpi-title">Heat Treat Hardness/Distortion Rate %</span></div>
+          <div class="kpi-value" id="ht-scrap-rate">0.00%</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+          <span><i class="fas fa-fire-burner" style="color:#dc2626; margin-right: 0.5rem;"></i> Heat Treatment Line Quality Audit Log & Search Analysis</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-heattreat" class="form-input search-input" placeholder="Search Part #, Hardness Reason...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('heattreat')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('heattreat')"><i class="fas fa-file-excel"></i> Upload Excel</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('heattreat')"><i class="fas fa-download"></i> Template</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Part Number</th>
+                <th>Inspected Qty</th>
+                <th>Accepted Qty</th>
+                <th>Rejection Qty</th>
+                <th>Rejection %</th>
+                <th>Reason for Rejection</th>
+                <th>Rework Qty</th>
+                <th>Rework %</th>
+                <th>Reason for Rework</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-heattreat">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. MACHINING VENDOR RETURNS DEDICATED WINDOW -->
+    <section id="vendor-view" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #0284c7;">
+          <div class="kpi-header"><span class="kpi-title">Total Vendor Machining Returns</span></div>
+          <div class="kpi-value" id="vendor-total-rej">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #e11d48;">
+          <div class="kpi-header"><span class="kpi-title">Vendor Defect PPM</span></div>
+          <div class="kpi-value" id="vendor-ppm">0 PPM</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #d97706;">
+          <div class="kpi-header"><span class="kpi-title">Vendor Scrap Rate %</span></div>
+          <div class="kpi-value" id="vendor-scrap-rate">0.00%</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+          <span><i class="fas fa-truck-field" style="color:#0284c7; margin-right: 0.5rem;"></i> Machining Vendor Component Rejection Log & Search Analysis</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-vendor" class="form-input search-input" placeholder="Search Part #, Vendor Defect...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('vendor')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('vendor')"><i class="fas fa-file-excel"></i> Upload Excel</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('vendor')"><i class="fas fa-download"></i> Template</button>
+          </div>
+        </div>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Part Number</th>
+              <th>Rejection Qty</th>
+              <th>Reason for Rejection</th>
+              <th>Rejection Rate %</th>
+              <th>SCAN CAPA</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-vendor">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7. CUSTOMER RETURNS DEDICATED WINDOW -->
+    <section id="customer-view" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: #db2777;">
+          <div class="kpi-header"><span class="kpi-title">Total Customer Returns</span></div>
+          <div class="kpi-value" id="cust-total-ret">0</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: #dc2626;">
+          <div class="kpi-header"><span class="kpi-title">Customer Rejected PPM</span></div>
+          <div class="kpi-value" id="cust-ppm">0 PPM</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+          <span><i class="fas fa-truck-ramp-box" style="color:#db2777; margin-right: 0.5rem;"></i> Customer Return Claims Log & Search Analysis</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-customer" class="form-input search-input" placeholder="Search Part #, Customer Spec...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('customer')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('customer')"><i class="fas fa-file-excel"></i> Upload Excel</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('customer')"><i class="fas fa-download"></i> Template</button>
+          </div>
+        </div>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Part Number</th>
+              <th>Returned Qty</th>
+              <th>Reason for Rejection</th>
+              <th>Field PPM</th>
+              <th>8D Action</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-customer">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8. TOP 5 PARETO & CAPA MATRIX -->
+    <section id="pareto-view" class="view-section">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title"><i class="fas fa-chart-column" style="color:#e11d48;"></i> Top 5 Rejection Reasons (Pareto 80/20)</div>
+            <div class="chart-subtitle">Ranked defect causes & cumulative % line</div>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-pareto-rejection"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337;">
+          <span><i class="fas fa-ranking-star" style="color:#e11d48; margin-right: 0.5rem;"></i> Top 5 Rejection Breakdown & Cumulative Share</span>
+        </div>
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Rejection Reason</th>
+              <th>Primary Stage / Source</th>
+              <th>Total Rejection Qty</th>
+              <th>% Share</th>
+              <th>Cumulative %</th>
+              <th>Action Plan</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-top5-rejection">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337;">
+          <span><i class="fas fa-wrench" style="color:#7c3aed; margin-right: 0.5rem;"></i> Top 5 Rework Reasons & Recovery Yield</span>
+        </div>
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Rework Reason</th>
+              <th>Total Rework Qty</th>
+              <th>Recovered Qty</th>
+              <th>Recovery Yield %</th>
+              <th>% of Total Rework</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-top5-rework">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-container" id="capa-section">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); background:#ffe4e6; color:#881337;">
+          <span><i class="fas fa-clipboard-check" style="color:#059669; margin-right: 0.5rem;"></i> Corrective & Preventive Action (CAPA / 8D) Tracker</span>
+        </div>
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>CAPA ID</th>
+              <th>Defect Reason</th>
+              <th>Stage Gate</th>
+              <th>Verified Root Cause</th>
+              <th>Corrective Action Taken</th>
+              <th>Owner / Resp.</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-capa">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9. DATA REGISTRY & EXCEL IMPORTER -->
+    <section id="logs-view" class="view-section">
+      <div class="table-container">
+        <div style="padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); display: flex; flex-wrap:wrap; justify-content: space-between; align-items: center; background:#ffe4e6; color:#881337; gap:0.75rem;">
+          <span><i class="fas fa-table" style="color:#0284c7; margin-right: 0.5rem;"></i> Master Quality Audit Log Registry</span>
+          
+          <div class="search-box-group">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-logs" class="form-input search-input" placeholder="Search Part #, Inspector, Defect...">
+            <button class="btn btn-sm btn-primary" onclick="openAddModal('auto')"><i class="fas fa-plus-circle"></i> Add Entry</button>
+            <button class="btn btn-sm btn-purple" onclick="openExcelModal('auto')"><i class="fas fa-file-excel"></i> Upload Category Excel</button>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Inspector</th>
+                <th>Part Number</th>
+                <th>Prod Qty</th>
+                <th>In-Proc</th>
+                <th>Final</th>
+                <th>MPI</th>
+                <th>HT</th>
+                <th>Cust Ret</th>
+                <th>Vendor</th>
+                <th>Mat Def</th>
+                <th>Non-Move</th>
+                <th>NPD Dev</th>
+                <th>Total Rej</th>
+                <th>Rework (Rec.)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-logs">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Login Modal Gate -->
+  <div class="modal-overlay" id="login-modal-overlay">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fas fa-lock" style="color:#e11d48; margin-right:0.5rem;"></i> System Login Gate</h3>
+      </div>
+      <form id="login-form">
+        <div class="modal-body">
+          <div id="login-error-msg" style="display:none; color:#dc2626; font-size:0.82rem; font-weight:700; background:#fee2e2; padding:0.5rem 0.75rem; border-radius:6px; margin-bottom:1rem; border:1px solid #fca5a5;">
+            Invalid Username or Password!
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label"><i class="fas fa-user"></i> Username</label>
+            <input type="text" id="login-username" class="form-input" placeholder="Enter Username (Mukund)" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-key"></i> Password</label>
+            <input type="password" id="login-password" class="form-input" placeholder="Enter Password (Tejas)" required>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content:center;">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem; font-size:0.95rem;">
+            <i class="fas fa-right-to-bracket"></i> Login to Access Dashboard
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Quality Entry Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fas fa-clipboard-list" style="color:#e11d48; margin-right:0.5rem;"></i> Add Quality, Vendor & Rejection Log</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <form id="quality-form">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Log Date</label>
+              <input type="date" id="log-date" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Shift</label>
+              <select id="log-shift" class="form-select" required>
+                <option value="Shift A">Shift A (Morning)</option>
+                <option value="Shift B">Shift B (Evening)</option>
+                <option value="Shift C">Shift C (Night)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Inspector Name</label>
+              <input type="text" id="log-inspector" class="form-input" value="Mukund" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Part Number / Component</label>
+              <select id="log-part" class="form-select" required>
+                <option value="PART-1001 (Gear Shaft)">PART-1001 (Gear Shaft)</option>
+                <option value="PART-1002 (Flange Hub)">PART-1002 (Flange Hub)</option>
+                <option value="PART-1003 (Pinion Housing)">PART-1003 (Pinion Housing)</option>
+                <option value="PART-1004 (Axle Spindle)">PART-1004 (Axle Spindle)</option>
+                <option value="NPD-5001 (Prototype EV Shaft)">NPD-5001 (Prototype EV Shaft)</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width" style="border-top:1px solid var(--border); padding-top:0.75rem; margin-top:0.25rem;">
+              <label class="form-label" style="color:#e11d48; font-size:0.85rem;">PRODUCTION & IN-HOUSE REJECTIONS</label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Production Quantity (Passed)</label>
+              <input type="number" id="log-prod" class="form-input" min="1" value="1000" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">In-Process Rejection Qty</label>
+              <input type="number" id="log-inproc" class="form-input" min="0" value="12" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Final Inspection Rejection Qty</label>
+              <input type="number" id="log-final" class="form-input" min="0" value="5" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">MPI Rejection Qty (NDT)</label>
+              <input type="number" id="log-mpi" class="form-input" min="0" value="4" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Heat Treatment Rejection Qty</label>
+              <input type="number" id="log-ht" class="form-input" min="0" value="3" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Material Defect Qty (Cast/Porosity)</label>
+              <input type="number" id="log-material" class="form-input" min="0" value="5" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">NPD / Development Trial Rejection</label>
+              <input type="number" id="log-npd" class="form-input" min="0" value="3" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Non-Moving Parts Scrap Qty</label>
+              <input type="number" id="log-nonmoving" class="form-input" min="0" value="2" required>
+            </div>
+
+            <div class="form-group full-width" style="border-top:1px solid var(--border); padding-top:0.75rem; margin-top:0.25rem;">
+              <label class="form-label" style="color:#0284c7; font-size:0.85rem;">MACHINING VENDOR & CUSTOMER RETURNS</label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Machining Vendor Returns Qty</label>
+              <input type="number" id="log-vendor" class="form-input" min="0" value="6" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Customer Returns Qty</label>
+              <input type="number" id="log-cust" class="form-input" min="0" value="0" required>
+            </div>
+
+            <div class="form-group full-width" style="border-top:1px solid var(--border); padding-top:0.75rem; margin-top:0.25rem;">
+              <label class="form-label" style="color:#7c3aed; font-size:0.85rem;">REWORK & REASON ASSIGNMENT</label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Rework Quantity Sent</label>
+              <input type="number" id="log-rework" class="form-input" min="0" value="16" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Rework Recovered (Salvaged)</label>
+              <input type="number" id="log-recovered" class="form-input" min="0" value="14" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Primary Rejection Reason</label>
+              <select id="log-rej-reason" class="form-select" required>
+                <option value="Vendor Machining Deviation">Vendor Machining Deviation</option>
+                <option value="Material Porosity / Cast Void">Material Porosity / Cast Void</option>
+                <option value="NPD / Pilot Sample Trial Defect">NPD / Pilot Sample Trial Defect</option>
+                <option value="Non-Moving Obsolete Scrap">Non-Moving Obsolete Scrap</option>
+                <option value="Dimensional Out of Spec">Dimensional Out of Spec</option>
+                <option value="MPI Surface Crack">MPI Surface Crack</option>
+                <option value="Heat Treat Hardness Out of Range">Heat Treat Hardness Out of Range</option>
+                <option value="Heat Treat Distortion">Heat Treat Distortion</option>
+                <option value="Tooling Marks / Scratches">Tooling Marks / Scratches</option>
+                <option value="Thread Damage / Burrs">Thread Damage / Burrs</option>
+                <option value="Customer Spec Mismatch">Customer Spec Mismatch</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Primary Rework Reason</label>
+              <select id="log-rework-reason" class="form-select" required>
+                <option value="Vendor Re-machining Correction">Vendor Re-machining Correction</option>
+                <option value="Oversize Machining (Re-turn/Grind)">Oversize Machining (Re-turn/Grind)</option>
+                <option value="Surface Rust / Degreasing Clean">Surface Rust / Degreasing Clean</option>
+                <option value="Thread Chasing & Deburring">Thread Chasing & Deburring</option>
+                <option value="Hardness Tempering Adjustment">Hardness Tempering Adjustment</option>
+                <option value="NPD Trial Re-work Polishing">NPD Trial Re-work Polishing</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Log</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Excel Upload Modal -->
+  <div class="modal-overlay" id="excel-modal-overlay">
+    <div class="modal" style="max-width:860px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fas fa-file-excel" style="color:#7c3aed; margin-right:0.5rem;"></i> Upload Category Excel / CSV Quality Data</h3>
+        <button class="modal-close" id="excel-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group full-width" style="margin-bottom:1.25rem;">
+          <label class="form-label" style="color:#7c3aed; font-size:0.9rem;"><i class="fas fa-filter"></i> Select Target Window Category:</label>
+          <select id="excel-category-select" class="form-select" style="font-weight:700; padding:0.6rem;">
+            <option value="auto">⚡ Automatic Detection / Master Sheet</option>
+            <option value="inprocess">⚙️ In-Process Rejections Sheet</option>
+            <option value="final">🔍 Final Inspection Rejections Sheet</option>
+            <option value="mpi">🧲 MPI (NDT Crack Check) Sheet</option>
+            <option value="heattreat">🔥 Heat Treatment Rejections Sheet</option>
+            <option value="customer">📦 Customer Returns Sheet</option>
+            <option value="vendor">🚚 Machining Vendor Returns Sheet</option>
+          </select>
+        </div>
+
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+          <h4 style="margin-bottom:0.4rem; color:#4c0519;">Drag & Drop Excel (.xlsx / .xls) or CSV File Here</h4>
+          <p style="font-size:0.85rem; color:#9f1239; margin-bottom:1rem;">Or click to browse your computer files</p>
+          <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;">
+          <button class="btn btn-purple"><i class="fas fa-folder-open"></i> Select Excel File</button>
+        </div>
+
+        <div style="margin-top:1.5rem; background:#ffe4e6; padding:1.25rem; border-radius:var(--radius-md);">
+          <strong style="color:#881337; font-size:0.9rem;"><i class="fas fa-file-arrow-down"></i> Download Category Excel Templates (Exact Field Structures):</strong>
+          
+          <div style="margin:0.5rem 0 1rem 0; font-size:0.78rem; color:#881337; line-height:1.4;">
+            <div>📌 <strong>In-Process / Final / MPI / Heat Treat:</strong> <code>Date</code> | <code>Part Number</code> | <code>Inspected Qty</code> | <code>Accepted Qty</code> | <code>Rejection Qty</code> | <code>Rejection %</code> | <code>Reason for Rejection</code> | <code>Rework Qty</code> | <code>Rework %</code> | <code>Reason for Rework</code></div>
+            <div style="margin-top:4px;">📌 <strong>Customer Returns:</strong> <code>Date</code> | <code>Part Number</code> | <code>Returned Qty</code> | <code>Reason for Rejection</code></div>
+            <div style="margin-top:4px;">📌 <strong>Machining Vendor Returns:</strong> <code>Date</code> | <code>Part Number</code> | <code>Rejection Qty</code> | <code>Reason for Rejection</code></div>
+          </div>
+          
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('inprocess')"><i class="fas fa-download"></i> In-Process Template</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('final')"><i class="fas fa-download"></i> Final QA Template</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('mpi')"><i class="fas fa-download"></i> MPI Template</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('heattreat')"><i class="fas fa-download"></i> Heat Treat Template</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('customer')"><i class="fas fa-download"></i> Customer Returns Template</button>
+            <button class="btn btn-sm" onclick="downloadCategoryTemplate('vendor')"><i class="fas fa-download"></i> Vendor Returns Template</button>
+            <button class="btn btn-sm btn-primary" onclick="downloadCategoryTemplate('master')"><i class="fas fa-download"></i> Master All-in-One Template</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="excel-modal-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2026 Enterprise Quality Management Systems. Designed for In-House, Machining Vendor & Customer Returns Monitoring.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
