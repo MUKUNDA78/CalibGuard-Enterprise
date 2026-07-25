@@ -314,28 +314,66 @@
     localStorage.setItem('oee_shift_logs_v10', JSON.stringify(shiftLogs));
   }
 
-  /* ==========================================================================
-     GLOBAL FILTER & DATA QUERYING
-     ========================================================================== */
+  function updateMonthFilterOptions() {
+    const select = document.getElementById('globalRangeFilter');
+    if (!select) return;
+
+    const currentSelected = select.value || 'ALL';
+
+    const monthSet = new Set();
+    shiftLogs.forEach(l => {
+      if (l.date && l.date.length >= 7) {
+        monthSet.add(l.date.substring(0, 7));
+      }
+    });
+
+    const sortedMonths = Array.from(monthSet).sort().reverse();
+
+    const formatMonthLabel = (mKey) => {
+      const parts = mKey.split('-');
+      if (parts.length !== 2) return mKey;
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[monthIdx] || parts[1]} ${year}`;
+    };
+
+    let html = `<option value="ALL">All Months (Combined)</option>`;
+    if (sortedMonths.length === 0) {
+      html += `
+        <option value="2026-07">Jul 2026</option>
+        <option value="2026-06">Jun 2026</option>
+        <option value="2026-05">May 2026</option>
+        <option value="2026-04">Apr 2026</option>
+        <option value="2026-03">Mar 2026</option>
+        <option value="2026-02">Feb 2026</option>
+        <option value="2026-01">Jan 2026</option>
+      `;
+    } else {
+      sortedMonths.forEach(m => {
+        html += `<option value="${m}">${formatMonthLabel(m)}</option>`;
+      });
+    }
+
+    select.innerHTML = html;
+    if (Array.from(select.options).some(opt => opt.value === currentSelected)) {
+      select.value = currentSelected;
+    } else {
+      select.value = 'ALL';
+    }
+  }
+
   function getFilteredLogs() {
     const hammerFilter = document.getElementById('globalHammerFilter').value;
     const shiftFilter = document.getElementById('globalShiftFilter').value;
-    const rangeFilter = document.getElementById('globalRangeFilter').value;
-
-    const today = new Date();
+    const monthFilter = document.getElementById('globalRangeFilter').value;
 
     return shiftLogs.filter(log => {
       if (hammerFilter !== 'ALL' && log.machine !== hammerFilter) return false;
       if (shiftFilter !== 'ALL' && log.shift !== shiftFilter) return false;
 
-      if (rangeFilter !== 'ALL') {
-        const days = parseInt(rangeFilter);
-        const logDate = new Date(log.date);
-        if (!isNaN(logDate.getTime())) {
-          const diffTime = Math.abs(today - logDate);
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          if (diffDays > days) return false;
-        }
+      if (monthFilter !== 'ALL') {
+        if (!log.date || !log.date.startsWith(monthFilter)) return false;
       }
 
       return true;
@@ -346,6 +384,7 @@
      UI RENDERERS & KPI CALCULATIONS
      ========================================================================== */
   function renderAllViews() {
+    updateMonthFilterOptions();
     const logs = getFilteredLogs();
 
     updateHammerLogCountBadges();
@@ -353,7 +392,7 @@
     renderHammerGauges(logs);
     renderTrendChart(logs);
     renderComponentsChart(logs);
-    renderMonthlyTrendView(logs);
+    renderMonthlyTrendView(shiftLogs); // Always show all months history in the Month-Wise Trend section
     renderInsightsView(logs);
     renderComparisonView(logs);
     renderDowntimeView(logs);
