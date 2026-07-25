@@ -250,7 +250,7 @@
           <!-- Rendered dynamically by JS for 5 hammers -->
         </div>
 
-        <!-- Charts Grid -->
+        <!-- Daily Charts Grid -->
         <div class="charts-grid mt-4">
           <div class="chart-card">
             <div class="card-header">
@@ -271,6 +271,46 @@
             <div class="chart-container">
               <canvas id="oeeComponentsChart"></canvas>
             </div>
+          </div>
+        </div>
+
+        <!-- Month-Wise OEE Trend Section (Overall Fleet & Each Hammer) -->
+        <div class="card mt-4">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h3><i class="fa-solid fa-calendar-days text-primary"></i> Month-Wise OEE Trend (Overall Fleet & Each Hammer)</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Monthly aggregated OEE performance trend for each hammer and overall fleet average</p>
+            </div>
+            <div class="card-actions">
+              <span class="badge badge-success"><i class="fa-solid fa-chart-area"></i> Monthly Analytics</span>
+            </div>
+          </div>
+
+          <div class="chart-container mt-3" style="height: 340px; position: relative;">
+            <canvas id="monthlyTrendChart"></canvas>
+          </div>
+
+          <!-- Monthly Performance Breakdown Table -->
+          <div class="table-responsive mt-4">
+            <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--primary);"><i class="fa-solid fa-table"></i> Month-by-Month Hammer Performance Matrix</h4>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Total Shifts</th>
+                  <th>Good Parts</th>
+                  <th>Overall Fleet OEE</th>
+                  <th>1 Ton OEE</th>
+                  <th>1.5 Ton OEE</th>
+                  <th>2.5T Old OEE</th>
+                  <th>2.5T New OEE</th>
+                  <th>3.5 Ton OEE</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyTrendTableBody">
+                <!-- Rendered dynamically by JS -->
+              </tbody>
+            </table>
           </div>
         </div>
       </section>

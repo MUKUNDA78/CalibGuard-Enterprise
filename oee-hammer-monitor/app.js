@@ -353,6 +353,7 @@
     renderHammerGauges(logs);
     renderTrendChart(logs);
     renderComponentsChart(logs);
+    renderMonthlyTrendView(logs);
     renderInsightsView(logs);
     renderComparisonView(logs);
     renderDowntimeView(logs);
@@ -942,6 +943,207 @@
           y: { min: 0, max: 105, ticks: { color: currentTheme === 'dark' ? '#6ee7b7' : '#047857', callback: v => v + '%' } }
         }
       }
+    });
+  }
+
+  /* ==========================================================================
+     MONTH-WISE OEE TREND & PERFORMANCE ANALYSIS (EACH HAMMER & OVERALL)
+     ========================================================================== */
+  function renderMonthlyTrendView(logs) {
+    const ctx = document.getElementById('monthlyTrendChart');
+    const tbody = document.getElementById('monthlyTrendTableBody');
+    if (!ctx || !tbody) return;
+
+    if (charts.monthlyTrend) charts.monthlyTrend.destroy();
+
+    if (logs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 16px;">Awaiting Excel shift logs for monthly trend calculation.</td></tr>`;
+      return;
+    }
+
+    // Group logs by YYYY-MM
+    const monthlyDataMap = {};
+
+    logs.forEach(l => {
+      const monthKey = l.date ? String(l.date).substring(0, 7) : 'Unknown';
+      if (!monthlyDataMap[monthKey]) {
+        monthlyDataMap[monthKey] = {
+          monthKey: monthKey,
+          overall: [],
+          hammers: {}
+        };
+        HAMMERS.forEach(h => {
+          monthlyDataMap[monthKey].hammers[h.name] = [];
+        });
+      }
+
+      monthlyDataMap[monthKey].overall.push(l);
+      if (monthlyDataMap[monthKey].hammers[l.machine]) {
+        monthlyDataMap[monthKey].hammers[l.machine].push(l);
+      }
+    });
+
+    const sortedMonthKeys = Object.keys(monthlyDataMap).sort();
+
+    const formatMonthLabel = (mKey) => {
+      const parts = mKey.split('-');
+      if (parts.length !== 2) return mKey;
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[monthIdx] || parts[1]} ${year}`;
+    };
+
+    const monthLabels = sortedMonthKeys.map(m => formatMonthLabel(m));
+
+    const calcGroupOee = (logArr) => {
+      if (!logArr || logArr.length === 0) return null;
+      let pMins = 0, oMins = 0, iMins = 0, totalPcs = 0, goodPcs = 0;
+      logArr.forEach(l => {
+        pMins += l.plannedTimeMins;
+        oMins += l.operatingTimeMins;
+        iMins += (l.totalParts * l.idealCycleSec) / 60;
+        totalPcs += l.totalParts;
+        goodPcs += l.goodParts;
+      });
+
+      const avail = pMins > 0 ? (oMins / pMins) * 100 : 0;
+      const perf = oMins > 0 ? Math.min(120, (iMins / oMins) * 100) : 0;
+      const qual = totalPcs > 0 ? (goodPcs / totalPcs) * 100 : 100;
+      const oee = (avail / 100) * (perf / 100) * (qual / 100) * 100;
+
+      return {
+        avail: parseFloat(avail.toFixed(1)),
+        perf: parseFloat(perf.toFixed(1)),
+        qual: parseFloat(qual.toFixed(1)),
+        oee: parseFloat(oee.toFixed(1)),
+        goodPcs: goodPcs,
+        totalShifts: logArr.length
+      };
+    };
+
+    const overallOeePoints = [];
+    const hammerDataPoints = {};
+    HAMMERS.forEach(h => { hammerDataPoints[h.name] = []; });
+
+    const monthlyStatsRows = [];
+
+    sortedMonthKeys.forEach(mKey => {
+      const mData = monthlyDataMap[mKey];
+      const overallRes = calcGroupOee(mData.overall);
+      overallOeePoints.push(overallRes ? overallRes.oee : null);
+
+      const rowHammerOees = {};
+      HAMMERS.forEach(h => {
+        const hRes = calcGroupOee(mData.hammers[h.name]);
+        const oeeVal = hRes ? hRes.oee : null;
+        hammerDataPoints[h.name].push(oeeVal);
+        rowHammerOees[h.name] = oeeVal;
+      });
+
+      monthlyStatsRows.push({
+        monthLabel: formatMonthLabel(mKey),
+        monthKey: mKey,
+        totalShifts: mData.overall.length,
+        goodPcs: overallRes ? overallRes.goodPcs : 0,
+        overallOee: overallRes ? overallRes.oee : 0,
+        hammerOees: rowHammerOees
+      });
+    });
+
+    const datasets = [
+      {
+        label: '★ Overall Fleet Average OEE',
+        data: overallOeePoints,
+        borderColor: '#16a34a',
+        backgroundColor: 'rgba(22, 163, 74, 0.15)',
+        borderWidth: 4,
+        tension: 0.3,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        fill: true,
+        spanGaps: true
+      }
+    ];
+
+    HAMMERS.forEach(h => {
+      datasets.push({
+        label: h.name,
+        data: hammerDataPoints[h.name],
+        borderColor: h.color,
+        backgroundColor: h.color,
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 4,
+        spanGaps: true
+      });
+    });
+
+    datasets.push({
+      label: 'Plant Target Benchmark (75%)',
+      data: sortedMonthKeys.map(() => 75),
+      borderColor: '#dc2626',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      pointRadius: 0,
+      fill: false
+    });
+
+    charts.monthlyTrend = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: monthLabels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: currentTheme === 'dark' ? '#6ee7b7' : '#047857', usePointStyle: true, boxWidth: 10 }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: (context) => {
+                let label = context.dataset.label || '';
+                if (label) label += ': ';
+                if (context.parsed.y !== null) label += context.parsed.y + '%';
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: currentTheme === 'dark' ? '#6ee7b7' : '#047857' } },
+          y: { min: 30, max: 105, ticks: { color: currentTheme === 'dark' ? '#6ee7b7' : '#047857', callback: v => v + '%' } }
+        }
+      }
+    });
+
+    tbody.innerHTML = '';
+    monthlyStatsRows.slice().reverse().forEach(row => {
+      const tr = document.createElement('tr');
+      
+      const getOeeCellHtml = (val) => {
+        if (val === null || val === undefined) return '<span style="color: var(--text-muted);">--</span>';
+        return `<strong style="color: ${getOeeColor(val)};">${val}%</strong>`;
+      };
+
+      tr.innerHTML = `
+        <td><strong>${row.monthLabel}</strong></td>
+        <td><span class="badge badge-info">${row.totalShifts} shifts</span></td>
+        <td>${row.goodPcs.toLocaleString()} pcs</td>
+        <td><strong style="color: ${getOeeColor(row.overallOee)}; font-size: 15px;">${row.overallOee}%</strong></td>
+        <td>${getOeeCellHtml(row.hammerOees['1 Ton Hammer'])}</td>
+        <td>${getOeeCellHtml(row.hammerOees['1.5 Ton Hammer'])}</td>
+        <td>${getOeeCellHtml(row.hammerOees['2.5 Ton (Old) Hammer'])}</td>
+        <td>${getOeeCellHtml(row.hammerOees['2.5 Ton (New) Hammer'])}</td>
+        <td>${getOeeCellHtml(row.hammerOees['3.5 Ton Hammer'])}</td>
+      `;
+      tbody.appendChild(tr);
     });
   }
 
