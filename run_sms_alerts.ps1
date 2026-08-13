@@ -30,7 +30,7 @@ public class SMSAlertDispatcher
         }
 
         string json = match.Groups[1].Value;
-        DateTime today = DateTime.Parse("2026-07-22");
+        DateTime today = DateTime.Today;
         string targetPhone = "7975635973";
 
         // Simple JSON parse for tagId, name, lastCalibratedDate, frequencyMonths
@@ -67,7 +67,7 @@ public class SMSAlertDispatcher
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("CALIBGUARD ENTERPRISE AUTOMATED ALERT");
         sb.AppendLine("Target Recipient: +91 " + targetPhone);
-        sb.AppendLine("System Reference Date: 22/07/2026");
+        sb.AppendLine("System Reference Date: " + today.ToString("dd/MM/yyyy"));
         sb.AppendLine();
         sb.AppendLine("PENDING / OVERDUE FOR CALIBRATION (" + overdueList.Count + " Equipment):");
 

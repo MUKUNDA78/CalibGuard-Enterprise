@@ -837,7 +837,7 @@
         "location":  "STORAGE",
         "frequencyMonths":  12,
         "lastCalibratedDate":  "2025-08-13",
-        "nextDueDate":  "2026-08-13",
+        "nextDueDate":  "2026-08-12",
         "agencyId":  "AGN-001",
         "status":  "Active",
         "pdfReportName":  null
@@ -845,28 +845,36 @@
 ];
 
     // --- Utilities ---
-    const TODAY_DATE = new Date('2026-07-18T11:47:24');
+    function getTodayDate() {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
 
     function getDaysUntilDue(dateStr) {
       if (!dateStr) return 0;
       const parts = dateStr.split('-');
       if (parts.length === 3) {
         const dueDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-        return Math.ceil((dueDate.getTime() - TODAY_DATE.getTime()) / (1000 * 60 * 60 * 24));
+        dueDate.setHours(0, 0, 0, 0);
+        const today = getTodayDate();
+        return Math.round((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       }
       return 0;
     }
 
-    function getCalibrationAlertInfo(nextDueDate, thresholdDays = 7) {
+    function getCalibrationAlertInfo(nextDueDate, thresholdDays = 14) {
       const days = getDaysUntilDue(nextDueDate);
       if (days < 0) return { key: 'overdue', label: `OVERDUE (${Math.abs(days)}d ago)`, shortLabel: 'Overdue', days, badgeClass: 'badge-red' };
+      if (days === 0) return { key: 'due-urgent', label: `DUE TODAY (${thresholdDays}-Day Window)`, shortLabel: 'Due Today', days, badgeClass: 'badge-red' };
       if (days <= thresholdDays) return { key: 'due-urgent', label: `DUE IN ${days} DAY${days === 1 ? '' : 'S'} (${thresholdDays}-Day Window)`, shortLabel: `Due in ${days}d`, days, badgeClass: 'badge-amber' };
       return { key: 'valid', label: `Compliant (${days} days left)`, shortLabel: 'Compliant', days, badgeClass: 'badge-green' };
     }
 
-    function getNABLAgencyAlertInfo(nablDueDate, thresholdDays = 7) {
+    function getNABLAgencyAlertInfo(nablDueDate, thresholdDays = 14) {
       const days = getDaysUntilDue(nablDueDate);
       if (days < 0) return { key: 'expired', label: `NABL ACCREDITATION EXPIRED (${Math.abs(days)}d ago)`, shortLabel: 'Expired', days, badgeClass: 'badge-red' };
+      if (days === 0) return { key: 'expiring-soon', label: `NABL SCOPE EXPIRING TODAY`, shortLabel: 'Expiring Today', days, badgeClass: 'badge-amber' };
       if (days <= thresholdDays) return { key: 'expiring-soon', label: `NABL SCOPE EXPIRING IN ${days} DAY${days === 1 ? '' : 'S'}`, shortLabel: `Expiring in ${days}d`, days, badgeClass: 'badge-amber' };
       return { key: 'valid', label: `NABL Accredited (${days} days valid)`, shortLabel: 'Valid', days, badgeClass: 'badge-green' };
     }
@@ -2474,7 +2482,8 @@
       }
 
       buildSMSAlertText(overdue, urgent, targetPhone = '7975635973') {
-        let msg = `🚨 CALIBGUARD SYSTEM ALERT 🚨\nTarget Recipient: ${targetPhone}\nDate: 22/07/2026\n\n`;
+        const todayFormatted = formatDate(parseExcelDate(new Date()));
+        let msg = `🚨 CALIBGUARD SYSTEM ALERT 🚨\nTarget Recipient: ${targetPhone}\nDate: ${todayFormatted}\n\n`;
         
         msg += `⚠️ PENDING / OVERDUE CALIBRATIONS (${overdue.length}):\n`;
         if (overdue.length === 0) {
