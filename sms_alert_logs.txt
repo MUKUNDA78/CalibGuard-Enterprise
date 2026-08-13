@@ -49,3 +49,33 @@ ACTION REQUIRED: Please perform calibration and update CalibGuard system records
 Status: ACTIVE DISPATCH (Alerts active until calibration completed & updated)
 
 
+=== SMS ALERT DISPATCH LOG [2026-08-13 14:38:19] ===
+Target Phone: 7975635973
+
+CALIBGUARD ENTERPRISE AUTOMATED ALERT
+Target Recipient: +91 7975635973
+System Reference Date: 13-08-2026
+
+PENDING / OVERDUE FOR CALIBRATION (6 Equipment):
+1. [GRS/QA/ST/01] SURFACE TABLE | Last Calib: 09-06-2025 | Due Date: 08-06-2026 (66 Days OVERDUE)
+2. [GRS/QA/LDG/01] LEVER DIAL GAUGE | Last Calib: 18-03-2020 | Due Date: 17-03-2021 (1975 Days OVERDUE)
+3. [-] WEIGHING SCALE | Last Calib: 25-06-2020 | Due Date: 24-06-2021 (1876 Days OVERDUE)
+4. [GRS/QA/91] LEVER DIAL GAUGE | Last Calib: 15-07-2025 | Due Date: 14-07-2026 (30 Days OVERDUE)
+5. [GRS/QA/88] DIGITAL HEIGHT GAUGE | Last Calib: 08-02-2025 | Due Date: 07-02-2026 (187 Days OVERDUE)
+6. [GRS/QA/56] PLUNGER DIAL GAUGE | Last Calib: 13-08-2025 | Due Date: 12-08-2026 (1 Days OVERDUE)
+
+DUE IN NEXT 14 DAYS (9 Equipment):
+1. [GRS/QA/107-24] Analog Vernier Caliper | Due Date: 17-08-2026 (in 4 Days)
+2. [GRS/QA/DV/101-23] VERNIER DEPTH GAUGE | Due Date: 17-08-2026 (in 4 Days)
+3. [GRS/QA/LD/103-23] LEVER DIAL GAUGE | Due Date: 17-08-2026 (in 4 Days)
+4. [GRS/QA/PP/01] Portable Hand Pyrometer | Due Date: 17-08-2026 (in 4 Days)
+5. [RG-03] Radius Gauge | Due Date: 17-08-2026 (in 4 Days)
+6. [RG-01] Radius Gauge | Due Date: 17-08-2026 (in 4 Days)
+7. [RG-02] Radius Gauge | Due Date: 17-08-2026 (in 4 Days)
+8. [GRS/QA/99] PLUNGER DIAL GAUGE | Due Date: 17-08-2026 (in 4 Days)
+9. [GRS/QA/98] PLUNGER DIAL GAUGE | Due Date: 17-08-2026 (in 4 Days)
+
+ACTION REQUIRED: Please perform calibration and update CalibGuard system records to clear these active alerts.
+Status: ACTIVE DISPATCH (Alerts active until calibration completed & updated)
+
+

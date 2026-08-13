@@ -94,7 +94,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.07.21.v10_real_user_seed_saved";
+    const DATA_VERSION = "2026.08.13.v12_realtime_date_and_grs_qa_56_overdue_fix";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -1046,8 +1046,9 @@
           const currentVersion = localStorage.getItem('calibguard_data_ver');
           if (currentVersion !== DATA_VERSION) {
             localStorage.setItem('calibguard_data_ver', DATA_VERSION);
+            localStorage.removeItem('calibguard_instruments');
+            StorageManager.set('instruments', INITIAL_INSTRUMENTS);
             if (key === 'instruments') {
-              StorageManager.set('instruments', INITIAL_INSTRUMENTS);
               return INITIAL_INSTRUMENTS;
             }
           }
@@ -1568,6 +1569,9 @@
                 <button id="btnHeaderImportJSON" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                   <span>&#128229; Restore (.json)</span>
                 </button>
+                <button id="btnHeaderResetSeed" class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all" title="Reset system to master seed data">
+                  <span>&#128260; Reset Seed</span>
+                </button>
               ` : ''}
 
               <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
@@ -1665,6 +1669,7 @@
         document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab)));
         document.getElementById('quickAlertBtn')?.addEventListener('click', () => this.switchTab('alerts'));
         document.getElementById('btnResetSeedData')?.addEventListener('click', () => this.resetToDefaultSeed());
+        document.getElementById('btnHeaderResetSeed')?.addEventListener('click', () => this.resetToDefaultSeed());
 
         const jsonInput = document.getElementById('jsonFileInput');
         
