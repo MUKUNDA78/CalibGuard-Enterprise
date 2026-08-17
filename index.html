@@ -97,7 +97,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.08.17.v15_fresh_empty_master_list";
+    const DATA_VERSION = "2026.08.17.v16_pdf_full_field_autocapture";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -496,6 +496,196 @@
         result.agencyId = instrument.agencyId;
         const matched = agencies.find(a => a.id === instrument.agencyId);
         result.agencyName = matched ? matched.name : 'Precision Metrology Services';
+      }
+
+      return result;
+    }
+
+    function parsePDFAllFields(text, filename, agencies = [], existingInstruments = []) {
+      let result = {
+        name: 'Measuring Instrument',
+        make: 'Mitutoyo',
+        serialNo: 'SN-001',
+        tagId: '',
+        range: '0-150 mm',
+        leastCount: '0.01 mm',
+        lastCalibratedDate: null,
+        nextDueDate: null,
+        frequencyMonths: 12,
+        historyCardNo: 'HC-2026-001',
+        location: 'Quality Inspection Shop',
+        agencyId: null,
+        agencyName: null,
+        category: 'Quality',
+        extractedSummary: [],
+        isUpdate: false
+      };
+
+      const combinedText = (filename || '') + '\n' + (text || '');
+      const lowerText = combinedText.toLowerCase();
+
+      // 1. GRS NO / TAG ID / ASSET ID
+      const tagMatch = combinedText.match(/(?:grs\s*no|tag\s*id|asset\s*id|gauge\s*no|equipment\s*no|cert\s*no|tag\s*no|asset\s*no|tag)[\s\:\-]*([a-z0-9\/\-\_]+)/i);
+      if (tagMatch && tagMatch[1] && tagMatch[1].length >= 3) {
+        result.tagId = tagMatch[1].trim();
+        result.extractedSummary.push(`GRS NO / Tag ID: ${result.tagId}`);
+      } else {
+        const grsPattern = combinedText.match(/(?:GRS|EQ|INS|QA|DS|INP)\/[A-Za-z0-9\/\-\_]+/i);
+        if (grsPattern) {
+          result.tagId = grsPattern[0].trim();
+          result.extractedSummary.push(`Detected Tag ID: ${result.tagId}`);
+        } else {
+          result.tagId = `GRS/QA/${Math.floor(Math.random() * 900 + 100)}`;
+          result.extractedSummary.push(`Generated Tag ID: ${result.tagId}`);
+        }
+      }
+
+      // Check if instrument with this tagId already exists
+      const existing = existingInstruments.find(i => i.tagId.toLowerCase().trim() === result.tagId.toLowerCase().trim());
+      if (existing) {
+        result.isUpdate = true;
+        result.name = existing.name;
+        result.make = existing.make;
+        result.serialNo = existing.serialNo;
+        result.range = existing.range;
+        result.leastCount = existing.leastCount;
+        result.frequencyMonths = existing.frequencyMonths || 12;
+        result.historyCardNo = existing.historyCardNo || 'HC-2026-001';
+        result.location = existing.location;
+        result.agencyId = existing.agencyId;
+        result.category = existing.category || 'Quality';
+      }
+
+      // 2. INSTRUMENT NAME
+      const nameMatch = combinedText.match(/(?:instrument\s*name|gauge\s*name|description|equipment|particulars|item\s*name|item)[\s\:\-]*([^\n\r,;]{3,40})/i);
+      if (nameMatch && nameMatch[1]) {
+        result.name = nameMatch[1].trim();
+        result.extractedSummary.push(`Instrument Name: ${result.name}`);
+      } else if (!existing) {
+        const knownTypes = [
+          "PLUNGER DIAL GAUGE", "LEVER DIAL GAUGE", "DIGITAL HEIGHT GAUGE", "VERNIER HEIGHT GAUGE",
+          "Analog Vernier Caliper", "VERNIER CALIPER", "DIGITAL VERNIER CALIPER", "VERNIER DEPTH GAUGE",
+          "SURFACE TABLE", "BEVEL PROTRACTOR", "ANALOG MICROMETER", "DIGITAL MICROMETER",
+          "Radius Gauge", "Portable Hand Pyrometer", "WEIGHING SCALE", "MAGNETIC V- BLOCK",
+          "COATING THICKNESS GAUGE"
+        ];
+        for (let kt of knownTypes) {
+          if (lowerText.includes(kt.toLowerCase())) {
+            result.name = kt;
+            result.extractedSummary.push(`Detected Instrument: ${result.name}`);
+            break;
+          }
+        }
+      }
+
+      // 3. MAKE / MANUFACTURER
+      const makeMatch = combinedText.match(/(?:make|manufacturer|brand|mfr)[\s\:\-]*([^\n\r,;]{2,25})/i);
+      if (makeMatch && makeMatch[1]) {
+        result.make = makeMatch[1].trim();
+        result.extractedSummary.push(`Make: ${result.make}`);
+      } else if (!existing) {
+        const knownMakes = ["Mitutoyo", "Yuri", "Baker", "Insize", "Jafuji", "Tashika", "Luthra", "Samurai", "Essae", "Aqmezzure"];
+        for (let km of knownMakes) {
+          if (lowerText.includes(km.toLowerCase())) {
+            result.make = km;
+            result.extractedSummary.push(`Detected Make: ${result.make}`);
+            break;
+          }
+        }
+      }
+
+      // 4. SERIAL NO
+      const serialMatch = combinedText.match(/(?:serial\s*number|serial\s*no|sr\s*no|sl\s*no|sn|machine\s*no)[\s\:\-]*([a-z0-9\-\_\/]{3,20})/i);
+      if (serialMatch && serialMatch[1]) {
+        result.serialNo = serialMatch[1].trim();
+        result.extractedSummary.push(`Serial No: ${result.serialNo}`);
+      }
+
+      // 5. RANGE
+      const rangeMatch = combinedText.match(/(?:range|capacity|specification|size)[\s\:\-]*([^\n\r,;]{3,30})/i);
+      if (rangeMatch && rangeMatch[1]) {
+        result.range = rangeMatch[1].trim();
+        result.extractedSummary.push(`Range: ${result.range}`);
+      } else if (!existing) {
+        const rangePattern = combinedText.match(/\d+(?:\.\d+)?\s*[\-\x\×x]\s*\d+(?:\.\d+)?\s*(?:mm|cm|m|kg|kgs|degree\s*c|°c)/i);
+        if (rangePattern) {
+          result.range = rangePattern[0].trim();
+          result.extractedSummary.push(`Detected Range: ${result.range}`);
+        }
+      }
+
+      // 6. LEAST COUNT
+      const lcMatch = combinedText.match(/(?:least\s*count|resolution|accuracy|lc)[\s\:\-]*([^\n\r,;]{2,20})/i);
+      if (lcMatch && lcMatch[1]) {
+        result.leastCount = lcMatch[1].trim();
+        result.extractedSummary.push(`Least Count: ${result.leastCount}`);
+      }
+
+      // 7. CALIBRATION ON DATE
+      const calibMatch = combinedText.match(/(?:calibration\s*date|calib\s*date|calib\s*on|date\s*of\s*calibration|done\s*on|cal\s*date)[\s\:\-]*([0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d{2,4}|\d{4}[\/\.\-][0-1]?\d[\/\.\-][0-3]?\d)/i);
+      if (calibMatch && calibMatch[1]) {
+        result.lastCalibratedDate = parseExcelDate(calibMatch[1]);
+        result.extractedSummary.push(`Calib On Date: ${result.lastCalibratedDate}`);
+      } else {
+        const allDates = [...combinedText.matchAll(/([0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d{4})/g)].map(m => m[1]);
+        if (allDates.length > 0) {
+          result.lastCalibratedDate = parseExcelDate(allDates[0]);
+          result.extractedSummary.push(`Detected Date: ${result.lastCalibratedDate}`);
+        }
+      }
+      if (!result.lastCalibratedDate) {
+        result.lastCalibratedDate = parseExcelDate(new Date());
+      }
+
+      // 8. FREQUENCY MONTHS
+      const freqMatch = combinedText.match(/(?:frequency|periodicity|interval)[\s\:\-]*(\d+)\s*(?:months|month|m)?/i);
+      if (freqMatch && freqMatch[1]) {
+        result.frequencyMonths = parseInt(freqMatch[1], 10);
+        result.extractedSummary.push(`Frequency: ${result.frequencyMonths} Months`);
+      }
+
+      // 9. DUE DATE (-1 DAY RULE APPLIED)
+      const dueMatch = combinedText.match(/(?:due\s*date|next\s*due|calib\s*due|expiry\s*date|valid\s*upto|valid\s*until)[\s\:\-]*([0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d{2,4}|\d{4}[\/\.\-][0-1]?\d[\/\.\-][0-3]?\d)/i);
+      if (dueMatch && dueMatch[1]) {
+        result.nextDueDate = parseExcelDate(dueMatch[1]);
+        result.extractedSummary.push(`Due Date: ${result.nextDueDate}`);
+      } else {
+        result.nextDueDate = calculateNextDueDate(result.lastCalibratedDate, result.frequencyMonths);
+        result.extractedSummary.push(`Calculated Due Date (-1 Day Rule): ${result.nextDueDate}`);
+      }
+
+      // 10. HISTORY CARD NO
+      const hcMatch = combinedText.match(/(?:history\s*card\s*no|history\s*card|hc\s*no|hc)[\s\:\-]*([a-z0-9\-\_]{3,20})/i);
+      if (hcMatch && hcMatch[1]) {
+        result.historyCardNo = hcMatch[1].trim();
+        result.extractedSummary.push(`History Card No: ${result.historyCardNo}`);
+      }
+
+      // 11. LOCATION
+      const locMatch = combinedText.match(/(?:location|shop|department|area|plant)[\s\:\-]*([^\n\r,;]{3,30})/i);
+      if (locMatch && locMatch[1]) {
+        result.location = locMatch[1].trim();
+        result.extractedSummary.push(`Location: ${result.location}`);
+      }
+
+      // 12. AGENCY MATCHING
+      if (agencies && agencies.length > 0) {
+        for (const ag of agencies) {
+          if (
+            (ag.name && lowerText.includes(ag.name.toLowerCase())) ||
+            (ag.code && lowerText.includes(ag.code.toLowerCase())) ||
+            (ag.nablCertNo && lowerText.includes(ag.nablCertNo.toLowerCase()))
+          ) {
+            result.agencyId = ag.id;
+            result.agencyName = ag.name;
+            result.extractedSummary.push(`Matched Agency: ${ag.name}`);
+            break;
+          }
+        }
+      }
+      if (!result.agencyId && agencies.length > 0) {
+        result.agencyId = agencies[0].id;
+        result.agencyName = agencies[0].name;
       }
 
       return result;
@@ -1094,6 +1284,10 @@
                 </button>
               ` : ''}
 
+              <button id="btnHeaderUploadPDF" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all" title="Upload PDF Calibration Certificate to create/update instrument in Master List">
+                <span>&#128196; Upload PDF Report</span>
+              </button>
+
               <button id="btnHeaderExportJSON" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center space-x-1 transition-all">
                 <span>&#128190; Backup (.json)</span>
               </button>
@@ -1190,6 +1384,7 @@
           <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
           <input type="file" id="jsonFileInput" accept=".json" class="hidden">
           <input type="file" id="pdfReportFileInput" accept="application/pdf" class="hidden">
+          <input type="file" id="globalPdfFileInput" accept="application/pdf" class="hidden">
           <input type="file" id="nablScopeFileInput" accept="application/pdf,image/*" class="hidden">
         `;
 
@@ -1233,8 +1428,10 @@
         });
 
         const excelInput = document.getElementById('excelFileInput');
+        const globalPdfInput = document.getElementById('globalPdfFileInput');
         
         document.getElementById('btnHeaderUploadExcel')?.addEventListener('click', () => excelInput?.click());
+        document.getElementById('btnHeaderUploadPDF')?.addEventListener('click', () => globalPdfInput?.click());
         document.getElementById('btnTriggerExcelUpload')?.addEventListener('click', () => excelInput?.click());
         document.getElementById('btnDownloadTemplate')?.addEventListener('click', () => downloadExcelTemplate());
 
@@ -1244,6 +1441,30 @@
             this.handleExcelUpload(file);
             e.target.value = '';
           }
+        });
+
+        globalPdfInput?.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          showToast(`&#9251; Extracting All 11 Fields from PDF "${file.name}"...`);
+
+          let pdfText = '';
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            pdfText = await extractPDFTextFromBuffer(arrayBuffer);
+          } catch (err) {
+            console.warn('PDF Buffer Read Notice:', err);
+          }
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const pdfDataUrl = evt.target.result;
+            const metadata = parsePDFAllFields(pdfText, file.name, this.state.agencies, this.state.instruments);
+            this.openGlobalPDFUploadModal(metadata, pdfDataUrl, file.name);
+          };
+          reader.readAsDataURL(file);
+          e.target.value = '';
         });
       }
 
@@ -1343,6 +1564,9 @@
                         <span>&#128202; Upload Fresh Excel Sheet</span>
                       </button>
                     ` : ''}
+                    <button id="btnEmptyUploadPDF" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1" title="Upload PDF Calibration Certificate to create/update instrument">
+                      <span>&#128196; Upload PDF Report</span>
+                    </button>
                     ${this.hasPermission('add_instrument') ? `
                       <button id="btnEmptyAddIns" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
                         + Add New Instrument
@@ -1783,8 +2007,12 @@
         c.querySelector('#btnEmptyReset')?.addEventListener('click', resetFn);
 
         const excelInput = document.getElementById('excelFileInput');
+        const globalPdfInput = document.getElementById('globalPdfFileInput');
+
         c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput?.click());
+        c.querySelector('#btnTableUploadPDF')?.addEventListener('click', () => globalPdfInput?.click());
         c.querySelector('#btnEmptyUploadExcel')?.addEventListener('click', () => excelInput?.click());
+        c.querySelector('#btnEmptyUploadPDF')?.addEventListener('click', () => globalPdfInput?.click());
         c.querySelector('#btnEmptyAddIns')?.addEventListener('click', () => this.openAddInstrumentModal());
 
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
@@ -1948,6 +2176,214 @@
           } catch (err) {
             alert('Error adding instrument: ' + err.message);
           }
+        });
+      }
+
+      openGlobalPDFUploadModal(metadata, pdfDataUrl, pdfFileName) {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        const isUpdate = metadata.isUpdate;
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-2xl rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2.5 rounded-xl bg-sky-100 text-sky-800 font-bold text-lg">&#128196;</span>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h3 class="font-bold text-lg text-slate-900">PDF Calibration Report Full-Data Capture</h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${isUpdate ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'}">
+                      ${isUpdate ? '&#128260; Update Existing Instrument' : '&#10024; New Instrument Entry'}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500">Review all 11 extracted fields before saving to Master Inventory</p>
+                </div>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center font-mono">
+              <div class="text-slate-800 font-bold">&#128196; File: ${pdfFileName}</div>
+              <div class="text-sky-700 font-bold">Captured Fields: 11 / 11 Master Columns</div>
+            </div>
+
+            <form id="globalPdfAutoCaptureForm" class="space-y-3 text-xs">
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">1. INSTRUMENT NAME *</label>
+                  <input type="text" id="gpcName" value="${metadata.name}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">2. MAKE *</label>
+                  <input type="text" id="gpcMake" value="${metadata.make}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">3. SERIAL NO *</label>
+                  <input type="text" id="gpcSerialNo" value="${metadata.serialNo}" class="white-input w-full p-2.5 rounded-xl font-mono text-slate-800 font-bold" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-sky-900 font-black mb-1">4. GRS NO (TAG ID) *</label>
+                  <input type="text" id="gpcTagId" value="${metadata.tagId}" class="white-input w-full p-2.5 rounded-xl font-mono text-sky-800 font-extrabold border-sky-400" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">5. RANGE *</label>
+                  <input type="text" id="gpcRange" value="${metadata.range}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">6. LEAST COUNT *</label>
+                  <input type="text" id="gpcLeastCount" value="${metadata.leastCount}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200">
+                <div>
+                  <label class="block text-emerald-900 font-extrabold mb-1">7. CAL ON DATE *</label>
+                  <input type="date" id="gpcLastCalib" value="${metadata.lastCalibratedDate}" class="white-input w-full p-2.5 rounded-xl font-bold font-mono text-emerald-900 border-emerald-300" required>
+                  <span class="text-[10px] text-emerald-700 font-semibold block mt-0.5">Format: DD/MM/YYYY (${formatDate(metadata.lastCalibratedDate)})</span>
+                </div>
+
+                <div>
+                  <label class="block text-amber-900 font-extrabold mb-1">8. DUE ON (-1 DAY) *</label>
+                  <input type="date" id="gpcNextDue" value="${metadata.nextDueDate}" class="white-input w-full p-2.5 rounded-xl font-bold font-mono text-amber-900 border-amber-300" required>
+                  <span class="text-[10px] text-amber-800 font-semibold block mt-0.5">Auto -1 Day Rule (${formatDate(metadata.nextDueDate)})</span>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1">9. FREQUENCY (MONTHS) *</label>
+                  <input type="number" id="gpcFreq" value="${metadata.frequencyMonths || 12}" min="1" max="60" class="white-input w-full p-2.5 rounded-xl font-bold border-emerald-300" required>
+                  <span class="text-[10px] text-emerald-700 font-semibold block mt-0.5">Interval Period</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">10. HISTORY CARD NO *</label>
+                  <input type="text" id="gpcHistoryCardNo" value="${metadata.historyCardNo}" class="white-input w-full p-2.5 rounded-xl font-mono text-indigo-700 font-bold" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">11. LOCATION *</label>
+                  <input type="text" id="gpcLocation" value="${metadata.location}" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-700 font-bold mb-1">12. AGENCY *</label>
+                  <select id="gpcAgency" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-900">
+                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === metadata.agencyId ? 'selected' : ''}>${a.name} (${a.code})</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              ${metadata.extractedSummary && metadata.extractedSummary.length > 0 ? `
+                <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-[11px] space-y-1">
+                  <div class="font-bold text-slate-700 uppercase text-[10px]">PDF Parser Intelligence Summary:</div>
+                  <div class="grid grid-cols-2 gap-1 text-slate-600 font-mono text-[10px]">
+                    ${metadata.extractedSummary.map(s => `<div>&bull; ${s}</div>`).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                  Cancel
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                  <span>&#128196; Confirm & Save to Master Inventory</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        const calibInput = document.getElementById('gpcLastCalib');
+        const freqInput = document.getElementById('gpcFreq');
+        const dueInput = document.getElementById('gpcNextDue');
+
+        const updateModalDueDate = () => {
+          const newCalib = calibInput.value;
+          const newFreq = parseInt(freqInput.value || '12', 10);
+          if (newCalib) {
+            dueInput.value = calculateNextDueDate(newCalib, newFreq);
+          }
+        };
+
+        calibInput.addEventListener('change', updateModalDueDate);
+        freqInput.addEventListener('change', updateModalDueDate);
+
+        document.getElementById('globalPdfAutoCaptureForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          const tagId = document.getElementById('gpcTagId').value.trim();
+          const name = document.getElementById('gpcName').value.trim();
+          const make = document.getElementById('gpcMake').value.trim();
+          const serialNo = document.getElementById('gpcSerialNo').value.trim();
+          const range = document.getElementById('gpcRange').value.trim();
+          const leastCount = document.getElementById('gpcLeastCount').value.trim();
+          const calibDate = calibInput.value;
+          const freq = parseInt(freqInput.value, 10);
+          const dueDate = dueInput.value;
+          const historyCardNo = document.getElementById('gpcHistoryCardNo').value.trim();
+          const location = document.getElementById('gpcLocation').value.trim();
+          const agencyId = document.getElementById('gpcAgency').value;
+
+          const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase().trim() === tagId.toLowerCase().trim());
+
+          if (existingIdx >= 0) {
+            this.state.instruments[existingIdx] = {
+              ...this.state.instruments[existingIdx],
+              tagId,
+              name,
+              make,
+              serialNo,
+              range,
+              leastCount,
+              lastCalibratedDate: calibDate,
+              frequencyMonths: freq,
+              nextDueDate: dueDate,
+              historyCardNo,
+              location,
+              agencyId,
+              pdfReportName: pdfFileName,
+              pdfReportData: pdfDataUrl
+            };
+          } else {
+            this.state.instruments.unshift({
+              id: `INS-${Date.now()}`,
+              tagId,
+              name,
+              make,
+              serialNo,
+              range,
+              leastCount,
+              lastCalibratedDate: calibDate,
+              frequencyMonths: freq,
+              nextDueDate: dueDate,
+              historyCardNo,
+              location,
+              agencyId,
+              category: 'Quality',
+              status: 'Active',
+              pdfReportName: pdfFileName,
+              pdfReportData: pdfDataUrl
+            });
+          }
+
+          this.saveState('instruments');
+
+          const agency = this.state.agencies.find(a => a.id === agencyId);
+          const agName = agency ? agency.name : 'Assigned Agency';
+
+          showToast(`📄 PDF Calibration Report Saved! Master Instrument ${tagId} (${name}) updated (Calib Date: ${formatDate(calibDate)}, Due Date: ${formatDate(dueDate)}, Agency: ${agName})`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
         });
       }
 
