@@ -97,7 +97,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.08.17.v14_column_sequence_alignment";
+    const DATA_VERSION = "2026.08.17.v15_fresh_empty_master_list";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -266,586 +266,7 @@
 
     const ALLOWED_CATEGORIES = ["MPI", "Heat Treatment", "Quality", "Production"];
 
-    const INITIAL_INSTRUMENTS = [
-    {
-        "id":  "INS-1784560578720-34",
-        "tagId":  "GRS/QA/SP/02/25",
-        "name":  "SURFACE TABLE",
-        "make":  "JAFUJI",
-        "serialNo":  "18/6214",
-        "range":  "1000 X1000",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-29",
-        "nextDueDate":  "2027-05-29",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-33",
-        "tagId":  "GRS/DS/VC/109-24",
-        "name":  "Analog Vernier Caliper",
-        "make":  "INSIZE",
-        "serialNo":  "2007240843",
-        "range":  "0-300 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-01",
-        "nextDueDate":  "2027-05-01",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-32",
-        "tagId":  "GRS/DS/VC/108-24",
-        "name":  "Analog Vernier Caliper",
-        "make":  "INSIZE",
-        "serialNo":  "206210839",
-        "range":  "0-300 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-01",
-        "nextDueDate":  "2027-05-01",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-31",
-        "tagId":  "GRS/QA/108-24",
-        "name":  "VERNIER HEIGHT GAUGE",
-        "make":  "INSIZE",
-        "serialNo":  "1111178362",
-        "range":  "0-600 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-11-11",
-        "nextDueDate":  "2026-11-11",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-30",
-        "tagId":  "GRS/QA/107-24",
-        "name":  "Analog Vernier Caliper",
-        "make":  "MITUTOYO",
-        "serialNo":  "23323413",
-        "range":  "0-300 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-29",
-        "tagId":  "GRS/QA/106-24",
-        "name":  "Analog Vernier Caliper",
-        "make":  "MITUTOYO",
-        "serialNo":  "23213230",
-        "range":  "0-300 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-03-01",
-        "nextDueDate":  "2027-03-01",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-28",
-        "tagId":  "GRS/DS/DG/105",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "INSIZE",
-        "serialNo":  "1924182",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-31",
-        "nextDueDate":  "2027-05-31",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-27",
-        "tagId":  "GRS/DS/DG/104",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "INSIZE",
-        "serialNo":  "1910257",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-31",
-        "nextDueDate":  "2027-05-31",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-26",
-        "tagId":  "GRS/QA/DV/101-23",
-        "name":  "VERNIER DEPTH GAUGE",
-        "make":  "MITUTOYO",
-        "serialNo":  "221201-0",
-        "range":  "0-300mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-25",
-        "tagId":  "GRS/QA/LD/103-23",
-        "name":  "LEVER DIAL GAUGE",
-        "make":  "INSIZE",
-        "serialNo":  "513-401-10",
-        "range":  "0-0.8 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-24",
-        "tagId":  "GRS/QA/102-23",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "BAKER",
-        "serialNo":  "ADB098",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-10-12",
-        "nextDueDate":  "2026-10-12",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-23",
-        "tagId":  "GRS/QA/PP/01",
-        "name":  "Portable Hand Pyrometer",
-        "make":  "HTC/IRX-66",
-        "serialNo":  "VVV/GPY-01",
-        "range":  "(-50) to 1550&#176;C",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-22",
-        "tagId":  "RG-03",
-        "name":  "Radius Gauge",
-        "make":  "KRISTEEL",
-        "serialNo":  "-",
-        "range":  "15.5-25 mm",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-21",
-        "tagId":  "RG-01",
-        "name":  "Radius Gauge",
-        "make":  "KRISTEEL",
-        "serialNo":  "-",
-        "range":  "1.0-7.0 mm",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-20",
-        "tagId":  "RG-02",
-        "name":  "Radius Gauge",
-        "make":  "KRISTEEL",
-        "serialNo":  "-",
-        "range":  "7.5-15 mm",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-19",
-        "tagId":  "GRS/QA/99",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "BAKER",
-        "serialNo":  "ECC632",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-18",
-        "tagId":  "GRS/QA/98",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "BAKER",
-        "serialNo":  "ECC557",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-18",
-        "nextDueDate":  "2026-08-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-17",
-        "tagId":  "GRS/QA/97",
-        "name":  "VERNIER DEPTH GAUGE",
-        "make":  "MITUTOYO",
-        "serialNo":  "20711055",
-        "range":  "0-300mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-10-12",
-        "nextDueDate":  "2026-10-12",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-16",
-        "tagId":  "GRS/QA/96",
-        "name":  "COATING THICKNESS GAUGE",
-        "make":  "AQMEZZURE",
-        "serialNo":  "-",
-        "range":  "0-1000 mm",
-        "leastCount":  "0.1",
-        "category":  "Dimensional",
-        "location":  "MPI",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-06-04",
-        "nextDueDate":  "2027-06-04",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-15",
-        "tagId":  "GRS/QA/ST/01",
-        "name":  "SURFACE TABLE",
-        "make":  "JAFUJI",
-        "serialNo":  "20/210\n20A/WL/1146",
-        "range":  "1000 X1000",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-06-09",
-        "nextDueDate":  "2026-06-09",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-14",
-        "tagId":  "GRS/QA/82",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "YASAKI",
-        "serialNo":  "JTR 417",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-03-01",
-        "nextDueDate":  "2027-03-01",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-13",
-        "tagId":  "GRS/QA/VC/02",
-        "name":  "VERNIER CALIPER",
-        "make":  "MITUTOYO",
-        "serialNo":  "19001533",
-        "range":  "0-600 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-10-12",
-        "nextDueDate":  "2026-10-12",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-12",
-        "tagId":  "GRS/QA/LDG/01",
-        "name":  "LEVER DIAL GAUGE",
-        "make":  "MITUTOYO",
-        "serialNo":  "363016",
-        "range":  "0-0.8 MM",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2020-03-18",
-        "nextDueDate":  "2021-03-18",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-11",
-        "tagId":  "GRS/QA/VB/02",
-        "name":  "MAGNETIC V- BLOCK",
-        "make":  "JAFUJI",
-        "serialNo":  "1348-2",
-        "range":  "100x95x70",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-04-06",
-        "nextDueDate":  "2027-04-06",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578720-10",
-        "tagId":  "GRS/QA/VB/01",
-        "name":  "MAGNETIC V- BLOCK",
-        "make":  "JAFUJI",
-        "serialNo":  "1348-1",
-        "range":  "100x95x70",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-04-06",
-        "nextDueDate":  "2027-04-06",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-8",
-        "tagId":  "-",
-        "name":  "WEIGHING SCALE",
-        "make":  "ESSAE",
-        "serialNo":  "DS21516189552",
-        "range":  "0-150 KGS",
-        "leastCount":  "-",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2020-06-25",
-        "nextDueDate":  "2021-06-25",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-7",
-        "tagId":  "GRS/QA/91",
-        "name":  "LEVER DIAL GAUGE",
-        "make":  "INSIZE",
-        "serialNo":  "8B00715",
-        "range":  "0-0.8 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "STORAGE",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-07-15",
-        "nextDueDate":  "2026-07-15",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-6",
-        "tagId":  "GRS/QA/88",
-        "name":  "DIGITAL HEIGHT GAUGE",
-        "make":  "MITUTOYO",
-        "serialNo":  "17106198",
-        "range":  "0-600 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-02-08",
-        "nextDueDate":  "2026-02-08",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-5",
-        "tagId":  "GRS/QA/57",
-        "name":  "VERNIER CALIPER",
-        "make":  "YURI",
-        "serialNo":  "J13053178",
-        "range":  "0-300 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-29",
-        "nextDueDate":  "2027-05-29",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-4",
-        "tagId":  "GRS/QA/87",
-        "name":  "DIGITAL VERNIER CALIPER",
-        "make":  "INSIZE",
-        "serialNo":  "2106181711",
-        "range":  "0-300 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-31",
-        "nextDueDate":  "2027-05-31",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-3",
-        "tagId":  "GRS/QA/84",
-        "name":  "DIAL VERNIER CALIPER",
-        "make":  "INSIZE",
-        "serialNo":  "SC50207170328",
-        "range":  "0-300 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "DIE SHOP",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-03-01",
-        "nextDueDate":  "2027-03-01",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-2",
-        "tagId":  "GRS/QA/92",
-        "name":  "VERNIER HEIGHT GAUGE,",
-        "make":  "INSIZE",
-        "serialNo":  "1406198610",
-        "range":  "0-600 mm",
-        "leastCount":  "0.02",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-03-01",
-        "nextDueDate":  "2027-03-01",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-1",
-        "tagId":  "GRS/QA/80",
-        "name":  "BEVEL PROTRACTOR",
-        "make":  "MITUTOYO",
-        "serialNo":  "164278",
-        "range":  "0-360&#176;",
-        "leastCount":  "5\u0027",
-        "category":  "Dimensional",
-        "location":  "IN-PROCESS",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2026-05-29",
-        "nextDueDate":  "2027-05-29",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    },
-    {
-        "id":  "INS-1784560578719-0",
-        "tagId":  "GRS/QA/56",
-        "name":  "PLUNGER DIAL GAUGE",
-        "make":  "YURI",
-        "serialNo":  "122551",
-        "range":  "0-10 mm",
-        "leastCount":  "0.01",
-        "category":  "Dimensional",
-        "location":  "STORAGE",
-        "frequencyMonths":  12,
-        "lastCalibratedDate":  "2025-08-13",
-        "nextDueDate":  "2026-08-12",
-        "agencyId":  "AGN-001",
-        "status":  "Active",
-        "pdfReportName":  null
-    }
-];
+    const INITIAL_INSTRUMENTS = [];
 
     // --- Utilities ---
     function getTodayDate() {
@@ -1356,6 +777,15 @@
           this.state.users = INITIAL_USERS;
           this.saveAllData();
           showToast('&#128260; Reset to Master Seed Data!');
+          this.renderCurrentTab();
+        }
+      }
+
+      clearAllInstruments() {
+        if (confirm('⚠️ Are you sure you want to DELETE ALL instruments from the Master Inventory?\n\nThis will clear all current records so you can upload a fresh Excel sheet and fresh PDF reports.')) {
+          this.state.instruments = [];
+          this.saveAllData();
+          showToast('🗑️ All instrument data deleted! Ready for fresh Excel sheet & PDF uploads.');
           this.renderCurrentTab();
         }
       }
@@ -1891,14 +1321,35 @@
         const isAdmin = (user.role === 'Admin' || user.username === 'Mukunda');
 
         if (filteredList.length === 0) {
+          const isSearching = (this.state.searchQuery || this.state.filterCategory !== 'All' || this.state.filterStatus !== 'All');
           return `
             <tr>
-              <td colspan="12" class="py-8 text-center text-slate-500 space-y-2">
-                <div class="text-2xl">&#128269; No Matching Measuring Instruments Found</div>
-                <p class="text-xs text-slate-400">Try adjusting your search query or reset filters.</p>
-                <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md mt-2">
-                  Reset Search & Filters
-                </button>
+              <td colspan="15" class="py-12 text-center text-slate-500 space-y-3">
+                <div class="text-4xl">&#128202;</div>
+                <div class="text-base font-bold text-slate-900">
+                  ${isSearching ? 'No Matching Measuring Instruments Found' : 'Master Instruments Inventory is Clean & Empty'}
+                </div>
+                <p class="text-xs text-slate-500 max-w-md mx-auto">
+                  ${isSearching ? 'Try clearing your search terms or resetting filters.' : 'Upload your fresh Excel sheet (.xlsx, .xls, .csv) or add instruments manually to populate your master calibration inventory.'}
+                </p>
+                <div class="flex justify-center space-x-3 pt-2">
+                  ${isSearching ? `
+                    <button id="btnEmptyReset" class="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs shadow-md">
+                      Reset Search & Filters
+                    </button>
+                  ` : `
+                    ${this.hasPermission('upload_excel') ? `
+                      <button id="btnEmptyUploadExcel" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                        <span>&#128202; Upload Fresh Excel Sheet</span>
+                      </button>
+                    ` : ''}
+                    ${this.hasPermission('add_instrument') ? `
+                      <button id="btnEmptyAddIns" class="px-4 py-2 rounded-xl bg-sky-800 hover:bg-sky-900 text-white font-extrabold text-xs shadow-md">
+                        + Add New Instrument
+                      </button>
+                    ` : ''}
+                  `}
+                </div>
               </td>
             </tr>
           `;
@@ -2205,6 +1656,9 @@
                   <button id="btnSaveMasterList" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
                     &#128190; Save Data
                   </button>
+                  <button id="btnClearAllInstruments" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-md" title="Delete all instruments to start with a fresh blank list">
+                    &#128465; Delete All Data
+                  </button>
                 ` : ''}
 
                 ${this.hasPermission('add_instrument') ? `
@@ -2330,8 +1784,11 @@
 
         const excelInput = document.getElementById('excelFileInput');
         c.querySelector('#btnTableUploadExcel')?.addEventListener('click', () => excelInput?.click());
+        c.querySelector('#btnEmptyUploadExcel')?.addEventListener('click', () => excelInput?.click());
+        c.querySelector('#btnEmptyAddIns')?.addEventListener('click', () => this.openAddInstrumentModal());
 
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
+        c.querySelector('#btnClearAllInstruments')?.addEventListener('click', () => this.clearAllInstruments());
         c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
 
         this.bindRowActions(c, isAdmin);
