@@ -25,6 +25,9 @@
   <!-- SheetJS CDN for Native Excel (.xlsx, .xls, .csv) Parsing & Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+  <!-- PDF.js CDN for PDF Text Parsing & Metadata Extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
   <!-- Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
 
@@ -94,7 +97,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.08.13.v12_realtime_date_and_grs_qa_56_overdue_fix";
+    const DATA_VERSION = "2026.08.17.v13_pdf_metadata_autocapture";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -975,6 +978,106 @@
         return `${dd}/${mm}/${yyyy}`;
       }
       return dateStr;
+    }
+
+    // --- PDF TEXT EXTRACTION & METADATA AUTO-CAPTURE ENGINE ---
+    async function extractPDFTextFromBuffer(arrayBuffer) {
+      try {
+        if (typeof pdfjsLib === 'undefined') return '';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+        return fullText;
+      } catch (err) {
+        console.warn('PDF text extraction notice:', err);
+        return '';
+      }
+    }
+
+    function parsePDFCalibrationMetadata(text, filename, agencies = [], instrument = null) {
+      let result = {
+        lastCalibratedDate: null,
+        nextDueDate: null,
+        agencyId: null,
+        agencyName: null,
+        extractedSummary: []
+      };
+
+      const combinedText = (filename || '') + '\n' + (text || '');
+      
+      // 1. MATCH CALIBRATION DATE
+      const calibMatch = combinedText.match(/(?:calibration\s*date|calib\s*date|calib\s*on|date\s*of\s*calibration|done\s*on|cal\s*date)[\s\:\-]*([0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d{2,4}|\d{4}[\/\.\-][0-1]?\d[\/\.\-][0-3]?\d)/i);
+      if (calibMatch && calibMatch[1]) {
+        result.lastCalibratedDate = parseExcelDate(calibMatch[1]);
+        result.extractedSummary.push(`Calibration Date: ${result.lastCalibratedDate}`);
+      }
+
+      // 2. MATCH DUE DATE
+      const dueMatch = combinedText.match(/(?:due\s*date|next\s*due|calib\s*due|expiry\s*date|valid\s*upto|valid\s*until)[\s\:\-]*([0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d{2,4}|\d{4}[\/\.\-][0-1]?\d[\/\.\-][0-3]?\d)/i);
+      if (dueMatch && dueMatch[1]) {
+        result.nextDueDate = parseExcelDate(dueMatch[1]);
+        result.extractedSummary.push(`Due Date: ${result.nextDueDate}`);
+      }
+
+      // Fallback for dates if explicit keywords were missing
+      if (!result.lastCalibratedDate) {
+        const allDates = [...combinedText.matchAll(/([0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d{4})/g)].map(m => m[1]);
+        if (allDates.length > 0) {
+          result.lastCalibratedDate = parseExcelDate(allDates[0]);
+          result.extractedSummary.push(`Auto-Detected Date: ${result.lastCalibratedDate}`);
+          if (allDates.length > 1 && !result.nextDueDate) {
+            result.nextDueDate = parseExcelDate(allDates[1]);
+            result.extractedSummary.push(`Auto-Detected Due Date: ${result.nextDueDate}`);
+          }
+        }
+      }
+
+      // Default fallback Calibration Date to today if unparseable
+      if (!result.lastCalibratedDate) {
+        result.lastCalibratedDate = parseExcelDate(new Date());
+      }
+
+      // Auto-compute Due Date using -1 Day Rule if not found explicitly
+      const freq = instrument ? (instrument.frequencyMonths || 12) : 12;
+      if (!result.nextDueDate) {
+        result.nextDueDate = calculateNextDueDate(result.lastCalibratedDate, freq);
+        result.extractedSummary.push(`Calculated Due Date (-1 Day Rule): ${result.nextDueDate}`);
+      }
+
+      // 3. AGENCY MATCHING
+      if (agencies && agencies.length > 0) {
+        const lowerText = combinedText.toLowerCase();
+        for (const ag of agencies) {
+          if (
+            (ag.name && lowerText.includes(ag.name.toLowerCase())) ||
+            (ag.code && lowerText.includes(ag.code.toLowerCase())) ||
+            (ag.nablCertNo && lowerText.includes(ag.nablCertNo.toLowerCase()))
+          ) {
+            result.agencyId = ag.id;
+            result.agencyName = ag.name;
+            result.extractedSummary.push(`Matched Agency: ${ag.name}`);
+            break;
+          }
+        }
+      }
+
+      // Fallback agency
+      if (!result.agencyId && instrument && instrument.agencyId) {
+        result.agencyId = instrument.agencyId;
+        const matched = agencies.find(a => a.id === instrument.agencyId);
+        result.agencyName = matched ? matched.name : 'Precision Metrology Services';
+      }
+
+      return result;
     }
 
     function downloadExcelTemplate() {
@@ -1915,23 +2018,146 @@
           });
         });
 
-        pdfInput.onchange = (e) => {
+        pdfInput.onchange = async (e) => {
           const file = e.target.files[0];
           if (!file || !currentUploadInsId) return;
 
+          const ins = this.state.instruments.find(i => i.id === currentUploadInsId);
+          if (!ins) return;
+
+          showToast(`⏳ Extracting Metadata from PDF "${file.name}"...`);
+
+          let pdfText = '';
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            pdfText = await extractPDFTextFromBuffer(arrayBuffer);
+          } catch (err) {
+            console.warn('PDF Buffer Read Notice:', err);
+          }
+
           const reader = new FileReader();
           reader.onload = (evt) => {
-            const ins = this.state.instruments.find(i => i.id === currentUploadInsId);
-            if (ins) {
-              ins.pdfReportName = file.name;
-              ins.pdfReportData = evt.target.result;
-              this.saveState('instruments');
-              showToast(`&#128196; PDF Report "${file.name}" uploaded & saved!`);
-              this.renderCurrentTab();
-            }
+            const pdfDataUrl = evt.target.result;
+            const metadata = parsePDFCalibrationMetadata(pdfText, file.name, this.state.agencies, ins);
+            this.openPDFAutoCaptureModal(ins, metadata, pdfDataUrl, file.name);
           };
           reader.readAsDataURL(file);
+          e.target.value = '';
         };
+      }
+
+      openPDFAutoCaptureModal(ins, metadata, pdfDataUrl, pdfFileName) {
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-lg rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-sm">&#128196;</span>
+                <div>
+                  <h3 class="font-bold text-lg text-slate-900">PDF Calibration Report Auto-Captured Metadata</h3>
+                  <p class="text-xs text-slate-500">Verify extracted details before updating Master Instrument</p>
+                </div>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1 font-mono">
+              <div class="font-bold text-slate-900">Target Equipment: ${ins.name}</div>
+              <div class="text-sky-700">Tag / Asset ID: ${ins.tagId} (${ins.historyCardNo || 'HC-2026-001'})</div>
+              <div class="text-slate-500 text-[11px]">Uploaded File: ${pdfFileName}</div>
+            </div>
+
+            <form id="pdfAutoCaptureForm" class="space-y-3.5 text-xs">
+              <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200">
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1">Captured Calibration On Date *</label>
+                  <input type="date" id="pacLastCalib" value="${metadata.lastCalibratedDate}" class="white-input w-full p-2.5 rounded-xl font-bold font-mono text-emerald-900 border-emerald-300" required>
+                  <span class="text-[10px] text-emerald-700 font-semibold block mt-0.5">Format: DD/MM/YYYY (${formatDate(metadata.lastCalibratedDate)})</span>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1">Frequency (Months) *</label>
+                  <input type="number" id="pacFreq" value="${ins.frequencyMonths || 12}" min="1" max="60" class="white-input w-full p-2.5 rounded-xl font-bold border-emerald-300" required>
+                  <span class="text-[10px] text-emerald-700 font-semibold block mt-0.5">Interval Period</span>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200">
+                <label class="block text-slate-800 font-extrabold mb-1">Calculated Next Due Date (-1 Day Rule) *</label>
+                <input type="date" id="pacNextDue" value="${metadata.nextDueDate}" class="white-input w-full p-2.5 rounded-xl font-bold font-mono text-amber-900 border-amber-300" required>
+                <span class="text-[10px] text-amber-800 font-semibold block mt-0.5">Automatically computed: 1 Day before completion (${formatDate(metadata.nextDueDate)})</span>
+              </div>
+
+              <div>
+                <label class="block text-slate-800 font-extrabold mb-1">Matched Calibration Agency *</label>
+                <select id="pacAgency" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-900">
+                  ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === metadata.agencyId ? 'selected' : ''}>${a.name} (${a.code})</option>`).join('')}
+                </select>
+                <span class="text-[10px] text-slate-500 font-medium block mt-0.5">Accredited Laboratory providing calibration</span>
+              </div>
+
+              ${metadata.extractedSummary && metadata.extractedSummary.length > 0 ? `
+                <div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-[11px] space-y-1">
+                  <div class="font-bold text-slate-700 uppercase text-[10px]">PDF Parser Intelligence Summary:</div>
+                  <ul class="list-disc list-inside text-slate-600 space-y-0.5 font-mono">
+                    ${metadata.extractedSummary.map(s => `<li>${s}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                  Cancel
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                  <span>&#128196; Confirm & Update Master List</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        const calibInput = document.getElementById('pacLastCalib');
+        const freqInput = document.getElementById('pacFreq');
+        const dueInput = document.getElementById('pacNextDue');
+
+        const updateModalDueDate = () => {
+          const newCalib = calibInput.value;
+          const newFreq = parseInt(freqInput.value || '12', 10);
+          if (newCalib) {
+            dueInput.value = calculateNextDueDate(newCalib, newFreq);
+          }
+        };
+
+        calibInput.addEventListener('change', updateModalDueDate);
+        freqInput.addEventListener('change', updateModalDueDate);
+
+        document.getElementById('pdfAutoCaptureForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          const calibDate = calibInput.value;
+          const freq = parseInt(freqInput.value, 10);
+          const dueDate = dueInput.value;
+          const agencyId = document.getElementById('pacAgency').value;
+
+          ins.lastCalibratedDate = calibDate;
+          ins.frequencyMonths = freq;
+          ins.nextDueDate = dueDate;
+          ins.agencyId = agencyId;
+          ins.pdfReportName = pdfFileName;
+          ins.pdfReportData = pdfDataUrl;
+
+          this.saveState('instruments');
+
+          const agency = this.state.agencies.find(a => a.id === agencyId);
+          const agName = agency ? agency.name : 'Assigned Agency';
+
+          showToast(`📄 Calibration Report Saved! Master Instrument ${ins.tagId} updated (Calib Date: ${formatDate(calibDate)}, Due Date: ${formatDate(dueDate)}, Agency: ${agName})`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
       }
 
       renderMasterList(c) {
