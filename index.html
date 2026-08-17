@@ -97,7 +97,7 @@
   </div>
 
   <script>
-    const DATA_VERSION = "2026.08.17.v13_pdf_metadata_autocapture";
+    const DATA_VERSION = "2026.08.17.v14_column_sequence_alignment";
 
     // --- Data Seed ---
     const INITIAL_AGENCIES = [
@@ -1912,41 +1912,57 @@
 
           return `
             <tr class="hover:bg-slate-50 transition-colors">
+              <!-- 1. INSTRUMENT -->
               <td class="py-3 px-3">
                 <div class="font-bold text-slate-900">${ins.name}</div>
-                <div class="font-mono text-sky-700 text-[10px] font-semibold">${ins.tagId}</div>
                 <div class="text-[9px] text-slate-400 font-bold">${ins.category || 'Quality'}</div>
               </td>
+
+              <!-- 2. MAKE -->
+              <td class="py-3 px-3 font-semibold text-slate-800">${ins.make || '-'}</td>
+
+              <!-- 3. SERIAL NO -->
+              <td class="py-3 px-3 font-mono text-slate-700 text-xs">${ins.serialNo || '-'}</td>
+
+              <!-- 4. GRS NO (TAG ID) -->
+              <td class="py-3 px-3 font-mono text-sky-700 font-extrabold text-xs">${ins.tagId}</td>
+
+              <!-- 5. RANGE -->
+              <td class="py-3 px-3 text-slate-800 font-medium">${ins.range || '-'}</td>
+
+              <!-- 6. LEAST COUNT -->
+              <td class="py-3 px-3 text-slate-700 font-mono text-xs">${ins.leastCount || '-'}</td>
+
+              <!-- 7. CAL ON (DD/MM/YYYY) -->
+              <td class="py-3 px-3 font-semibold font-mono text-slate-900 text-xs">
+                ${formatDate(ins.lastCalibratedDate)}
+              </td>
+
+              <!-- 8. DUE ON (-1 DAY RULE APPLIED) (DD/MM/YYYY) -->
+              <td class="py-3 px-3 font-bold font-mono text-slate-900 text-xs">
+                ${formatDate(computedDueDate)}
+              </td>
+
+              <!-- 9. CAL FREQUENCY -->
+              <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 12} Months</td>
+
+              <!-- 10. HISTORY CARD NO -->
               <td class="py-3 px-3">
                 <span class="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
                   ${ins.historyCardNo || 'HC-2026-001'}
                 </span>
               </td>
-              <td class="py-3 px-3">
-                <div class="font-semibold text-slate-800">${ins.make || 'Mitutoyo'}</div>
-                <div class="font-mono text-slate-500 text-[10px]">${ins.serialNo || 'SN-000'}</div>
-              </td>
-              <td class="py-3 px-3">
-                <div class="text-slate-800 font-medium">${ins.range || '0-150 mm'}</div>
-                <div class="text-sky-700 font-mono text-[10px]">LC: ${ins.leastCount || '0.01 mm'}</div>
-              </td>
-              <td class="py-3 px-3 text-slate-600">${ins.location}</td>
-              
-              <!-- CALIBRATION ON DATE DISPLAYED IN DD/MM/YYYY FORMAT -->
-              <td class="py-3 px-3 font-semibold font-mono text-slate-900 text-xs">
-                ${formatDate(ins.lastCalibratedDate)}
-              </td>
-              
-              <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 6} Months</td>
-              
-              <!-- DUE DATE DISPLAYED IN DD/MM/YYYY FORMAT (-1 DAY RULE APPLIED) -->
-              <td class="py-3 px-3 font-bold font-mono text-slate-900 text-xs">
-                ${formatDate(computedDueDate)}
-              </td>
 
+              <!-- 11. LOCATION -->
+              <td class="py-3 px-3 text-slate-600 font-semibold">${ins.location}</td>
+
+              <!-- 12. AGENCY -->
               <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
+
+              <!-- 13. STATUS -->
               <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
-              
+
+              <!-- 14. PDF REPORT -->
               <td class="py-3 px-3 text-center space-y-1">
                 ${hasPdf ? `
                   <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
@@ -1963,6 +1979,7 @@
                 ` : ''}
               </td>
 
+              <!-- 15. ACTIONS -->
               <td class="py-3 px-3 text-right space-y-1">
                 ${isAdmin ? `
                   <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
@@ -2241,16 +2258,19 @@
                 <table class="w-full text-left text-xs">
                   <thead class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase text-[10px] font-extrabold">
                     <tr>
-                      <th class="py-3.5 px-3">Tag ID & Name</th>
+                      <th class="py-3.5 px-3">INSTRUMENT</th>
+                      <th class="py-3.5 px-3">MAKE</th>
+                      <th class="py-3.5 px-3">SERIAL NO</th>
+                      <th class="py-3.5 px-3 text-sky-800 font-black">GRS NO</th>
+                      <th class="py-3.5 px-3">RANGE</th>
+                      <th class="py-3.5 px-3">LEAST COUNT</th>
+                      <th class="py-3.5 px-3">CAL ON</th>
+                      <th class="py-3.5 px-3 text-amber-900 font-black">DUE ON (-1 DAY)</th>
+                      <th class="py-3.5 px-3">CAL FREQUENCY</th>
                       <th class="py-3.5 px-3">HISTORY CARD NO</th>
-                      <th class="py-3.5 px-3">Make / Serial</th>
-                      <th class="py-3.5 px-3">Range & LC</th>
-                      <th class="py-3.5 px-3">Location</th>
-                      <th class="py-3.5 px-3">CALIBRATION ON DATE (DD/MM/YYYY)</th>
-                      <th class="py-3.5 px-3">FREQUENCY</th>
-                      <th class="py-3.5 px-3">DUE DATE (-1 DAY) (DD/MM/YYYY)</th>
-                      <th class="py-3.5 px-3">Agency</th>
-                      <th class="py-3.5 px-3">Status</th>
+                      <th class="py-3.5 px-3">LOCATION</th>
+                      <th class="py-3.5 px-3">AGENCY</th>
+                      <th class="py-3.5 px-3">STATUS</th>
                       <th class="py-3.5 px-3 text-center">PDF REPORT</th>
                       <th class="py-3.5 px-3 text-right">Actions (Admin Only)</th>
                     </tr>
