@@ -1586,85 +1586,77 @@
           const hasPdf = ins.pdfReportName || ins.pdfReportData;
 
           return `
-            <tr class="hover:bg-slate-50 transition-colors">
+            <tr class="hover:bg-slate-50 transition-colors text-[11px]">
               <!-- 1. INSTRUMENT -->
-              <td class="py-3 px-3">
-                <div class="font-bold text-slate-900">${ins.name}</div>
+              <td class="py-2 px-2">
+                <div class="font-bold text-slate-900 leading-tight">${ins.name}</div>
                 <div class="text-[9px] text-slate-400 font-bold">${ins.category || 'Quality'}</div>
               </td>
 
               <!-- 2. MAKE -->
-              <td class="py-3 px-3 font-semibold text-slate-800">${ins.make || '-'}</td>
+              <td class="py-2 px-2 font-semibold text-slate-800">${ins.make || '-'}</td>
 
               <!-- 3. SERIAL NO -->
-              <td class="py-3 px-3 font-mono text-slate-700 text-xs">${ins.serialNo || '-'}</td>
+              <td class="py-2 px-2 font-mono text-slate-700">${ins.serialNo || '-'}</td>
 
               <!-- 4. GRS NO (TAG ID) -->
-              <td class="py-3 px-3 font-mono text-sky-700 font-extrabold text-xs">${ins.tagId}</td>
+              <td class="py-2 px-2 font-mono text-sky-700 font-extrabold">${ins.tagId}</td>
 
               <!-- 5. RANGE -->
-              <td class="py-3 px-3 text-slate-800 font-medium">${ins.range || '-'}</td>
+              <td class="py-2 px-2 text-slate-800 font-medium">${ins.range || '-'}</td>
 
               <!-- 6. LEAST COUNT -->
-              <td class="py-3 px-3 text-slate-700 font-mono text-xs">${ins.leastCount || '-'}</td>
+              <td class="py-2 px-2 text-slate-700 font-mono">${ins.leastCount || '-'}</td>
 
               <!-- 7. CAL ON (DD/MM/YYYY) -->
-              <td class="py-3 px-3 font-semibold font-mono text-slate-900 text-xs">
+              <td class="py-2 px-2 font-semibold font-mono text-slate-900">
                 ${formatDate(ins.lastCalibratedDate)}
               </td>
 
               <!-- 8. DUE ON (-1 DAY RULE APPLIED) (DD/MM/YYYY) -->
-              <td class="py-3 px-3 font-bold font-mono text-slate-900 text-xs">
+              <td class="py-2 px-2 font-bold font-mono text-slate-900">
                 ${formatDate(computedDueDate)}
               </td>
 
               <!-- 9. CAL FREQUENCY -->
-              <td class="py-3 px-3 font-bold text-sky-700">${ins.frequencyMonths || 12} Months</td>
+              <td class="py-2 px-2 font-bold text-sky-700">${ins.frequencyMonths || 12}m</td>
 
               <!-- 10. HISTORY CARD NO -->
-              <td class="py-3 px-3">
-                <span class="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
+              <td class="py-2 px-2">
+                <span class="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded text-[10px]">
                   ${ins.historyCardNo || 'HC-2026-001'}
                 </span>
               </td>
 
               <!-- 11. LOCATION -->
-              <td class="py-3 px-3 text-slate-600 font-semibold">${ins.location}</td>
+              <td class="py-2 px-2 text-slate-600 font-semibold">${ins.location}</td>
 
               <!-- 12. AGENCY -->
-              <td class="py-3 px-3 font-semibold text-sky-700">${agency ? agency.name : 'Unassigned'}</td>
+              <td class="py-2 px-2 font-semibold text-sky-700 max-w-[110px] truncate" title="${agency ? agency.name : 'Unassigned'}">${agency ? agency.name : 'Unassigned'}</td>
 
               <!-- 13. STATUS -->
-              <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${info.badgeClass}">${info.label}</span></td>
+              <td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[9.5px] font-bold ${info.badgeClass}">${info.shortLabel || info.label}</span></td>
 
               <!-- 14. PDF REPORT -->
-              <td class="py-3 px-3 text-center space-y-1">
+              <td class="py-2 px-2 text-center">
                 ${hasPdf ? `
-                  <button class="btnViewPDF px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-300 text-[11px] font-bold hover:bg-sky-200 block w-full text-center" data-ins-id="${ins.id}">
-                    &#128196; View PDF Report
+                  <button class="btnViewPDF px-2 py-0.5 rounded bg-sky-100 text-sky-800 border border-sky-300 text-[10px] font-bold hover:bg-sky-200" data-ins-id="${ins.id}" title="View Attached PDF Certificate">
+                    &#128196; View PDF
                   </button>
                 ` : `
-                  <span class="text-[10px] text-slate-400 block">No PDF Uploaded</span>
+                  <span class="text-[10px] text-slate-400 block">No PDF</span>
                 `}
-
-                ${this.hasPermission('upload_pdf') ? `
-                  <button class="btnUploadPDF px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-semibold block w-full text-center" data-ins-id="${ins.id}">
-                    &#128228; ${hasPdf ? 'Re-upload PDF' : 'Upload PDF'}
-                  </button>
-                ` : ''}
               </td>
 
               <!-- 15. ACTIONS -->
-              <td class="py-3 px-3 text-right space-y-1">
+              <td class="py-2 px-2 text-right">
                 ${isAdmin ? `
-                  <button class="btnEditIns px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 block w-full text-center" data-ins-id="${ins.id}">
-                    &#9999;&#65039; Edit & Save
-                  </button>
-                  <button class="btnDeleteIns px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 block w-full text-center" data-ins-id="${ins.id}">
-                    &#128465;&#65039; Delete
-                  </button>
+                  <div class="flex items-center justify-end space-x-1">
+                    <button class="btnEditIns px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-semibold hover:bg-sky-100" data-ins-id="${ins.id}">Edit</button>
+                    <button class="btnDeleteIns px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 text-[10px] font-semibold hover:bg-red-100" data-ins-id="${ins.id}">Del</button>
+                  </div>
                 ` : `
-                  <span class="text-[10px] text-slate-400 font-semibold italic block text-center py-1">&#128274; Admin Edit Only</span>
+                  <span class="text-[9px] text-slate-400 italic">&#128274; View</span>
                 `}
               </td>
             </tr>
@@ -1936,21 +1928,21 @@
                 <table class="w-full text-left text-xs">
                   <thead class="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase text-[10px] font-extrabold">
                     <tr>
-                      <th class="py-3.5 px-3">INSTRUMENT</th>
-                      <th class="py-3.5 px-3">MAKE</th>
-                      <th class="py-3.5 px-3">SERIAL NO</th>
-                      <th class="py-3.5 px-3 text-sky-800 font-black">GRS NO</th>
-                      <th class="py-3.5 px-3">RANGE</th>
-                      <th class="py-3.5 px-3">LEAST COUNT</th>
-                      <th class="py-3.5 px-3">CAL ON</th>
-                      <th class="py-3.5 px-3 text-amber-900 font-black">DUE ON (-1 DAY)</th>
-                      <th class="py-3.5 px-3">CAL FREQUENCY</th>
-                      <th class="py-3.5 px-3">HISTORY CARD NO</th>
-                      <th class="py-3.5 px-3">LOCATION</th>
-                      <th class="py-3.5 px-3">AGENCY</th>
-                      <th class="py-3.5 px-3">STATUS</th>
-                      <th class="py-3.5 px-3 text-center">PDF REPORT</th>
-                      <th class="py-3.5 px-3 text-right">Actions (Admin Only)</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">INSTRUMENT</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">MAKE</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">SERIAL NO</th>
+                      <th class="py-2.5 px-2 text-sky-800 font-black text-[10px]">GRS NO</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">RANGE</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">LEAST COUNT</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">CAL ON</th>
+                      <th class="py-2.5 px-2 text-amber-900 font-black text-[10px]">DUE ON (-1d)</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">FREQ</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">HISTORY CARD</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">LOCATION</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">AGENCY</th>
+                      <th class="py-2.5 px-2 font-extrabold text-[10px]">STATUS</th>
+                      <th class="py-2.5 px-2 text-center font-extrabold text-[10px]">PDF REPORT</th>
+                      <th class="py-2.5 px-2 text-right font-extrabold text-[10px]">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody id="masterTableBody" class="divide-y divide-slate-200">
@@ -2017,8 +2009,6 @@
 
         c.querySelector('#btnSaveMasterList')?.addEventListener('click', () => this.saveAllData());
         c.querySelector('#btnClearAllInstruments')?.addEventListener('click', () => this.clearAllInstruments());
-        c.querySelector('#btnAddInstrument')?.addEventListener('click', () => this.openAddInstrumentModal());
-
         this.bindRowActions(c, isAdmin);
       }
 
@@ -2035,71 +2025,62 @@
         const defaultHCNo = `HC-2026-${Math.floor(100 + Math.random() * 900)}`;
 
         m.innerHTML = `
-          <div class="white-card modal-enter w-full max-w-5xl rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl my-6">
+          <div class="white-card modal-enter w-full max-w-7xl rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl my-2">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
                 <h3 class="font-bold text-lg text-slate-900">Add New Master Instrument</h3>
-                <p class="text-xs text-slate-500">All 12 Master Inventory Fields displayed simultaneously below (Due Date auto-calculates to 1 Day Before)</p>
+                <p class="text-xs text-slate-500">All 12 Master Inventory Fields displayed simultaneously below in a single view</p>
               </div>
               <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
             <form id="newInsForm" class="space-y-4 text-xs">
-              <!-- ROW 1: CORE IDENTITY (Fields 1 - 4) -->
-              <div class="grid grid-cols-4 gap-3">
+              <!-- 6-COLUMN GRID FOR ALL 12 FIELDS IN 2 ROWS -->
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">1. INSTRUMENT NAME *</label>
-                  <input type="text" id="mName" placeholder="e.g. Digital Vernier Caliper" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">1. INSTRUMENT *</label>
+                  <input type="text" id="mName" placeholder="Digital Vernier" class="white-input w-full p-2 rounded-xl font-bold text-slate-900 border-slate-300 text-xs" required>
                 </div>
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">2. MAKE / BRAND *</label>
-                  <input type="text" id="mMake" placeholder="e.g. Mitutoyo" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">2. MAKE *</label>
+                  <input type="text" id="mMake" placeholder="Mitutoyo" class="white-input w-full p-2 rounded-xl font-bold text-slate-900 border-slate-300 text-xs" required>
                 </div>
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">3. SERIAL NUMBER *</label>
-                  <input type="text" id="mSerial" placeholder="e.g. MT-99201" class="white-input w-full p-2.5 rounded-xl font-mono font-bold" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">3. SERIAL NO *</label>
+                  <input type="text" id="mSerial" placeholder="MT-99201" class="white-input w-full p-2 rounded-xl font-mono text-slate-900 font-bold border-slate-300 text-xs" required>
                 </div>
                 <div>
-                  <label class="block text-sky-900 font-black mb-1">4. GRS NO (TAG ID) *</label>
-                  <input type="text" id="mTagId" value="${defaultTagId}" class="white-input w-full p-2.5 rounded-xl font-mono text-sky-700 font-extrabold border-sky-400" required>
+                  <label class="block text-sky-900 font-black mb-1 text-[11px]">4. GRS NO (TAG ID) *</label>
+                  <input type="text" id="mTagId" value="${defaultTagId}" class="white-input w-full p-2 rounded-xl font-mono text-sky-800 font-extrabold border-sky-400 text-xs" required>
                 </div>
-              </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">5. RANGE *</label>
+                  <input type="text" id="mRange" placeholder="0-150 mm" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">6. LEAST COUNT *</label>
+                  <input type="text" id="mLeastCount" placeholder="0.01 mm" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
 
-              <!-- ROW 2: SPECIFICATIONS & DATES (Fields 5 - 8) -->
-              <div class="grid grid-cols-4 gap-3">
-                <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">5. RANGE *</label>
-                  <input type="text" id="mRange" placeholder="e.g. 0-150 mm" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                <div class="p-1.5 rounded-xl bg-emerald-50/80 border border-emerald-300">
+                  <label class="block text-emerald-950 font-extrabold mb-1 text-[10px]">7. CAL ON DATE *</label>
+                  <input type="date" id="mLastCalib" value="2026-01-22" class="white-input w-full p-1.5 rounded-lg font-bold font-mono text-emerald-900 border-emerald-300 text-xs" required>
+                </div>
+                <div class="p-1.5 rounded-xl bg-amber-50/80 border border-amber-300">
+                  <label class="block text-amber-950 font-extrabold mb-1 text-[10px]">8. CAL FREQ (MONTHS) *</label>
+                  <input type="number" id="mFreq" value="12" min="1" max="60" class="white-input w-full p-1.5 rounded-lg font-bold border-amber-300 text-xs" required>
                 </div>
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">6. LEAST COUNT *</label>
-                  <input type="text" id="mLeastCount" placeholder="e.g. 0.01 mm" class="white-input w-full p-2.5 rounded-xl font-bold" required>
-                </div>
-                <div class="p-2 rounded-xl bg-emerald-50/70 border border-emerald-300">
-                  <label class="block text-emerald-950 font-extrabold mb-1">7. CAL ON DATE *</label>
-                  <input type="date" id="mLastCalib" value="2026-01-22" class="white-input w-full p-2 rounded-xl font-bold font-mono text-emerald-900 border-emerald-300" required>
-                  <span class="text-[9px] text-emerald-700 font-semibold block mt-0.5">Format: DD/MM/YYYY</span>
-                </div>
-                <div class="p-2 rounded-xl bg-amber-50/70 border border-amber-300">
-                  <label class="block text-amber-950 font-extrabold mb-1">8. CAL FREQUENCY (MONTHS) *</label>
-                  <input type="number" id="mFreq" value="12" min="1" max="60" class="white-input w-full p-2 rounded-xl font-bold border-amber-300" required>
-                  <span class="text-[9px] text-amber-800 font-semibold block mt-0.5">Auto -1 Day Rule</span>
-                </div>
-              </div>
-
-              <!-- ROW 3: OPERATIONS & LABORATORY (Fields 9 - 12) -->
-              <div class="grid grid-cols-4 gap-3">
-                <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">9. HISTORY CARD NO *</label>
-                  <input type="text" id="mHistoryCardNo" value="${defaultHCNo}" class="white-input w-full p-2.5 rounded-xl font-mono text-indigo-700 font-bold" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">9. HISTORY CARD *</label>
+                  <input type="text" id="mHistoryCardNo" value="${defaultHCNo}" class="white-input w-full p-2 rounded-xl font-mono text-indigo-700 font-bold border-slate-300 text-xs" required>
                 </div>
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">10. LOCATION / SHOP *</label>
-                  <input type="text" id="mLocation" placeholder="e.g. Quality Lab" class="white-input w-full p-2.5 rounded-xl font-bold" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">10. LOCATION / SHOP *</label>
+                  <input type="text" id="mLocation" placeholder="Quality Lab" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
                 </div>
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">11. CATEGORY *</label>
-                  <select id="mCategory" class="white-input w-full p-2.5 rounded-xl font-bold">
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">11. CATEGORY *</label>
+                  <select id="mCategory" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs">
                     <option value="MPI">&#128269; MPI</option>
                     <option value="Heat Treatment">&#128293; Heat Treatment</option>
                     <option value="Quality" selected>&#127919; Quality</option>
@@ -2107,8 +2088,8 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">12. ASSIGNED AGENCY *</label>
-                  <select id="mAgency" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-900">
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">12. AGENCY *</label>
+                  <select id="mAgency" class="white-input w-full p-2 rounded-xl font-bold text-sky-900 border-slate-300 text-xs">
                     ${this.state.agencies.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
                   </select>
                 </div>
@@ -2140,7 +2121,7 @@
             const category = document.getElementById('mCategory').value;
             const location = document.getElementById('mLocation').value.trim();
             const lastCal = document.getElementById('mLastCalib').value || '2026-01-22';
-            const freq = parseInt(document.getElementById('mFreq').value || '6', 10);
+            const freq = parseInt(document.getElementById('mFreq').value || '12', 10);
             const agencyId = document.getElementById('mAgency').value;
 
             const nextDue = calculateNextDueDate(lastCal, freq);
@@ -2183,7 +2164,7 @@
         const isUpdate = metadata.isUpdate;
 
         m.innerHTML = `
-          <div class="white-card modal-enter w-full max-w-5xl rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl">
+          <div class="white-card modal-enter w-full max-w-7xl rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl my-2">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-2">
                 <span class="p-2.5 rounded-xl bg-sky-100 text-sky-800 font-bold text-lg">&#128196;</span>
@@ -2194,101 +2175,92 @@
                       ${isUpdate ? '&#128260; Update Existing Instrument' : '&#10024; New Instrument Entry'}
                     </span>
                   </div>
-                  <p class="text-xs text-slate-500">All 12 Master Inventory Fields displayed simultaneously below</p>
+                  <p class="text-xs text-slate-500">All 12 Master Inventory Fields displayed simultaneously below in a single view</p>
                 </div>
               </div>
               <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
             </div>
 
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center font-mono">
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center font-mono">
               <div class="text-slate-800 font-bold">&#128196; PDF File: ${pdfFileName}</div>
-              <div class="text-emerald-700 font-extrabold">&#9989; 12 / 12 Master Fields Visible At A Time</div>
+              <div class="text-emerald-700 font-extrabold">&#9989; 12 / 12 Master Fields Visible At A Time (6 Columns x 2 Rows)</div>
             </div>
 
-            <form id="globalPdfAutoCaptureForm" class="space-y-4 text-xs">
-              <!-- ROW 1: CORE IDENTITY (Fields 1 - 4) -->
-              <div class="grid grid-cols-4 gap-3">
+            <form id="globalPdfAutoCaptureForm" class="space-y-3.5 text-xs">
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">1. INSTRUMENT NAME *</label>
-                  <input type="text" id="gpcName" value="${metadata.name}" class="white-input w-full p-2.5 rounded-xl font-bold text-slate-900 border-slate-300" required>
-                </div>
-
-                <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">2. MAKE / BRAND *</label>
-                  <input type="text" id="gpcMake" value="${metadata.make}" class="white-input w-full p-2.5 rounded-xl font-bold text-slate-900 border-slate-300" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">1. INSTRUMENT *</label>
+                  <input type="text" id="gpcName" value="${metadata.name}" class="white-input w-full p-2 rounded-xl font-bold text-slate-900 border-slate-300 text-xs" required>
                 </div>
 
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">3. SERIAL NO *</label>
-                  <input type="text" id="gpcSerialNo" value="${metadata.serialNo}" class="white-input w-full p-2.5 rounded-xl font-mono text-slate-900 font-bold border-slate-300" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">2. MAKE *</label>
+                  <input type="text" id="gpcMake" value="${metadata.make}" class="white-input w-full p-2 rounded-xl font-bold text-slate-900 border-slate-300 text-xs" required>
                 </div>
 
                 <div>
-                  <label class="block text-sky-900 font-black mb-1">4. GRS NO (TAG ID) *</label>
-                  <input type="text" id="gpcTagId" value="${metadata.tagId}" class="white-input w-full p-2.5 rounded-xl font-mono text-sky-800 font-extrabold border-sky-400" required>
-                </div>
-              </div>
-
-              <!-- ROW 2: SPECIFICATIONS & DATES (Fields 5 - 8) -->
-              <div class="grid grid-cols-4 gap-3">
-                <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">5. RANGE *</label>
-                  <input type="text" id="gpcRange" value="${metadata.range}" class="white-input w-full p-2.5 rounded-xl font-bold border-slate-300" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">3. SERIAL NO *</label>
+                  <input type="text" id="gpcSerialNo" value="${metadata.serialNo}" class="white-input w-full p-2 rounded-xl font-mono text-slate-900 font-bold border-slate-300 text-xs" required>
                 </div>
 
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">6. LEAST COUNT *</label>
-                  <input type="text" id="gpcLeastCount" value="${metadata.leastCount}" class="white-input w-full p-2.5 rounded-xl font-bold border-slate-300" required>
-                </div>
-
-                <div class="p-2 rounded-xl bg-emerald-50/70 border border-emerald-300">
-                  <label class="block text-emerald-950 font-extrabold mb-1">7. CAL ON DATE *</label>
-                  <input type="date" id="gpcLastCalib" value="${metadata.lastCalibratedDate}" class="white-input w-full p-2 rounded-xl font-bold font-mono text-emerald-900 border-emerald-300" required>
-                  <span class="text-[9px] text-emerald-700 font-semibold block mt-0.5">Format: DD/MM/YYYY</span>
-                </div>
-
-                <div class="p-2 rounded-xl bg-amber-50/70 border border-amber-300">
-                  <label class="block text-amber-950 font-extrabold mb-1">8. DUE ON (-1 DAY) *</label>
-                  <input type="date" id="gpcNextDue" value="${metadata.nextDueDate}" class="white-input w-full p-2 rounded-xl font-bold font-mono text-amber-950 border-amber-300" required>
-                  <span class="text-[9px] text-amber-800 font-semibold block mt-0.5">Auto -1 Day Rule</span>
-                </div>
-              </div>
-
-              <!-- ROW 3: OPERATIONS & LABORATORY (Fields 9 - 12) -->
-              <div class="grid grid-cols-4 gap-3">
-                <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">9. CAL FREQUENCY (MONTHS) *</label>
-                  <input type="number" id="gpcFreq" value="${metadata.frequencyMonths || 12}" min="1" max="60" class="white-input w-full p-2.5 rounded-xl font-bold border-slate-300" required>
+                  <label class="block text-sky-900 font-black mb-1 text-[11px]">4. GRS NO (TAG ID) *</label>
+                  <input type="text" id="gpcTagId" value="${metadata.tagId}" class="white-input w-full p-2 rounded-xl font-mono text-sky-800 font-extrabold border-sky-400 text-xs" required>
                 </div>
 
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">10. HISTORY CARD NO *</label>
-                  <input type="text" id="gpcHistoryCardNo" value="${metadata.historyCardNo}" class="white-input w-full p-2.5 rounded-xl font-mono text-indigo-700 font-bold border-slate-300" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">5. RANGE *</label>
+                  <input type="text" id="gpcRange" value="${metadata.range}" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
                 </div>
 
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">11. LOCATION *</label>
-                  <input type="text" id="gpcLocation" value="${metadata.location}" class="white-input w-full p-2.5 rounded-xl font-bold border-slate-300" required>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">6. LEAST COUNT *</label>
+                  <input type="text" id="gpcLeastCount" value="${metadata.leastCount}" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+
+                <div class="p-1.5 rounded-xl bg-emerald-50/80 border border-emerald-300">
+                  <label class="block text-emerald-950 font-extrabold mb-1 text-[10px]">7. CAL ON DATE *</label>
+                  <input type="date" id="gpcLastCalib" value="${metadata.lastCalibratedDate}" class="white-input w-full p-1.5 rounded-lg font-bold font-mono text-emerald-900 border-emerald-300 text-xs" required>
+                </div>
+
+                <div class="p-1.5 rounded-xl bg-amber-50/80 border border-amber-300">
+                  <label class="block text-amber-950 font-extrabold mb-1 text-[10px]">8. DUE ON (-1 DAY) *</label>
+                  <input type="date" id="gpcNextDue" value="${metadata.nextDueDate}" class="white-input w-full p-1.5 rounded-lg font-bold font-mono text-amber-950 border-amber-300 text-xs" required>
                 </div>
 
                 <div>
-                  <label class="block text-slate-800 font-extrabold mb-1">12. CALIBRATION AGENCY *</label>
-                  <select id="gpcAgency" class="white-input w-full p-2.5 rounded-xl font-bold text-sky-900 border-slate-300">
-                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === metadata.agencyId ? 'selected' : ''}>${a.name} (${a.code})</option>`).join('')}
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">9. FREQ (MONTHS) *</label>
+                  <input type="number" id="gpcFreq" value="${metadata.frequencyMonths || 12}" min="1" max="60" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">10. HISTORY CARD *</label>
+                  <input type="text" id="gpcHistoryCardNo" value="${metadata.historyCardNo}" class="white-input w-full p-2 rounded-xl font-mono text-indigo-700 font-bold border-slate-300 text-xs" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">11. LOCATION *</label>
+                  <input type="text" id="gpcLocation" value="${metadata.location}" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">12. AGENCY *</label>
+                  <select id="gpcAgency" class="white-input w-full p-2 rounded-xl font-bold text-sky-900 border-slate-300 text-xs">
+                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === metadata.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
                   </select>
                 </div>
               </div>
 
               ${metadata.extractedSummary && metadata.extractedSummary.length > 0 ? `
-                <div class="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-[11px]">
+                <div class="p-2 rounded-xl bg-slate-100 border border-slate-200 text-[11px]">
                   <div class="font-bold text-slate-700 uppercase text-[10px]">PDF Parser Intelligence Log:</div>
-                  <div class="grid grid-cols-3 gap-1 text-slate-600 font-mono text-[10px] mt-1">
+                  <div class="grid grid-cols-4 gap-1 text-slate-600 font-mono text-[10px] mt-1">
                     ${metadata.extractedSummary.map(s => `<div>&bull; ${s}</div>`).join('')}
                   </div>
                 </div>
               ` : ''}
 
-              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+              <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
                 <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 font-bold">
                   Cancel
                 </button>
@@ -2298,6 +2270,222 @@
               </div>
             </form>
           </div>
+        `;
+
+        const calibInput = document.getElementById('gpcLastCalib');
+        const freqInput = document.getElementById('gpcFreq');
+        const dueInput = document.getElementById('gpcNextDue');
+
+        const updateModalDueDate = () => {
+          const newCalib = calibInput.value;
+          const newFreq = parseInt(freqInput.value || '12', 10);
+          if (newCalib) {
+            dueInput.value = calculateNextDueDate(newCalib, newFreq);
+          }
+        };
+
+        calibInput.addEventListener('change', updateModalDueDate);
+        freqInput.addEventListener('change', updateModalDueDate);
+
+        document.getElementById('globalPdfAutoCaptureForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          const tagId = document.getElementById('gpcTagId').value.trim();
+          const name = document.getElementById('gpcName').value.trim();
+          const make = document.getElementById('gpcMake').value.trim();
+          const serialNo = document.getElementById('gpcSerialNo').value.trim();
+          const range = document.getElementById('gpcRange').value.trim();
+          const leastCount = document.getElementById('gpcLeastCount').value.trim();
+          const calibDate = calibInput.value;
+          const freq = parseInt(freqInput.value, 10);
+          const dueDate = dueInput.value;
+          const historyCardNo = document.getElementById('gpcHistoryCardNo').value.trim();
+          const location = document.getElementById('gpcLocation').value.trim();
+          const agencyId = document.getElementById('gpcAgency').value;
+
+          const existingIdx = this.state.instruments.findIndex(i => i.tagId.toLowerCase().trim() === tagId.toLowerCase().trim());
+
+          if (existingIdx >= 0) {
+            this.state.instruments[existingIdx] = {
+              ...this.state.instruments[existingIdx],
+              tagId,
+              name,
+              make,
+              serialNo,
+              range,
+              leastCount,
+              lastCalibratedDate: calibDate,
+              frequencyMonths: freq,
+              nextDueDate: dueDate,
+              historyCardNo,
+              location,
+              agencyId,
+              pdfReportName: pdfFileName,
+              pdfReportData: pdfDataUrl
+            };
+          } else {
+            this.state.instruments.unshift({
+              id: `INS-${Date.now()}`,
+              tagId,
+              name,
+              make,
+              serialNo,
+              range,
+              leastCount,
+              lastCalibratedDate: calibDate,
+              frequencyMonths: freq,
+              nextDueDate: dueDate,
+              historyCardNo,
+              location,
+              agencyId,
+              category: 'Quality',
+              status: 'Active',
+              pdfReportName: pdfFileName,
+              pdfReportData: pdfDataUrl
+            });
+          }
+
+          this.saveState('instruments');
+
+          const agency = this.state.agencies.find(a => a.id === agencyId);
+          const agName = agency ? agency.name : 'Assigned Agency';
+
+          showToast(`📄 PDF Calibration Report Saved! Master Instrument ${tagId} (${name}) updated (Calib Date: ${formatDate(calibDate)}, Due Date: ${formatDate(dueDate)}, Agency: ${agName})`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }
+
+      openEditInstrumentModal(insId) {
+        if (!this.hasPermission('edit_instrument')) {
+          alert('Access Denied: Your account role does not have permission to edit instruments.');
+          return;
+        }
+
+        const ins = this.state.instruments.find(i => i.id === insId);
+        if (!ins) return;
+
+        const m = document.getElementById('modalContainer');
+        m.classList.remove('hidden');
+
+        const currentDueDate = calculateNextDueDate(ins.lastCalibratedDate, ins.frequencyMonths);
+
+        m.innerHTML = `
+          <div class="white-card modal-enter w-full max-w-7xl rounded-2xl p-6 border border-slate-200 space-y-4 bg-white shadow-2xl my-2">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 class="font-bold text-lg text-slate-900">Edit & Modify Master Instrument: ${ins.tagId}</h3>
+                <p class="text-xs text-slate-500">All 12 Master Inventory Fields displayed simultaneously below in a single view</p>
+              </div>
+              <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-lg px-2">&#10005;</button>
+            </div>
+
+            <form id="editInsForm" class="space-y-3.5 text-xs">
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">1. INSTRUMENT *</label>
+                  <input type="text" id="eName" value="${ins.name}" class="white-input w-full p-2 rounded-xl font-bold text-slate-900 border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">2. MAKE *</label>
+                  <input type="text" id="eMake" value="${ins.make || ''}" class="white-input w-full p-2 rounded-xl font-bold text-slate-900 border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">3. SERIAL NO *</label>
+                  <input type="text" id="eSerial" value="${ins.serialNo || ''}" class="white-input w-full p-2 rounded-xl font-mono text-slate-900 font-bold border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-sky-900 font-black mb-1 text-[11px]">4. GRS NO (TAG ID) *</label>
+                  <input type="text" id="eTagId" value="${ins.tagId}" class="white-input w-full p-2 rounded-xl font-mono text-sky-800 font-extrabold border-sky-400 text-xs" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">5. RANGE *</label>
+                  <input type="text" id="eRange" value="${ins.range || ''}" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">6. LEAST COUNT *</label>
+                  <input type="text" id="eLeastCount" value="${ins.leastCount || ''}" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+
+                <div class="p-1.5 rounded-xl bg-emerald-50/80 border border-emerald-300">
+                  <label class="block text-emerald-950 font-extrabold mb-1 text-[10px]">7. CAL ON DATE *</label>
+                  <input type="date" id="eLastCalib" value="${ins.lastCalibratedDate}" class="white-input w-full p-1.5 rounded-lg font-bold font-mono text-emerald-900 border-emerald-300 text-xs" required>
+                </div>
+                <div class="p-1.5 rounded-xl bg-amber-50/80 border border-amber-300">
+                  <label class="block text-amber-950 font-extrabold mb-1 text-[10px]">8. DUE ON (-1 DAY) *</label>
+                  <input type="date" id="eNextDue" value="${ins.nextDueDate || currentDueDate}" class="white-input w-full p-1.5 rounded-lg font-bold font-mono text-amber-950 border-amber-300 text-xs" required>
+                </div>
+
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">9. FREQ (MONTHS) *</label>
+                  <input type="number" id="eFreq" value="${ins.frequencyMonths || 12}" min="1" max="60" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">10. HISTORY CARD *</label>
+                  <input type="text" id="eHistoryCardNo" value="${ins.historyCardNo || 'HC-2026-001'}" class="white-input w-full p-2 rounded-xl font-mono text-indigo-700 font-bold border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">11. LOCATION *</label>
+                  <input type="text" id="eLocation" value="${ins.location || ''}" class="white-input w-full p-2 rounded-xl font-bold border-slate-300 text-xs" required>
+                </div>
+                <div>
+                  <label class="block text-slate-800 font-extrabold mb-1 text-[11px]">12. AGENCY *</label>
+                  <select id="eAgency" class="white-input w-full p-2 rounded-xl font-bold text-sky-900 border-slate-300 text-xs">
+                    ${this.state.agencies.map(a => `<option value="${a.id}" ${a.id === ins.agencyId ? 'selected' : ''}>${a.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+                <button type="button" onclick="document.getElementById('modalContainer').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200">
+                  Cancel
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md flex items-center space-x-1">
+                  <span>&#128190; Save Modifications</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        const calibInput = document.getElementById('eLastCalib');
+        const freqInput = document.getElementById('eFreq');
+        const dueInput = document.getElementById('eNextDue');
+
+        const updateModalDueDate = () => {
+          const newCalib = calibInput.value;
+          const newFreq = parseInt(freqInput.value || '12', 10);
+          if (newCalib) {
+            dueInput.value = calculateNextDueDate(newCalib, newFreq);
+          }
+        };
+
+        calibInput.addEventListener('change', updateModalDueDate);
+        freqInput.addEventListener('change', updateModalDueDate);
+
+        document.getElementById('editInsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          ins.name = document.getElementById('eName').value.trim();
+          ins.make = document.getElementById('eMake').value.trim();
+          ins.serialNo = document.getElementById('eSerial').value.trim();
+          ins.tagId = document.getElementById('eTagId').value.trim();
+          ins.range = document.getElementById('eRange').value.trim();
+          ins.leastCount = document.getElementById('eLeastCount').value.trim();
+          ins.lastCalibratedDate = calibInput.value;
+          ins.frequencyMonths = parseInt(freqInput.value, 10);
+          ins.nextDueDate = dueInput.value;
+          ins.historyCardNo = document.getElementById('eHistoryCardNo').value.trim();
+          ins.location = document.getElementById('eLocation').value.trim();
+          ins.agencyId = document.getElementById('eAgency').value;
+
+          this.saveState('instruments');
+          showToast(`&#128190; Master Instrument ${ins.tagId} (${ins.name}) saved!`);
+          m.classList.add('hidden');
+          this.renderCurrentTab();
+        });
+      }div>
         `;
 
         const calibInput = document.getElementById('gpcLastCalib');
